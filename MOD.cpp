@@ -227,6 +227,7 @@ static void finishChunk(util::fstream_writer& writer, u32 chunkStart)
 
 void MOD::write(util::fstream_writer& writer)
 {
+    // Write header
     u32 headerPos = startChunk(writer, 0);
     writer.align(0x20);
     writer.writeU16(m_header.m_dateTime.m_year);
@@ -234,6 +235,9 @@ void MOD::write(util::fstream_writer& writer)
     writer.writeU8(m_header.m_dateTime.m_day);
     writer.writeU32(m_header.m_flags);
     finishChunk(writer, headerPos);
+
+    // Finalise writing with 0xFFFF chunk and append any INI file
+    finishChunk(writer, startChunk(writer, 0xFFFF));
 }
 
 void MOD::reset()

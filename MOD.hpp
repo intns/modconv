@@ -72,6 +72,10 @@ struct TextureAttributes {
     void read(util::fstream_reader&);
 };
 
+enum class MODFlags : u8{
+    UseNBT = 0x01
+};
+
 struct MOD {
     MOD() = default;
     MOD(util::fstream_reader& reader) { read(reader); }
