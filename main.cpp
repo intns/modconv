@@ -16,13 +16,13 @@ int main(int argc, char** argv)
     cmdStream.read(fileStr.data(), cfSz);
     util::tokeniser tokeniser(fileStr);
 
-    util::fstream_reader reader;
     MOD modFile;
     while (!tokeniser.isEnd()) {
         const std::string& token = tokeniser.next();
 
         if (token == "load") {
             const std::string& filename = tokeniser.next();
+            util::fstream_reader reader;
             reader.open(filename, std::ios_base::binary);
             if (!reader.is_open()) {
                 std::cerr << "Unable to open " << filename << std::endl;
@@ -32,9 +32,9 @@ int main(int argc, char** argv)
             reader.endianness() = util::fstream_reader::Endianness::Big;
             reader.seekg(0, std::ios_base::beg);
             modFile.read(reader);
+            reader.close();
         } else if (token == "close") {
             std::cout << std::endl;
-            reader.close();
             modFile.reset();
         } 
     }

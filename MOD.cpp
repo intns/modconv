@@ -56,6 +56,15 @@ void Texture::read(util::fstream_reader& reader)
     reader.read_buffer(reinterpret_cast<char*>(m_imageData.data()), m_imageData.size());
 }
 
+void TextureAttributes::read(util::fstream_reader& reader)
+{
+    m_index = reader.readU16();
+    reader.readU16();
+    m_tilingMode = reader.readU16();
+    m_unknown1 = reader.readU16();
+    m_unknown2 = reader.readF32();
+}
+
 void MOD::align(util::fstream_reader& reader, u32 amt)
 {
     u32 offs = amt - (reader.tellg() % amt);
@@ -177,6 +186,18 @@ void MOD::read(util::fstream_reader& reader)
             std::cout << m_textures.size() << " texture(s) found\n"
                       << std::endl;
             break;
+        case 0x22:
+            m_texattrs.resize(reader.readU32());
+
+            align(reader, 0x20);
+            for (TextureAttributes& attrs : m_texattrs) {
+                attrs.read(reader);
+            }
+            align(reader, 0x20);
+
+            std::cout << m_texattrs.size() << " texture attribute(s) found\n"
+                      << std::endl;
+            break;
         case 0xFFFF:
             stopRead = true;
             break;
@@ -216,7 +237,7 @@ const std::map<u32, std::string_view> gChunkNames = {
     { 0x1F, "Texture Coordinate 7" },
 
     { 0x20, "Textures" },
-    { 0x22, "Texture Mipmaps" },
+    { 0x22, "Texture Attributes" },
     { 0x30, "Materials" },
 
     { 0x40, "Vertex Matrix" },

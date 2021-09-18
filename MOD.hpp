@@ -61,6 +61,15 @@ struct Texture {
     void read(util::fstream_reader&);
 };
 
+struct TextureAttributes {
+    u16 m_index;
+    u16 m_tilingMode;
+    u16 m_unknown1;
+    f32 m_unknown2;
+
+    void read(util::fstream_reader&);
+};
+
 struct MOD {
     MOD() = default;
     MOD(util::fstream_reader& reader) { read(reader); }
@@ -79,4 +88,5 @@ struct MOD {
     std::vector<Color> m_vcolors;
     std::array<std::vector<Vector2f>, 8> m_texcoords;
     std::vector<Texture> m_textures;
+    std::vector<TextureAttributes> m_texattrs;
 };
