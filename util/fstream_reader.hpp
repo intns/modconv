@@ -8,42 +8,48 @@
 
 namespace util {
 
-class fstream_reader {
+class fstream_reader : public std::ifstream {
 public:
     enum class Endianness : u8 {
         Little = 0,
         Big
     };
 
-    fstream_reader(std::ifstream& file, std::size_t position = 0, Endianness endianness = Endianness::Little);
     ~fstream_reader() = default;
+    fstream_reader(std::size_t position = 0, Endianness endianness = Endianness::Little);
     fstream_reader(const fstream_reader&) = delete;
     fstream_reader& operator=(const fstream_reader&) = delete;
 
-    inline const std::ifstream& getStream() const { return m_filestream; }
-    inline const std::streampos getRemaining() const { return m_filesize - m_filestream.tellg(); }
+    inline const std::streampos getRemaining() { return m_filesize - tellg(); }
     inline const std::streampos getFilesize() const { return m_filesize; }
 
     inline Endianness& endianness() { return m_endianness; }
     inline const Endianness& endianness() const { return m_endianness; }
 
+    inline void open_fstream(std::size_t position = 0, Endianness endianness = Endianness::Little)
+    {
+        m_endianness = endianness;
+        seekg(0, std::ios_base::end);
+        m_filesize = tellg();
+        setPosition(position);
+    }
+
     inline void setPosition(std::size_t position)
     {
         if (position <= m_filesize) {
-            m_filestream.seekg(position);
+            seekg(position);
         }
     }
-    inline const std::streampos getPosition() const { return m_filestream.tellg(); }
 
     inline void read_buffer(char* buffer, std::streampos size)
     {
-        m_filestream.read(buffer, size);
+        read(buffer, size);
     }
 
     inline u8 readU8()
     {
         u8 byte = 0;
-        m_filestream.read(reinterpret_cast<char*>(&byte), 1);
+        read(reinterpret_cast<char*>(&byte), 1);
         return byte;
     }
     inline u16 readU16()
@@ -79,7 +85,7 @@ public:
     inline s8 readS8()
     {
         char byte = 0;
-        m_filestream.read(&byte, 1);
+        read(&byte, 1);
         return byte;
     }
     inline s16 readS16()
@@ -117,8 +123,6 @@ public:
         u32 word = readU32();
         return *reinterpret_cast<float*>(&word);
     }
-
-    std::ifstream& m_filestream;
 
 private:
     std::streampos m_filesize;

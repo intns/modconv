@@ -43,11 +43,24 @@ void Color::read(util::fstream_reader& reader)
     a = reader.readU8();
 }
 
+void Texture::read(util::fstream_reader& reader)
+{
+    m_width = reader.readU16();
+    m_height = reader.readU16();
+    m_format = reader.readU32();
+    m_unknown = reader.readU32();
+    for (u32 i = 0; i < 4; i++) {
+        reader.readU32();
+    }
+    m_imageData.resize(reader.readU32());
+    reader.read_buffer(reinterpret_cast<char*>(m_imageData.data()), m_imageData.size());
+}
+
 void MOD::align(util::fstream_reader& reader, u32 amt)
 {
-    u32 offs = amt - (reader.m_filestream.tellg() % amt);
+    u32 offs = amt - (reader.tellg() % amt);
     if (offs != 0x20) {
-        reader.m_filestream.seekg(offs, std::ios_base::cur);
+        reader.seekg(offs, std::ios_base::cur);
     }
 }
 
@@ -55,7 +68,7 @@ void MOD::read(util::fstream_reader& reader)
 {
     bool stopRead = false;
     while (!stopRead) {
-        std::streampos position = reader.m_filestream.tellg();
+        std::streampos position = reader.tellg();
         u32 opcode = reader.readU32();
         u32 length = reader.readU32();
 
@@ -152,14 +165,38 @@ void MOD::read(util::fstream_reader& reader)
                       << std::endl;
             break;
         }
+        case 0x20:
+            m_textures.resize(reader.readU32());
+
+            align(reader, 0x20);
+            for (Texture& texture : m_textures) {
+                texture.read(reader);
+            }
+            align(reader, 0x20);
+
+            std::cout << m_textures.size() << " texture(s) found\n"
+                      << std::endl;
+            break;
         case 0xFFFF:
             stopRead = true;
             break;
         default:
-            reader.m_filestream.seekg(static_cast<std::basic_istream<char, std::char_traits<char>>::off_type>(length), std::ios_base::cur);
+            reader.seekg(static_cast<std::basic_istream<char, std::char_traits<char>>::off_type>(length), std::ios_base::cur);
             break;
         }
     }
+}
+
+void MOD::reset()
+{
+    m_vertices.clear();
+    m_vnormals.clear();
+    m_vertexnbt.clear();
+    m_vcolors.clear();
+    for (u32 i = 0; i < 8; i++) {
+        m_texcoords[i].clear();
+    }
+    m_textures.clear();
 }
 
 const std::map<u32, std::string_view> gChunkNames = {

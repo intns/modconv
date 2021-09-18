@@ -1,8 +1,8 @@
+#include <array>
 #include <optional>
 #include <string_view>
 #include <util/fstream_reader.hpp>
 #include <vector>
-#include <array>
 
 struct Vector2i {
     u32 x, y;
@@ -51,12 +51,24 @@ struct NBT {
     void read(util::fstream_reader&);
 };
 
+struct Texture {
+    u16 m_width;
+    u16 m_height;
+    u32 m_format;
+    u32 m_unknown;
+    std::vector<u8> m_imageData;
+
+    void read(util::fstream_reader&);
+};
+
 struct MOD {
     MOD() = default;
+    MOD(util::fstream_reader& reader) { read(reader); }
     ~MOD() = default;
 
     void align(util::fstream_reader& reader, u32 amt);
     void read(util::fstream_reader& reader);
+    void reset();
 
     const std::optional<std::string_view> getChunkName(u32 opcode);
 
@@ -66,4 +78,5 @@ struct MOD {
     std::vector<NBT> m_vertexnbt;
     std::vector<Color> m_vcolors;
     std::array<std::vector<Vector2f>, 8> m_texcoords;
+    std::vector<Texture> m_textures;
 };
