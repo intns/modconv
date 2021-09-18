@@ -1,4 +1,5 @@
 load mizu.mod
+write mizu_new.mod
 close
 
 load callCirc.mod

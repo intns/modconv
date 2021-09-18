@@ -33,10 +33,22 @@ int main(int argc, char** argv)
             reader.seekg(0, std::ios_base::beg);
             modFile.read(reader);
             reader.close();
+        } else if (token == "write") {
+            const std::string& filename = tokeniser.next();
+            util::fstream_writer writer(util::fstream_writer::Endianness::Big);
+            writer.open(filename, std::ios_base::binary);
+            if (!writer.is_open())
+            {
+                std::cerr << "Unable to open " << filename << std::endl;
+                return EXIT_FAILURE;
+            }
+            std::cout << "Writing " << filename << std::endl;
+            modFile.write(writer);
+            writer.close();
         } else if (token == "close") {
             std::cout << std::endl;
             modFile.reset();
-        } 
+        }
     }
 
     ((void)std::getchar());

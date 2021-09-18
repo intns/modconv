@@ -86,7 +86,7 @@ void MOD::read(util::fstream_reader& reader)
             return;
         }
 
-        std::cout << "Got opcode " << std::hex << opcode << std::dec;
+        std::cout << "Got chunk 0x" << std::hex << opcode << std::dec;
         const auto ocString = getChunkName(opcode);
         std::cout << ", " << (ocString.has_value() ? ocString.value() : "Unknown chunk") << std::endl;
 
@@ -206,6 +206,34 @@ void MOD::read(util::fstream_reader& reader)
             break;
         }
     }
+}
+
+static const u32 startChunk(util::fstream_writer& writer, u32 chunk)
+{
+    writer.writeU32(chunk);
+    const u32 position = static_cast<u32>(writer.tellp());
+    writer.writeU32(0);
+    return position;
+}
+
+static void finishChunk(util::fstream_writer& writer, u32 chunkStart)
+{
+    writer.align(0x20);
+    const u32 position = static_cast<u32>(writer.tellp());
+    writer.seekp(chunkStart, std::ios_base::beg);
+    writer.writeU32(position - chunkStart - 4);
+    writer.seekp(position, std::ios_base::beg);
+}
+
+void MOD::write(util::fstream_writer& writer)
+{
+    u32 headerPos = startChunk(writer, 0);
+    writer.align(0x20);
+    writer.writeU16(m_header.m_dateTime.m_year);
+    writer.writeU8(m_header.m_dateTime.m_month);
+    writer.writeU8(m_header.m_dateTime.m_day);
+    writer.writeU32(m_header.m_flags);
+    finishChunk(writer, headerPos);
 }
 
 void MOD::reset()
