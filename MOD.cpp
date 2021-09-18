@@ -12,7 +12,8 @@ void MOD::align(util::fstream_reader& reader, u32 amt)
 
 void MOD::read(util::fstream_reader& reader)
 {
-    while (true) {
+    bool stopRead = false;
+    while (!stopRead) {
         std::streampos position = reader.m_filestream.tellg();
         u32 opcode = reader.readU32();
         u32 length = reader.readU32();
@@ -28,7 +29,7 @@ void MOD::read(util::fstream_reader& reader)
 
         switch (opcode) {
         case 0xFFFF:
-
+            stopRead = true;
             break;
         default:
             reader.m_filestream.seekg(static_cast<std::basic_istream<char, std::char_traits<char>>::off_type>(length), std::ios_base::cur);
