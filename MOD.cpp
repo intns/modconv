@@ -2,6 +2,39 @@
 #include <iostream>
 #include <map>
 
+void Vector2i::read(util::fstream_reader& reader)
+{
+    x = reader.readU32();
+    y = reader.readU32();
+}
+
+void Vector2f::read(util::fstream_reader& reader)
+{
+    x = reader.readF32();
+    y = reader.readF32();
+}
+
+void Vector3i::read(util::fstream_reader& reader)
+{
+    x = reader.readU32();
+    y = reader.readU32();
+    z = reader.readU32();
+}
+
+void Vector3f::read(util::fstream_reader& reader)
+{
+    x = reader.readF32();
+    y = reader.readF32();
+    z = reader.readF32();
+}
+
+void NBT::read(util::fstream_reader& reader)
+{
+    m_normals.read(reader);
+    m_binormals.read(reader);
+    m_tangent.read(reader);
+}
+
 void MOD::align(util::fstream_reader& reader, u32 amt)
 {
     u32 offs = amt - (reader.m_filestream.tellg() % amt);
@@ -45,9 +78,7 @@ void MOD::read(util::fstream_reader& reader)
 
             align(reader, 0x20);
             for (Vector3f& vertex : m_vertices) {
-                vertex.x = reader.readF32();
-                vertex.y = reader.readF32();
-                vertex.z = reader.readF32();
+                vertex.read(reader);
             }
             align(reader, 0x20);
 
@@ -59,13 +90,23 @@ void MOD::read(util::fstream_reader& reader)
 
             align(reader, 0x20);
             for (Vector3f& vertex : m_vnormals) {
-                vertex.x = reader.readF32();
-                vertex.y = reader.readF32();
-                vertex.z = reader.readF32();
+                vertex.read(reader);
             }
             align(reader, 0x20);
 
             std::cout << m_vnormals.size() << " vertex normals found\n"
+                      << std::endl;
+            break;
+        case 0x12:
+            m_vertexnbt.resize(reader.readU32());
+
+            align(reader, 0x20);
+            for (NBT& nbt : m_vertexnbt) {
+                nbt.read(reader);
+            }
+            align(reader, 0x20);
+
+            std::cout << m_vertexnbt.size() << " vertex NBTs found\n"
                       << std::endl;
             break;
         case 0xFFFF:

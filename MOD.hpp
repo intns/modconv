@@ -1,22 +1,30 @@
-#include <util/fstream_reader.hpp>
-#include <string_view>
 #include <optional>
+#include <string_view>
+#include <util/fstream_reader.hpp>
 #include <vector>
 
 struct Vector2i {
     u32 x, y;
+
+    void read(util::fstream_reader&);
 };
 
 struct Vector2f {
     f32 x, y;
+
+    void read(util::fstream_reader&);
 };
 
 struct Vector3i {
     u32 x, y, z;
+
+    void read(util::fstream_reader&);
 };
 
 struct Vector3f {
     f32 x, y, z;
+
+    void read(util::fstream_reader&);
 };
 
 struct Header {
@@ -26,6 +34,14 @@ struct Header {
         u8 m_day;
     } m_dateTime;
     u32 m_flags;
+};
+
+struct NBT {
+    Vector3f m_normals;
+    Vector3f m_binormals;
+    Vector3f m_tangent;
+
+    void read(util::fstream_reader&);
 };
 
 struct MOD {
@@ -40,4 +56,5 @@ struct MOD {
     Header m_header;
     std::vector<Vector3f> m_vertices;
     std::vector<Vector3f> m_vnormals;
+    std::vector<NBT> m_vertexnbt;
 };
