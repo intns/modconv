@@ -30,6 +30,9 @@
     <ClCompile Include="util\fstream_reader.cpp">
       <Filter>Header Files\utillib</Filter>
     </ClCompile>
+    <ClCompile Include="util\fstream_writer.cpp">
+      <Filter>Header Files\utillib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="types.hpp">
@@ -48,6 +51,9 @@
       <Filter>Header Files\utillib</Filter>
     </ClInclude>
     <ClInclude Include="util\vector_reader.hpp">
+      <Filter>Header Files\utillib</Filter>
+    </ClInclude>
+    <ClInclude Include="util\fstream_writer.hpp">
       <Filter>Header Files\utillib</Filter>
     </ClInclude>
   </ItemGroup>
