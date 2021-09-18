@@ -1,4 +1,4 @@
-#include "MOD.hpp"
+#include <MOD.hpp>
 
 int main(int argc, char** argv)
 {
