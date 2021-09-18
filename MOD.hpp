@@ -2,6 +2,7 @@
 #include <string_view>
 #include <util/fstream_reader.hpp>
 #include <vector>
+#include <array>
 
 struct Vector2i {
     u32 x, y;
@@ -23,6 +24,12 @@ struct Vector3i {
 
 struct Vector3f {
     f32 x, y, z;
+
+    void read(util::fstream_reader&);
+};
+
+struct Color {
+    u8 r, g, b, a;
 
     void read(util::fstream_reader&);
 };
@@ -57,4 +64,6 @@ struct MOD {
     std::vector<Vector3f> m_vertices;
     std::vector<Vector3f> m_vnormals;
     std::vector<NBT> m_vertexnbt;
+    std::vector<Color> m_vcolors;
+    std::array<std::vector<Vector2f>, 8> m_texcoords;
 };

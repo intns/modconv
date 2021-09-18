@@ -35,6 +35,14 @@ void NBT::read(util::fstream_reader& reader)
     m_tangent.read(reader);
 }
 
+void Color::read(util::fstream_reader& reader)
+{
+    r = reader.readU8();
+    g = reader.readU8();
+    b = reader.readU8();
+    a = reader.readU8();
+}
+
 void MOD::align(util::fstream_reader& reader, u32 amt)
 {
     u32 offs = amt - (reader.m_filestream.tellg() % amt);
@@ -109,6 +117,41 @@ void MOD::read(util::fstream_reader& reader)
             std::cout << m_vertexnbt.size() << " vertex NBTs found\n"
                       << std::endl;
             break;
+        case 0x13:
+            m_vcolors.resize(reader.readU32());
+
+            align(reader, 0x20);
+            for (Color& color : m_vcolors) {
+                color.read(reader);
+            }
+            align(reader, 0x20);
+
+            std::cout << m_vertexnbt.size() << " vertex NBTs found\n"
+                      << std::endl;
+            break;
+        case 0x18:
+        case 0x19:
+        case 0x1A:
+        case 0x1B:
+        case 0x1C:
+        case 0x1D:
+        case 0x1E:
+        case 0x1F: {
+
+            const u32 texcoordNum = opcode - 0x18;
+            m_texcoords[texcoordNum].resize(reader.readU32());
+
+            align(reader, 0x20);
+            for (Vector2f& coords : m_texcoords[texcoordNum]) {
+                coords.read(reader);
+            }
+            align(reader, 0x20);
+
+            std::cout << "Texture Coordinate " << texcoordNum
+                      << " has " << m_texcoords[texcoordNum].size() << " coordinates\n"
+                      << std::endl;
+            break;
+        }
         case 0xFFFF:
             stopRead = true;
             break;
