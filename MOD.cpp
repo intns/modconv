@@ -23,11 +23,51 @@ void MOD::read(util::fstream_reader& reader)
             return;
         }
 
-        std::cout << "Got opcode " << std::hex << opcode;
+        std::cout << "Got opcode " << std::hex << opcode << std::dec;
         const auto ocString = getChunkName(opcode);
         std::cout << ", " << (ocString.has_value() ? ocString.value() : "Unknown chunk") << std::endl;
 
         switch (opcode) {
+        case 0:
+            align(reader, 0x20);
+            m_header.m_dateTime.m_year = reader.readU16();
+            m_header.m_dateTime.m_month = reader.readU8();
+            m_header.m_dateTime.m_day = reader.readU8();
+            align(reader, 0x20);
+
+            std::cout << "MOD File Creation date (YYYY/MM/DD): " << (u32)m_header.m_dateTime.m_year
+                      << "/" << (u32)m_header.m_dateTime.m_month
+                      << "/" << (u32)m_header.m_dateTime.m_day << '\n'
+                      << std::endl;
+            break;
+        case 0x10:
+            m_vertices.resize(reader.readU32());
+
+            align(reader, 0x20);
+            for (Vector3f& vertex : m_vertices) {
+                vertex.x = reader.readF32();
+                vertex.y = reader.readF32();
+                vertex.z = reader.readF32();
+            }
+            align(reader, 0x20);
+
+            std::cout << m_vertices.size() << " vertices found\n"
+                      << std::endl;
+            break;
+        case 0x11:
+            m_vnormals.resize(reader.readU32());
+
+            align(reader, 0x20);
+            for (Vector3f& vertex : m_vnormals) {
+                vertex.x = reader.readF32();
+                vertex.y = reader.readF32();
+                vertex.z = reader.readF32();
+            }
+            align(reader, 0x20);
+
+            std::cout << m_vnormals.size() << " vertex normals found\n"
+                      << std::endl;
+            break;
         case 0xFFFF:
             stopRead = true;
             break;
