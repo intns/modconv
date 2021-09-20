@@ -8,10 +8,22 @@ void Vector2i::read(util::fstream_reader& reader)
     y = reader.readU32();
 }
 
+void Vector2i::write(util::fstream_writer& writer)
+{
+    writer.writeU32(x);
+    writer.writeU32(y);
+}
+
 void Vector2f::read(util::fstream_reader& reader)
 {
     x = reader.readF32();
     y = reader.readF32();
+}
+
+void Vector2f::write(util::fstream_writer& writer)
+{
+    writer.writeF32(x);
+    writer.writeF32(y);
 }
 
 void Vector3i::read(util::fstream_reader& reader)
@@ -21,11 +33,25 @@ void Vector3i::read(util::fstream_reader& reader)
     z = reader.readU32();
 }
 
+void Vector3i::write(util::fstream_writer& writer)
+{
+    writer.writeU32(x);
+    writer.writeU32(y);
+    writer.writeU32(z);
+}
+
 void Vector3f::read(util::fstream_reader& reader)
 {
     x = reader.readF32();
     y = reader.readF32();
     z = reader.readF32();
+}
+
+void Vector3f::write(util::fstream_writer& writer)
+{
+    writer.writeF32(x);
+    writer.writeF32(y);
+    writer.writeF32(z);
 }
 
 void NBT::read(util::fstream_reader& reader)
@@ -35,12 +61,27 @@ void NBT::read(util::fstream_reader& reader)
     m_tangent.read(reader);
 }
 
+void NBT::write(util::fstream_writer& writer)
+{
+    m_normals.write(writer);
+    m_binormals.write(writer);
+    m_tangent.write(writer);
+}
+
 void Color::read(util::fstream_reader& reader)
 {
     r = reader.readU8();
     g = reader.readU8();
     b = reader.readU8();
     a = reader.readU8();
+}
+
+void Color::write(util::fstream_writer& writer)
+{
+    writer.writeU8(r);
+    writer.writeU8(g);
+    writer.writeU8(b);
+    writer.writeU8(a);
 }
 
 void Texture::read(util::fstream_reader& reader)
@@ -56,6 +97,19 @@ void Texture::read(util::fstream_reader& reader)
     reader.read_buffer(reinterpret_cast<char*>(m_imageData.data()), m_imageData.size());
 }
 
+void Texture::write(util::fstream_writer& writer)
+{
+    writer.writeU16(m_width);
+    writer.writeU16(m_height);
+    writer.writeU32(m_format);
+    writer.writeU32(m_unknown);
+    for (u32 i = 0; i < 4; i++) {
+        writer.writeU32(0);
+    }
+    writer.writeU32(m_imageData.size());
+    writer.write(reinterpret_cast<char*>(m_imageData.data()), m_imageData.size());
+}
+
 void TextureAttributes::read(util::fstream_reader& reader)
 {
     m_index = reader.readU16();
@@ -63,6 +117,15 @@ void TextureAttributes::read(util::fstream_reader& reader)
     m_tilingMode = reader.readU16();
     m_unknown1 = reader.readU16();
     m_unknown2 = reader.readF32();
+}
+
+void TextureAttributes::write(util::fstream_writer& writer)
+{
+    writer.writeU16(m_index);
+    writer.writeU16(0);
+    writer.writeU16(m_tilingMode);
+    writer.writeU16(m_unknown1);
+    writer.writeF32(m_unknown2);
 }
 
 void MOD::align(util::fstream_reader& reader, u32 amt)
@@ -96,6 +159,7 @@ void MOD::read(util::fstream_reader& reader)
             m_header.m_dateTime.m_year = reader.readU16();
             m_header.m_dateTime.m_month = reader.readU8();
             m_header.m_dateTime.m_day = reader.readU8();
+            m_header.m_flags = reader.readU32();
             align(reader, 0x20);
 
             std::cout << "MOD File Creation date (YYYY/MM/DD): " << (u32)m_header.m_dateTime.m_year
@@ -225,6 +289,20 @@ static void finishChunk(util::fstream_writer& writer, u32 chunkStart)
     writer.seekp(position, std::ios_base::beg);
 }
 
+static inline void writeGenericChunk(auto& vector, u32 chunkIdentifier, util::fstream_writer& writer)
+{
+    u32 subchunkPos = startChunk(writer, chunkIdentifier);
+    writer.writeU32(vector.size());
+
+    writer.align(0x20);
+    for (auto& contents : vector) {
+        contents.write(writer);
+    }
+    finishChunk(writer, subchunkPos);
+}
+
+// NOTE: the control flow and layout of this function is a replica of a
+// decompiled version of the DMD->MOD process, found in plugTexConv
 void MOD::write(util::fstream_writer& writer)
 {
     // Write header
@@ -235,6 +313,16 @@ void MOD::write(util::fstream_writer& writer)
     writer.writeU8(m_header.m_dateTime.m_day);
     writer.writeU32(m_header.m_flags);
     finishChunk(writer, headerPos);
+
+    if (m_vertices.size()) {
+        writeGenericChunk(m_vertices, 0x10, writer);
+    } else if (m_vcolors.size()) {
+        writeGenericChunk(m_vcolors, 0x13, writer);
+    } else if (m_vnormals.size()) {
+        writeGenericChunk(m_vnormals, 0x11, writer);
+    } else if (m_header.m_flags & static_cast<u32>(MODFlags::UseNBT) && m_vertexnbt.size()) {
+        writeGenericChunk(m_vnormals, 0x12, writer);
+    }
 
     // Finalise writing with 0xFFFF chunk and append any INI file
     finishChunk(writer, startChunk(writer, 0xFFFF));

@@ -25,7 +25,7 @@ public:
 
     inline void align(u32 amt)
     {
-        const u32 pos = tellp();
+        const u32 pos = static_cast<u32>(tellp());
         for (u32 i = 0; i < ((~(amt - 1) & (pos + amt - 1)) - pos); ++i) {
             writeU8(0);
         }

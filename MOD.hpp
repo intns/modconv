@@ -9,30 +9,35 @@ struct Vector2i {
     u32 x = 0, y = 0;
 
     void read(util::fstream_reader&);
+    void write(util::fstream_writer&);
 };
 
 struct Vector2f {
     f32 x = 0, y = 0;
 
     void read(util::fstream_reader&);
+    void write(util::fstream_writer&);
 };
 
 struct Vector3i {
     u32 x = 0, y = 0, z = 0;
 
     void read(util::fstream_reader&);
+    void write(util::fstream_writer&);
 };
 
 struct Vector3f {
     f32 x = 0, y = 0, z = 0;
 
     void read(util::fstream_reader&);
+    void write(util::fstream_writer&);
 };
 
 struct Color {
     u8 r = 0, g = 0, b = 0, a = 0;
 
     void read(util::fstream_reader&);
+    void write(util::fstream_writer&);
 };
 
 struct Header {
@@ -51,6 +56,7 @@ struct NBT {
     Vector3f m_tangent;
 
     void read(util::fstream_reader&);
+    void write(util::fstream_writer&);
 };
 
 struct Texture {
@@ -61,6 +67,7 @@ struct Texture {
     std::vector<u8> m_imageData;
 
     void read(util::fstream_reader&);
+    void write(util::fstream_writer&);
 };
 
 struct TextureAttributes {
@@ -70,6 +77,7 @@ struct TextureAttributes {
     f32 m_unknown2 = 0;
 
     void read(util::fstream_reader&);
+    void write(util::fstream_writer&);
 };
 
 enum class MODFlags : u8{
