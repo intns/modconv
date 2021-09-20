@@ -1,4 +1,5 @@
 #include <array>
+#include <format>
 #include <optional>
 #include <string_view>
 #include <util/fstream_reader.hpp>
@@ -100,6 +101,7 @@ struct TextureAttributes {
 // TCR = Texture Environment (TEV) Colour Register                //
 ////////////////////////////////////////////////////////////////////
 namespace mat {
+
 struct KeyInfoU8 {
     u8 m_unknown1  = 0;
     f32 m_unknown2 = 0;
@@ -215,11 +217,10 @@ struct TextureData {
     f32 m_unknown15 = 0;
     f32 m_unknown16 = 0;
     f32 m_unknown17 = 0;
-    f32 m_unknown18 = 0;
 
+    std::vector<TXD_Unk1> m_unknown18;
     std::vector<TXD_Unk1> m_unknown19;
     std::vector<TXD_Unk1> m_unknown20;
-    std::vector<TXD_Unk1> m_unknown21;
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
@@ -238,7 +239,7 @@ struct TextureInfo {
 enum class MaterialFlags : u8 { UsePVW = 1 };
 
 struct Material {
-    u32 m_flags  = 0;
+    u32 m_flags    = 0;
     u32 m_unknown1 = 0;
     Colour m_colour;
 
@@ -293,18 +294,19 @@ struct PVWCombiner {
     u8 m_unknown9;
     u8 m_unknown10;
     u8 m_unknown11;
+    u8 m_unknown12;
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
 };
 
 struct TEVStage {
-    u8 m_unknown1;
-    u8 m_unknown2;
-    u8 m_unknown3;
-    u8 m_unknown4;
-    u8 m_unknown5;
-    u8 m_unknown6;
+    u8 m_unknown1 = 0;
+    u8 m_unknown2 = 0;
+    u8 m_unknown3 = 0;
+    u8 m_unknown4 = 0;
+    u8 m_unknown5 = 0;
+    u8 m_unknown6 = 0;
     PVWCombiner m_unknown7;
     PVWCombiner m_unknown8;
 

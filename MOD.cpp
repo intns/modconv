@@ -161,7 +161,7 @@ void MOD::read(util::fstream_reader& reader)
         u32 length              = reader.readU32();
 
         if (position & 0x1F) {
-            std::cout << "Error in chunk " << opcode
+            std::cout << "Error in chunk " << opcode << ", offset " << position
                       << ", chunk start isn't aligned to 0x20, this means an improper read occured." << std::endl;
             return;
         }
@@ -630,6 +630,7 @@ void TXD_Unk1::write(util::fstream_writer& writer)
 void TextureData::read(util::fstream_reader& reader)
 {
     m_unknown1 = reader.readS32();
+
     m_unknown2 = reader.readS16();
     m_unknown3 = reader.readS16();
 
@@ -649,7 +650,11 @@ void TextureData::read(util::fstream_reader& reader)
     m_unknown15 = reader.readF32();
     m_unknown16 = reader.readF32();
     m_unknown17 = reader.readF32();
-    m_unknown18 = reader.readF32();
+
+    m_unknown18.resize(reader.readU32());
+    for (mat::TXD_Unk1& unk : m_unknown18) {
+        unk.read(reader);
+    }
 
     m_unknown19.resize(reader.readU32());
     for (mat::TXD_Unk1& unk : m_unknown19) {
@@ -658,11 +663,6 @@ void TextureData::read(util::fstream_reader& reader)
 
     m_unknown20.resize(reader.readU32());
     for (mat::TXD_Unk1& unk : m_unknown20) {
-        unk.read(reader);
-    }
-
-    m_unknown21.resize(reader.readU32());
-    for (mat::TXD_Unk1& unk : m_unknown21) {
         unk.read(reader);
     }
 }
@@ -689,7 +689,11 @@ void TextureData::write(util::fstream_writer& writer)
     writer.writeF32(m_unknown15);
     writer.writeF32(m_unknown16);
     writer.writeF32(m_unknown17);
-    writer.writeF32(m_unknown18);
+
+    writer.writeU32(m_unknown18.size());
+    for (mat::TXD_Unk1& unk : m_unknown18) {
+        unk.write(writer);
+    }
 
     writer.writeU32(m_unknown19.size());
     for (mat::TXD_Unk1& unk : m_unknown19) {
@@ -698,11 +702,6 @@ void TextureData::write(util::fstream_writer& writer)
 
     writer.writeU32(m_unknown20.size());
     for (mat::TXD_Unk1& unk : m_unknown20) {
-        unk.write(writer);
-    }
-
-    writer.writeU32(m_unknown21.size());
-    for (mat::TXD_Unk1& unk : m_unknown19) {
         unk.write(writer);
     }
 }
@@ -844,6 +843,7 @@ void PVWCombiner::read(util::fstream_reader& reader)
     m_unknown9  = reader.readU8();
     m_unknown10 = reader.readU8();
     m_unknown11 = reader.readU8();
+    m_unknown12 = reader.readU8();
 }
 
 void PVWCombiner::write(util::fstream_writer& writer)
@@ -859,6 +859,7 @@ void PVWCombiner::write(util::fstream_writer& writer)
     writer.writeU8(m_unknown9);
     writer.writeU8(m_unknown10);
     writer.writeU8(m_unknown11);
+    writer.writeU8(m_unknown12);
 }
 
 void TEVStage::read(util::fstream_reader& reader)
