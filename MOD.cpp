@@ -2,6 +2,16 @@
 #include <iostream>
 #include <map>
 
+namespace {
+static inline void align(util::fstream_reader& reader, u32 amt)
+{
+    u32 offs = amt - (reader.tellg() % amt);
+    if (offs != 0x20) {
+        reader.seekg(offs, std::ios_base::cur);
+    }
+}
+} // namespace
+
 void Vector2i::read(util::fstream_reader& reader)
 {
     x = reader.readU32();
@@ -640,11 +650,67 @@ void Envelope::write(util::fstream_writer& writer)
     }
 }
 
-static inline void align(util::fstream_reader& reader, u32 amt)
+void DisplayList::read(util::fstream_reader& reader)
 {
-    u32 offs = amt - (reader.tellg() % amt);
-    if (offs != 0x20) {
-        reader.seekg(offs, std::ios_base::cur);
+    m_flags.intView = reader.readU32();
+    m_unknown1      = reader.readU32();
+    m_dlistData.resize(reader.readU32());
+    align(reader, 0x20);
+    reader.read(reinterpret_cast<char*>(m_dlistData.data()), m_dlistData.size());
+}
+
+void DisplayList::write(util::fstream_writer& writer)
+{
+    writer.writeU32(m_flags.intView);
+    writer.writeU32(m_unknown1);
+    writer.writeU32(m_dlistData.size());
+    writer.align(0x20);
+    writer.write(reinterpret_cast<char*>(m_dlistData.data()), m_dlistData.size());
+}
+
+void MeshPacket::read(util::fstream_reader& reader)
+{
+    m_indices.resize(reader.readU32());
+    for (u16& index : m_indices) {
+        index = reader.readU16();
+    }
+
+    m_displaylists.resize(reader.readU32());
+    for (DisplayList& dlist : m_displaylists) {
+        dlist.read(reader);
+    }
+}
+
+void MeshPacket::write(util::fstream_writer& writer)
+{
+    writer.writeU32(m_indices.size());
+    for (u16& index : m_indices) {
+        writer.writeU16(index);
+    }
+
+    writer.writeU32(m_displaylists.size());
+    for (DisplayList& dlist : m_displaylists) {
+        dlist.write(writer);
+    }
+}
+
+void Mesh::read(util::fstream_reader& reader)
+{
+    m_boneIndex     = reader.readU32();
+    m_vtxDescriptor = reader.readU32();
+    m_packets.resize(reader.readU32());
+    for (MeshPacket& packet : m_packets) {
+        packet.read(reader);
+    }
+}
+
+void Mesh::write(util::fstream_writer& writer)
+{
+    writer.writeU32(m_boneIndex);
+    writer.writeU32(m_vtxDescriptor);
+    writer.writeU32(m_packets.size());
+    for (MeshPacket& packet : m_packets) {
+        packet.write(writer);
     }
 }
 
@@ -791,11 +857,14 @@ void MOD::read(util::fstream_reader& reader)
             readGenericChunk(reader, m_envelopes);
             std::cout << m_envelopes.size() << " envelope(s) found\n" << std::endl;
             break;
+        case 0x50:
+            readGenericChunk(reader, m_meshes);
+            std::cout << m_meshes.size() << " mesh(es) found\n" << std::endl;
+            break;
         case 0x61:
             m_jointNames.resize(reader.readU32());
             align(reader, 0x20);
-            for (std::string& str : m_jointNames)
-            {
+            for (std::string& str : m_jointNames) {
                 str.resize(reader.readU32());
                 for (u32 i = 0; i < str.size(); i++) {
                     str[i] = reader.readU8();
@@ -881,6 +950,10 @@ void MOD::write(util::fstream_writer& writer)
 
     if (m_vtxMatrix.size()) {
         writeGenericChunk(writer, m_vtxMatrix, 0x40);
+    }
+
+    if (m_meshes.size()) {
+        writeGenericChunk(writer, m_meshes, 0x50);
     }
 
     if (m_jointNames.size()) {
