@@ -88,6 +88,7 @@ struct TextureAttributes {
     void write(util::fstream_writer&);
 };
 
+namespace mat {
 ////////////////////////////////////////////////////////////////////
 // NOTE: the names of the classes are taken directly from sysCore //
 // with the exception of unknowns (_Unk)                          //
@@ -100,7 +101,6 @@ struct TextureAttributes {
 // TEV = TextureEnvironment                                       //
 // TCR = Texture Environment (TEV) Colour Register                //
 ////////////////////////////////////////////////////////////////////
-namespace mat {
 
 struct KeyInfoU8 {
     u8 m_unknown1  = 0;
@@ -337,6 +337,13 @@ struct MaterialContainer {
     std::vector<mat::TEVInfo> m_texEnvironments;
 };
 
+struct VtxMatrix {
+    u16 m_index = 0;
+
+    void read(util::fstream_reader&);
+    void write(util::fstream_writer&);
+};
+
 enum class MODFlags : u8 { UseNBT = 0x01 };
 
 struct MOD {
@@ -344,7 +351,6 @@ struct MOD {
     MOD(util::fstream_reader& reader) { read(reader); }
     ~MOD() = default;
 
-    void align(util::fstream_reader& reader, u32 amt);
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
     void reset();
@@ -355,9 +361,10 @@ struct MOD {
     std::vector<Vector3f> m_vertices;
     std::vector<Vector3f> m_vnormals;
     std::vector<NBT> m_vertexnbt;
-    std::vector<Colour> m_vColours;
+    std::vector<Colour> m_vcolours;
     std::array<std::vector<Vector2f>, 8> m_texcoords;
     std::vector<Texture> m_textures;
     std::vector<TextureAttributes> m_texattrs;
     MaterialContainer m_materials;
+    std::vector<VtxMatrix> m_vtxMatrix;
 };
