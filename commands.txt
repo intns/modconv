@@ -1,4 +1,4 @@
 load practice.mod
-promptuser
+texswap
 write practice_new.mod
 close
