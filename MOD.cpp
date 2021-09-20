@@ -882,6 +882,7 @@ void TEVStage::write(util::fstream_writer& writer)
     writer.writeU8(m_unknown5);
     writer.writeU8(m_unknown6);
     m_unknown7.write(writer);
+    m_unknown8.write(writer);
 }
 
 void TEVInfo::read(util::fstream_reader& reader)
@@ -906,6 +907,7 @@ void TEVInfo::write(util::fstream_writer& writer)
     m_unknown1.write(writer);
     m_unknown2.write(writer);
     m_unknown3.write(writer);
+
     m_unknown4.write(writer);
     m_unknown5.write(writer);
     m_unknown6.write(writer);
