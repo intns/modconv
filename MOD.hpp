@@ -1,5 +1,4 @@
 #include <array>
-#include <format>
 #include <optional>
 #include <string_view>
 #include <util/fstream_reader.hpp>

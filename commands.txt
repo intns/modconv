@@ -1,3 +1,4 @@
 load practice.mod
+promptuser
 write practice_new.mod
 close
