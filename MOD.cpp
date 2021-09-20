@@ -68,7 +68,7 @@ void NBT::write(util::fstream_writer& writer)
     m_tangent.write(writer);
 }
 
-void Color::read(util::fstream_reader& reader)
+void Colour::read(util::fstream_reader& reader)
 {
     r = reader.readU8();
     g = reader.readU8();
@@ -76,12 +76,28 @@ void Color::read(util::fstream_reader& reader)
     a = reader.readU8();
 }
 
-void Color::write(util::fstream_writer& writer)
+void Colour::write(util::fstream_writer& writer)
 {
     writer.writeU8(r);
     writer.writeU8(g);
     writer.writeU8(b);
     writer.writeU8(a);
+}
+
+void ShortColour::read(util::fstream_reader& reader)
+{
+    r = reader.readU16();
+    g = reader.readU16();
+    b = reader.readU16();
+    a = reader.readU16();
+}
+
+void ShortColour::write(util::fstream_writer& writer)
+{
+    writer.writeU16(r);
+    writer.writeU16(g);
+    writer.writeU16(b);
+    writer.writeU16(a);
 }
 
 void Texture::read(util::fstream_reader& reader)
@@ -201,11 +217,11 @@ void MOD::read(util::fstream_reader& reader)
             std::cout << m_vertexnbt.size() << " vertex NBTs found\n" << std::endl;
             break;
         case 0x13:
-            m_vcolors.resize(reader.readU32());
+            m_vColours.resize(reader.readU32());
 
             align(reader, 0x20);
-            for (Color& color : m_vcolors) {
-                color.read(reader);
+            for (Colour& Colour : m_vColours) {
+                Colour.read(reader);
             }
             align(reader, 0x20);
 
@@ -304,12 +320,8 @@ static void finishChunk(util::fstream_writer& writer, u32 chunkStart)
 
 static inline void writeGenericChunk(util::fstream_writer& writer, auto& vector, u32 chunkIdentifier)
 {
-    std::optional<std::string_view> chunkName = MOD::getChunkName(chunkIdentifier);
-    if (chunkName.has_value()) {
-        std::cout << std::hex;
-        std::cout << "Writing 0x" << chunkIdentifier << ", " << chunkName.value() << std::endl;
-        std::cout << std::dec;
-    }
+    std::cout << "Writing 0x" << std::hex << chunkIdentifier << std::dec << ", " << MOD::getChunkName(0x30).value()
+              << std::endl;
 
     u32 subchunkPos = startChunk(writer, chunkIdentifier);
     writer.writeU32(vector.size());
@@ -338,8 +350,8 @@ void MOD::write(util::fstream_writer& writer)
         writeGenericChunk(writer, m_vertices, 0x10);
     }
 
-    if (m_vcolors.size()) {
-        writeGenericChunk(writer, m_vcolors, 0x13);
+    if (m_vColours.size()) {
+        writeGenericChunk(writer, m_vColours, 0x13);
     }
 
     if (m_vnormals.size()) {
@@ -364,7 +376,23 @@ void MOD::write(util::fstream_writer& writer)
         writeGenericChunk(writer, m_texattrs, 0x22);
     }
 
-    // TODO: implement rest
+    if (m_materials.m_materials.size()) {
+        std::cout << "Writing 0x30, " << MOD::getChunkName(0x30).value() << std::endl;
+
+        const u32 start = startChunk(writer, 0x30);
+        writer.writeU32(m_materials.m_materials.size());
+        writer.writeU32(m_materials.m_texEnvironments.size());
+        writer.align(0x20);
+
+        for (mat::TEVInfo& tevInfo : m_materials.m_texEnvironments) {
+            tevInfo.write(writer);
+        }
+
+        for (mat::Material& material : m_materials.m_materials) {
+            material.write(writer);
+        }
+        finishChunk(writer, start);
+    }
 
     // Finalise writing with 0xFFFF chunk and append any INI file
     finishChunk(writer, startChunk(writer, 0xFFFF));
@@ -375,7 +403,7 @@ void MOD::reset()
     m_vertices.clear();
     m_vnormals.clear();
     m_vertexnbt.clear();
-    m_vcolors.clear();
+    m_vColours.clear();
     for (u32 i = 0; i < 8; i++) {
         m_texcoords[i].clear();
     }
@@ -461,7 +489,23 @@ void KeyInfoF32::write(util::fstream_writer& writer)
     writer.writeF32(m_unknown3);
 }
 
-inline void PCI_Unk1::read(util::fstream_reader& reader)
+void KeyInfoS10::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readS16();
+    reader.readS16();
+    m_unknown2 = reader.readF32();
+    m_unknown3 = reader.readF32();
+}
+
+void KeyInfoS10::write(util::fstream_writer& writer)
+{
+    writer.writeS16(m_unknown1);
+    writer.writeS16(0);
+    writer.writeF32(m_unknown2);
+    writer.writeF32(m_unknown3);
+}
+
+void PCI_Unk1::read(util::fstream_reader& reader)
 {
     m_unknown1 = reader.readS32();
     m_unknown2.read(reader);
@@ -469,7 +513,7 @@ inline void PCI_Unk1::read(util::fstream_reader& reader)
     m_unknown4.read(reader);
 }
 
-inline void PCI_Unk1::write(util::fstream_writer& writer)
+void PCI_Unk1::write(util::fstream_writer& writer)
 {
     writer.writeS32(m_unknown1);
     m_unknown2.write(writer);
@@ -477,13 +521,13 @@ inline void PCI_Unk1::write(util::fstream_writer& writer)
     m_unknown4.write(writer);
 }
 
-inline void PCI_Unk2::read(util::fstream_reader& reader)
+void PCI_Unk2::read(util::fstream_reader& reader)
 {
     m_unknown1 = reader.readS32();
     m_unknown2.read(reader);
 }
 
-inline void PCI_Unk2::write(util::fstream_writer& writer)
+void PCI_Unk2::write(util::fstream_writer& writer)
 {
     writer.writeS32(m_unknown1);
     m_unknown2.write(writer);
@@ -623,7 +667,45 @@ void TextureData::read(util::fstream_reader& reader)
     }
 }
 
-void TextureData::write(util::fstream_writer& reader) { }
+void TextureData::write(util::fstream_writer& writer)
+{
+    writer.writeS32(m_unknown1);
+    writer.writeS16(m_unknown2);
+    writer.writeS16(m_unknown3);
+
+    writer.writeU8(m_unknown4);
+    writer.writeU8(m_unknown5);
+    writer.writeU8(m_unknown6);
+    writer.writeU8(m_unknown7);
+
+    writer.writeS32(m_unknown8);
+    writer.writeS32(m_unknown9);
+
+    writer.writeF32(m_unknown10);
+    writer.writeF32(m_unknown11);
+    writer.writeF32(m_unknown12);
+    writer.writeF32(m_unknown13);
+    writer.writeF32(m_unknown14);
+    writer.writeF32(m_unknown15);
+    writer.writeF32(m_unknown16);
+    writer.writeF32(m_unknown17);
+    writer.writeF32(m_unknown18);
+
+    writer.writeU32(m_unknown19.size());
+    for (mat::TXD_Unk1& unk : m_unknown19) {
+        unk.write(writer);
+    }
+
+    writer.writeU32(m_unknown20.size());
+    for (mat::TXD_Unk1& unk : m_unknown20) {
+        unk.write(writer);
+    }
+
+    writer.writeU32(m_unknown21.size());
+    for (mat::TXD_Unk1& unk : m_unknown19) {
+        unk.write(writer);
+    }
+}
 
 void TextureInfo::read(util::fstream_reader& reader)
 {
@@ -641,17 +723,30 @@ void TextureInfo::read(util::fstream_reader& reader)
     }
 }
 
-// TODO
-void TextureInfo::write(util::fstream_writer& writer) { }
+void TextureInfo::write(util::fstream_writer& writer)
+{
+    writer.writeS32(m_unknown1);
+    m_unknown2.write(writer);
+
+    writer.writeU32(m_unknown3.size());
+    for (mat::TexGenData& genData : m_unknown3) {
+        genData.write(writer);
+    }
+
+    writer.writeU32(m_unknown4.size());
+    for (mat::TextureData& texData : m_unknown4) {
+        texData.write(writer);
+    }
+}
 
 void Material::read(util::fstream_reader& reader)
 {
-    m_flags  = reader.readU32();
-    m_texIdx = reader.readU32();
-    m_color.read(reader);
+    m_flags    = reader.readU32();
+    m_unknown1 = reader.readU32();
+    m_colour.read(reader);
 
-    if (m_flags & static_cast<u32>(mat::MaterialFlags::UsePVW)) {
-        m_unknown1 = reader.readU32();
+    if (m_flags & static_cast<u32>(MaterialFlags::UsePVW)) {
+        m_unknown2 = reader.readU32();
         m_colourInfo.read(reader);
         m_lightingInfo.read(reader);
         m_peInfo.read(reader);
@@ -659,16 +754,167 @@ void Material::read(util::fstream_reader& reader)
     }
 }
 
-// TODO
-void Material::write(util::fstream_writer& writer) { }
+void Material::write(util::fstream_writer& writer)
+{
+    writer.writeU32(m_flags);
+    writer.writeU32(m_unknown1);
+    m_colour.write(writer);
+
+    if (m_flags & static_cast<u32>(MaterialFlags::UsePVW)) {
+        writer.writeS32(m_unknown2);
+        m_colourInfo.write(writer);
+        m_lightingInfo.write(writer);
+        m_peInfo.write(writer);
+        m_texInfo.write(writer);
+    }
+}
+
+void TCR_Unk1::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readS32();
+    m_unknown2.read(reader);
+    m_unknown3.read(reader);
+    m_unknown4.read(reader);
+}
+
+void TCR_Unk1::write(util::fstream_writer& writer)
+{
+    writer.writeS32(m_unknown1);
+    m_unknown2.write(writer);
+    m_unknown3.write(writer);
+    m_unknown4.write(writer);
+}
+
+void TCR_Unk2::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readS32();
+    m_unknown2.read(reader);
+}
+
+void TCR_Unk2::write(util::fstream_writer& writer)
+{
+    writer.writeS32(m_unknown1);
+    m_unknown2.write(writer);
+}
+
+void TEVColReg::read(util::fstream_reader& reader)
+{
+    m_unknown1.read(reader);
+    m_unknown2 = reader.readS32();
+    m_unknown3 = reader.readF32();
+
+    m_unknown4.resize(reader.readU32());
+    for (mat::TCR_Unk1& unk : m_unknown4) {
+        unk.read(reader);
+    }
+
+    m_unknown5.resize(reader.readU32());
+    for (mat::TCR_Unk2& unk : m_unknown5) {
+        unk.read(reader);
+    }
+}
+
+void TEVColReg::write(util::fstream_writer& writer)
+{
+    m_unknown1.write(writer);
+    writer.writeS32(m_unknown2);
+    writer.writeF32(m_unknown3);
+
+    writer.writeU32(m_unknown4.size());
+    for (mat::TCR_Unk1& unk : m_unknown4) {
+        unk.write(writer);
+    }
+
+    writer.writeU32(m_unknown5.size());
+    for (mat::TCR_Unk2& unk : m_unknown5) {
+        unk.write(writer);
+    }
+}
+
+void PVWCombiner::read(util::fstream_reader& reader)
+{
+    m_unknown1  = reader.readU8();
+    m_unknown2  = reader.readU8();
+    m_unknown3  = reader.readU8();
+    m_unknown4  = reader.readU8();
+    m_unknown5  = reader.readU8();
+    m_unknown6  = reader.readU8();
+    m_unknown7  = reader.readU8();
+    m_unknown8  = reader.readU8();
+    m_unknown9  = reader.readU8();
+    m_unknown10 = reader.readU8();
+    m_unknown11 = reader.readU8();
+}
+
+void PVWCombiner::write(util::fstream_writer& writer)
+{
+    writer.writeU8(m_unknown1);
+    writer.writeU8(m_unknown2);
+    writer.writeU8(m_unknown3);
+    writer.writeU8(m_unknown4);
+    writer.writeU8(m_unknown5);
+    writer.writeU8(m_unknown6);
+    writer.writeU8(m_unknown7);
+    writer.writeU8(m_unknown8);
+    writer.writeU8(m_unknown9);
+    writer.writeU8(m_unknown10);
+    writer.writeU8(m_unknown11);
+}
+
+void TEVStage::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readU8();
+    m_unknown2 = reader.readU8();
+    m_unknown3 = reader.readU8();
+    m_unknown4 = reader.readU8();
+    m_unknown5 = reader.readU8();
+    m_unknown6 = reader.readU8();
+    m_unknown7.read(reader);
+    m_unknown8.read(reader);
+}
+
+void TEVStage::write(util::fstream_writer& writer)
+{
+    writer.writeU8(m_unknown1);
+    writer.writeU8(m_unknown2);
+    writer.writeU8(m_unknown3);
+    writer.writeU8(m_unknown4);
+    writer.writeU8(m_unknown5);
+    writer.writeU8(m_unknown6);
+    m_unknown7.write(writer);
+}
 
 void TEVInfo::read(util::fstream_reader& reader)
 {
-    // TODO: PVWTevColReg
-    // TODO: PVWTevStage
+    m_unknown1.read(reader);
+    m_unknown2.read(reader);
+    m_unknown3.read(reader);
+
+    m_unknown4.read(reader);
+    m_unknown5.read(reader);
+    m_unknown6.read(reader);
+    m_unknown7.read(reader);
+
+    m_unknown8.resize(reader.readU32());
+    for (mat::TEVStage& stage : m_unknown8) {
+        stage.read(reader);
+    }
 }
 
-// TODO
-void TEVInfo::write(util::fstream_writer& writer) { }
+void TEVInfo::write(util::fstream_writer& writer)
+{
+    m_unknown1.write(writer);
+    m_unknown2.write(writer);
+    m_unknown3.write(writer);
+    m_unknown4.write(writer);
+    m_unknown5.write(writer);
+    m_unknown6.write(writer);
+    m_unknown7.write(writer);
+
+    writer.writeU32(m_unknown8.size());
+    for (mat::TEVStage& stage : m_unknown8) {
+        stage.write(writer);
+    }
+}
 
 } // namespace mat

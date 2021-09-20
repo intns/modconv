@@ -33,8 +33,15 @@ struct Vector3f {
     void write(util::fstream_writer&);
 };
 
-struct Color {
+struct Colour {
     u8 r = 0, g = 0, b = 0, a = 0;
+
+    void read(util::fstream_reader&);
+    void write(util::fstream_writer&);
+};
+
+struct ShortColour {
+    u16 r = 0, g = 0, b = 0, a = 0;
 
     void read(util::fstream_reader&);
     void write(util::fstream_writer&);
@@ -90,6 +97,7 @@ struct TextureAttributes {
 // PCI = PolygonColourInfo                                        //
 // TXD = TextureData                                              //
 // TEV = TextureEnvironment                                       //
+// TCR = Texture Environment (TEV) Colour Register                //
 ////////////////////////////////////////////////////////////////////
 namespace mat {
 struct KeyInfoU8 {
@@ -103,6 +111,15 @@ struct KeyInfoU8 {
 
 struct KeyInfoF32 {
     f32 m_unknown1 = 0;
+    f32 m_unknown2 = 0;
+    f32 m_unknown3 = 0;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
+};
+
+struct KeyInfoS10 {
+    s16 m_unknown1 = 0;
     f32 m_unknown2 = 0;
     f32 m_unknown3 = 0;
 
@@ -129,7 +146,7 @@ struct PCI_Unk2 {
 };
 
 struct PolygonColourInfo {
-    Color m_unknown1;
+    Colour m_unknown1;
     s32 m_unknown2 = 0;
     f32 m_unknown3 = 0;
     std::vector<PCI_Unk1> m_unknown4;
@@ -168,7 +185,7 @@ struct TexGenData {
 };
 
 struct TXD_Unk1 {
-    s32 m_unknown1;
+    s32 m_unknown1 = 0;
     KeyInfoF32 m_unknown2;
     KeyInfoF32 m_unknown3;
     KeyInfoF32 m_unknown4;
@@ -222,10 +239,10 @@ enum class MaterialFlags : u8 { UsePVW = 1 };
 
 struct Material {
     u32 m_flags  = 0;
-    u32 m_texIdx = 0;
-    Color m_color;
-
     u32 m_unknown1 = 0;
+    Colour m_colour;
+
+    u32 m_unknown2 = 0;
     PolygonColourInfo m_colourInfo;
     LightingInfo m_lightingInfo;
     PeInfo m_peInfo;
@@ -235,7 +252,78 @@ struct Material {
     void write(util::fstream_writer& writer);
 };
 
+struct TCR_Unk1 {
+    s32 m_unknown1 = 0;
+    KeyInfoS10 m_unknown2;
+    KeyInfoS10 m_unknown3;
+    KeyInfoS10 m_unknown4;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
+};
+
+struct TCR_Unk2 {
+    s32 m_unknown1 = 0;
+    KeyInfoS10 m_unknown2;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
+};
+
+struct TEVColReg {
+    ShortColour m_unknown1;
+    s32 m_unknown2 = 0;
+    f32 m_unknown3 = 0;
+    std::vector<TCR_Unk1> m_unknown4;
+    std::vector<TCR_Unk2> m_unknown5;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
+};
+
+struct PVWCombiner {
+    u8 m_unknown1;
+    u8 m_unknown2;
+    u8 m_unknown3;
+    u8 m_unknown4;
+    u8 m_unknown5;
+    u8 m_unknown6;
+    u8 m_unknown7;
+    u8 m_unknown8;
+    u8 m_unknown9;
+    u8 m_unknown10;
+    u8 m_unknown11;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
+};
+
+struct TEVStage {
+    u8 m_unknown1;
+    u8 m_unknown2;
+    u8 m_unknown3;
+    u8 m_unknown4;
+    u8 m_unknown5;
+    u8 m_unknown6;
+    PVWCombiner m_unknown7;
+    PVWCombiner m_unknown8;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
+};
+
 struct TEVInfo {
+    // Probably RGB
+    TEVColReg m_unknown1;
+    TEVColReg m_unknown2;
+    TEVColReg m_unknown3;
+
+    Colour m_unknown4;
+    Colour m_unknown5;
+    Colour m_unknown6;
+    Colour m_unknown7;
+
+    std::vector<TEVStage> m_unknown8;
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
@@ -266,7 +354,7 @@ struct MOD {
     std::vector<Vector3f> m_vertices;
     std::vector<Vector3f> m_vnormals;
     std::vector<NBT> m_vertexnbt;
-    std::vector<Color> m_vcolors;
+    std::vector<Colour> m_vColours;
     std::array<std::vector<Vector2f>, 8> m_texcoords;
     std::vector<Texture> m_textures;
     std::vector<TextureAttributes> m_texattrs;
