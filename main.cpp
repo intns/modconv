@@ -37,12 +37,11 @@ int main(int argc, char** argv)
             const std::string& filename = tokeniser.next();
             util::fstream_writer writer(util::fstream_writer::Endianness::Big);
             writer.open(filename, std::ios_base::binary);
-            if (!writer.is_open())
-            {
+            if (!writer.is_open()) {
                 std::cerr << "Unable to open " << filename << std::endl;
                 return EXIT_FAILURE;
             }
-            std::cout << "Writing " << filename << std::endl;
+            std::cout << std::endl << "Writing " << filename << std::endl;
             modFile.write(writer);
             writer.close();
         } else if (token == "close") {

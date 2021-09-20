@@ -86,9 +86,9 @@ void Color::write(util::fstream_writer& writer)
 
 void Texture::read(util::fstream_reader& reader)
 {
-    m_width = reader.readU16();
-    m_height = reader.readU16();
-    m_format = reader.readU32();
+    m_width   = reader.readU16();
+    m_height  = reader.readU16();
+    m_format  = reader.readU32();
     m_unknown = reader.readU32();
     for (u32 i = 0; i < 4; i++) {
         reader.readU32();
@@ -115,8 +115,8 @@ void TextureAttributes::read(util::fstream_reader& reader)
     m_index = reader.readU16();
     reader.readU16();
     m_tilingMode = reader.readU16();
-    m_unknown1 = reader.readU16();
-    m_unknown2 = reader.readF32();
+    m_unknown1   = reader.readU16();
+    m_unknown2   = reader.readF32();
 }
 
 void TextureAttributes::write(util::fstream_writer& writer)
@@ -141,11 +141,12 @@ void MOD::read(util::fstream_reader& reader)
     bool stopRead = false;
     while (!stopRead) {
         std::streampos position = reader.tellg();
-        u32 opcode = reader.readU32();
-        u32 length = reader.readU32();
+        u32 opcode              = reader.readU32();
+        u32 length              = reader.readU32();
 
         if (position & 0x1F) {
-            std::cout << "Error in chunk " << opcode << ", chunk start isn't aligned to 0x20, this means an improper read occured." << std::endl;
+            std::cout << "Error in chunk " << opcode
+                      << ", chunk start isn't aligned to 0x20, this means an improper read occured." << std::endl;
             return;
         }
 
@@ -156,15 +157,14 @@ void MOD::read(util::fstream_reader& reader)
         switch (opcode) {
         case 0:
             align(reader, 0x20);
-            m_header.m_dateTime.m_year = reader.readU16();
+            m_header.m_dateTime.m_year  = reader.readU16();
             m_header.m_dateTime.m_month = reader.readU8();
-            m_header.m_dateTime.m_day = reader.readU8();
-            m_header.m_flags = reader.readU32();
+            m_header.m_dateTime.m_day   = reader.readU8();
+            m_header.m_flags            = reader.readU32();
             align(reader, 0x20);
 
-            std::cout << "MOD File Creation date (YYYY/MM/DD): " << (u32)m_header.m_dateTime.m_year
-                      << "/" << (u32)m_header.m_dateTime.m_month
-                      << "/" << (u32)m_header.m_dateTime.m_day << '\n'
+            std::cout << "MOD File Creation date (YYYY/MM/DD): " << (u32)m_header.m_dateTime.m_year << "/"
+                      << (u32)m_header.m_dateTime.m_month << "/" << (u32)m_header.m_dateTime.m_day << '\n'
                       << std::endl;
             break;
         case 0x10:
@@ -176,8 +176,7 @@ void MOD::read(util::fstream_reader& reader)
             }
             align(reader, 0x20);
 
-            std::cout << m_vertices.size() << " vertices found\n"
-                      << std::endl;
+            std::cout << m_vertices.size() << " vertices found\n" << std::endl;
             break;
         case 0x11:
             m_vnormals.resize(reader.readU32());
@@ -188,8 +187,7 @@ void MOD::read(util::fstream_reader& reader)
             }
             align(reader, 0x20);
 
-            std::cout << m_vnormals.size() << " vertex normals found\n"
-                      << std::endl;
+            std::cout << m_vnormals.size() << " vertex normals found\n" << std::endl;
             break;
         case 0x12:
             m_vertexnbt.resize(reader.readU32());
@@ -200,8 +198,7 @@ void MOD::read(util::fstream_reader& reader)
             }
             align(reader, 0x20);
 
-            std::cout << m_vertexnbt.size() << " vertex NBTs found\n"
-                      << std::endl;
+            std::cout << m_vertexnbt.size() << " vertex NBTs found\n" << std::endl;
             break;
         case 0x13:
             m_vcolors.resize(reader.readU32());
@@ -212,8 +209,7 @@ void MOD::read(util::fstream_reader& reader)
             }
             align(reader, 0x20);
 
-            std::cout << m_vertexnbt.size() << " vertex NBTs found\n"
-                      << std::endl;
+            std::cout << m_vertexnbt.size() << " vertex NBTs found\n" << std::endl;
             break;
         case 0x18:
         case 0x19:
@@ -233,8 +229,8 @@ void MOD::read(util::fstream_reader& reader)
             }
             align(reader, 0x20);
 
-            std::cout << "Texture Coordinate " << texcoordNum
-                      << " has " << m_texcoords[texcoordNum].size() << " coordinates\n"
+            std::cout << "Texture Coordinate " << texcoordNum << " has " << m_texcoords[texcoordNum].size()
+                      << " coordinates\n"
                       << std::endl;
             break;
         }
@@ -247,8 +243,7 @@ void MOD::read(util::fstream_reader& reader)
             }
             align(reader, 0x20);
 
-            std::cout << m_textures.size() << " texture(s) found\n"
-                      << std::endl;
+            std::cout << m_textures.size() << " texture(s) found\n" << std::endl;
             break;
         case 0x22:
             m_texattrs.resize(reader.readU32());
@@ -259,14 +254,32 @@ void MOD::read(util::fstream_reader& reader)
             }
             align(reader, 0x20);
 
-            std::cout << m_texattrs.size() << " texture attribute(s) found\n"
-                      << std::endl;
+            std::cout << m_texattrs.size() << " texture attribute(s) found\n" << std::endl;
+            break;
+        case 0x30:
+            m_materials.m_materials.resize(reader.readU32());
+            m_materials.m_texEnvironments.resize(reader.readU32());
+
+            align(reader, 0x20);
+            if (m_materials.m_texEnvironments.size()) {
+                for (mat::TEVInfo& info : m_materials.m_texEnvironments) {
+                    info.read(reader);
+                }
+            }
+
+            if (m_materials.m_materials.size()) {
+                for (mat::Material& mat : m_materials.m_materials) {
+                    mat.read(reader);
+                }
+            }
+            align(reader, 0x20);
             break;
         case 0xFFFF:
             stopRead = true;
             break;
         default:
-            reader.seekg(static_cast<std::basic_istream<char, std::char_traits<char>>::off_type>(length), std::ios_base::cur);
+            reader.seekg(static_cast<std::basic_istream<char, std::char_traits<char>>::off_type>(length),
+                         std::ios_base::cur);
             break;
         }
     }
@@ -293,7 +306,9 @@ static inline void writeGenericChunk(util::fstream_writer& writer, auto& vector,
 {
     std::optional<std::string_view> chunkName = MOD::getChunkName(chunkIdentifier);
     if (chunkName.has_value()) {
-        std::cout << "Writing " << chunkName.value() << std::endl;
+        std::cout << std::hex;
+        std::cout << "Writing 0x" << chunkIdentifier << ", " << chunkName.value() << std::endl;
+        std::cout << std::dec;
     }
 
     u32 subchunkPos = startChunk(writer, chunkIdentifier);
@@ -310,8 +325,6 @@ static inline void writeGenericChunk(util::fstream_writer& writer, auto& vector,
 // decompiled version of the DMD->MOD process, found in plugTexConv
 void MOD::write(util::fstream_writer& writer)
 {
-    std::cout << std::endl;
-
     // Write header
     u32 headerPos = startChunk(writer, 0);
     writer.align(0x20);
@@ -347,6 +360,12 @@ void MOD::write(util::fstream_writer& writer)
         writeGenericChunk(writer, m_textures, 0x20);
     }
 
+    if (m_texattrs.size()) {
+        writeGenericChunk(writer, m_texattrs, 0x22);
+    }
+
+    // TODO: implement rest
+
     // Finalise writing with 0xFFFF chunk and append any INI file
     finishChunk(writer, startChunk(writer, 0xFFFF));
 }
@@ -363,7 +382,9 @@ void MOD::reset()
     m_textures.clear();
 }
 
-const std::map<u32, std::string_view> gChunkNames = {
+// clang-format off
+const std::map<u32, std::string_view> gChunkNames = 
+{
     { 0x00, "Header" },
     { 0x10, "Vertices" },
     { 0x11, "Vertex Normals" },
@@ -394,6 +415,7 @@ const std::map<u32, std::string_view> gChunkNames = {
     { 0x110, "Collision Grid" },
     { 0xFFFF, "End Of File" }
 };
+// clang-format on
 
 const std::optional<std::string_view> MOD::getChunkName(u32 opcode)
 {
@@ -403,3 +425,250 @@ const std::optional<std::string_view> MOD::getChunkName(u32 opcode)
 
     return std::nullopt;
 }
+
+namespace mat {
+void KeyInfoU8::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readU8();
+    reader.readU8();
+    reader.readU16();
+
+    m_unknown2 = reader.readF32();
+    m_unknown3 = reader.readF32();
+}
+
+void KeyInfoU8::write(util::fstream_writer& writer)
+{
+    writer.writeU8(m_unknown1);
+    writer.writeU8(0);
+    writer.writeU16(0);
+
+    writer.writeF32(m_unknown2);
+    writer.writeF32(m_unknown3);
+}
+
+void KeyInfoF32::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readF32();
+    m_unknown2 = reader.readF32();
+    m_unknown3 = reader.readF32();
+}
+
+void KeyInfoF32::write(util::fstream_writer& writer)
+{
+    writer.writeF32(m_unknown1);
+    writer.writeF32(m_unknown2);
+    writer.writeF32(m_unknown3);
+}
+
+inline void PCI_Unk1::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readS32();
+    m_unknown2.read(reader);
+    m_unknown3.read(reader);
+    m_unknown4.read(reader);
+}
+
+inline void PCI_Unk1::write(util::fstream_writer& writer)
+{
+    writer.writeS32(m_unknown1);
+    m_unknown2.write(writer);
+    m_unknown3.write(writer);
+    m_unknown4.write(writer);
+}
+
+inline void PCI_Unk2::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readS32();
+    m_unknown2.read(reader);
+}
+
+inline void PCI_Unk2::write(util::fstream_writer& writer)
+{
+    writer.writeS32(m_unknown1);
+    m_unknown2.write(writer);
+}
+
+void PolygonColourInfo::read(util::fstream_reader& reader)
+{
+    m_unknown1.read(reader);
+    m_unknown2 = reader.readS32();
+    m_unknown3 = reader.readF32();
+
+    m_unknown4.resize(reader.readU32());
+    for (mat::PCI_Unk1& unk : m_unknown4) {
+        unk.read(reader);
+    }
+
+    m_unknown5.resize(reader.readU32());
+    for (mat::PCI_Unk2& unk : m_unknown5) {
+        unk.read(reader);
+    }
+}
+
+void PolygonColourInfo::write(util::fstream_writer& writer)
+{
+    m_unknown1.write(writer);
+    writer.writeS32(m_unknown2);
+    writer.writeF32(m_unknown3);
+
+    writer.writeU32(m_unknown4.size());
+    for (mat::PCI_Unk1& unk : m_unknown4) {
+        unk.write(writer);
+    }
+
+    writer.writeU32(m_unknown5.size());
+    for (mat::PCI_Unk2& unk : m_unknown5) {
+        unk.write(writer);
+    }
+}
+
+void LightingInfo::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readS32();
+    m_unknown2 = reader.readF32();
+}
+
+void LightingInfo::write(util::fstream_writer& writer)
+{
+    writer.writeS32(m_unknown1);
+    writer.writeF32(m_unknown2);
+}
+
+void PeInfo::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readS32();
+    m_unknown2 = reader.readS32();
+    m_unknown3 = reader.readS32();
+    m_unknown4 = reader.readS32();
+}
+
+void PeInfo::write(util::fstream_writer& writer)
+{
+    writer.writeS32(m_unknown1);
+    writer.writeS32(m_unknown2);
+    writer.writeS32(m_unknown3);
+    writer.writeS32(m_unknown4);
+}
+
+void TexGenData::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readU8();
+    m_unknown2 = reader.readU8();
+    m_unknown3 = reader.readU8();
+    m_unknown4 = reader.readU8();
+}
+
+void TexGenData::write(util::fstream_writer& writer)
+{
+    writer.writeU8(m_unknown1);
+    writer.writeU8(m_unknown2);
+    writer.writeU8(m_unknown3);
+    writer.writeU8(m_unknown4);
+}
+
+void TXD_Unk1::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readS32();
+    m_unknown2.read(reader);
+    m_unknown3.read(reader);
+    m_unknown4.read(reader);
+}
+
+void TXD_Unk1::write(util::fstream_writer& writer)
+{
+    writer.writeS32(m_unknown1);
+    m_unknown2.write(writer);
+    m_unknown3.write(writer);
+    m_unknown4.write(writer);
+}
+
+void TextureData::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readS32();
+    m_unknown2 = reader.readS16();
+    m_unknown3 = reader.readS16();
+
+    m_unknown4 = reader.readU8();
+    m_unknown5 = reader.readU8();
+    m_unknown6 = reader.readU8();
+    m_unknown7 = reader.readU8();
+
+    m_unknown8 = reader.readS32();
+    m_unknown9 = reader.readS32();
+
+    m_unknown10 = reader.readF32();
+    m_unknown11 = reader.readF32();
+    m_unknown12 = reader.readF32();
+    m_unknown13 = reader.readF32();
+    m_unknown14 = reader.readF32();
+    m_unknown15 = reader.readF32();
+    m_unknown16 = reader.readF32();
+    m_unknown17 = reader.readF32();
+    m_unknown18 = reader.readF32();
+
+    m_unknown19.resize(reader.readU32());
+    for (mat::TXD_Unk1& unk : m_unknown19) {
+        unk.read(reader);
+    }
+
+    m_unknown20.resize(reader.readU32());
+    for (mat::TXD_Unk1& unk : m_unknown20) {
+        unk.read(reader);
+    }
+
+    m_unknown21.resize(reader.readU32());
+    for (mat::TXD_Unk1& unk : m_unknown21) {
+        unk.read(reader);
+    }
+}
+
+void TextureData::write(util::fstream_writer& reader) { }
+
+void TextureInfo::read(util::fstream_reader& reader)
+{
+    m_unknown1 = reader.readS32();
+    m_unknown2.read(reader);
+
+    m_unknown3.resize(reader.readU32());
+    for (mat::TexGenData& genData : m_unknown3) {
+        genData.read(reader);
+    }
+
+    m_unknown4.resize(reader.readU32());
+    for (mat::TextureData& texData : m_unknown4) {
+        texData.read(reader);
+    }
+}
+
+// TODO
+void TextureInfo::write(util::fstream_writer& writer) { }
+
+void Material::read(util::fstream_reader& reader)
+{
+    m_flags  = reader.readU32();
+    m_texIdx = reader.readU32();
+    m_color.read(reader);
+
+    if (m_flags & static_cast<u32>(mat::MaterialFlags::UsePVW)) {
+        m_unknown1 = reader.readU32();
+        m_colourInfo.read(reader);
+        m_lightingInfo.read(reader);
+        m_peInfo.read(reader);
+        m_texInfo.read(reader);
+    }
+}
+
+// TODO
+void Material::write(util::fstream_writer& writer) { }
+
+void TEVInfo::read(util::fstream_reader& reader)
+{
+    // TODO: PVWTevColReg
+    // TODO: PVWTevStage
+}
+
+// TODO
+void TEVInfo::write(util::fstream_writer& writer) { }
+
+} // namespace mat
