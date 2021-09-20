@@ -344,6 +344,14 @@ struct VtxMatrix {
     void write(util::fstream_writer&);
 };
 
+struct Envelope {
+    std::vector<u16> m_indices;
+    std::vector<f32> m_weights;
+
+    void read(util::fstream_reader&);
+    void write(util::fstream_writer&);
+};
+
 enum class MODFlags : u8 { UseNBT = 0x01 };
 
 struct MOD {
@@ -367,4 +375,5 @@ struct MOD {
     std::vector<TextureAttributes> m_texattrs;
     MaterialContainer m_materials;
     std::vector<VtxMatrix> m_vtxMatrix;
+    std::vector<Envelope> m_envelopes;
 };

@@ -619,6 +619,27 @@ void TEVInfo::write(util::fstream_writer& writer)
 void VtxMatrix::read(util::fstream_reader& reader) { m_index = reader.readU16(); }
 void VtxMatrix::write(util::fstream_writer& writer) { writer.writeU16(m_index); }
 
+void Envelope::read(util::fstream_reader& reader)
+{
+    m_indices.resize(reader.readU16());
+    m_weights.reserve(m_indices.size());
+
+    for (std::size_t i = 0; i < m_indices.size(); i++) {
+        m_indices[i] = reader.readU16();
+        m_weights[i] = reader.readF32();
+    }
+}
+
+void Envelope::write(util::fstream_writer& writer)
+{
+    writer.writeU16(static_cast<u16>(m_indices.size()));
+
+    for (std::size_t i = 0; i < m_indices.size(); i++) {
+        writer.writeU16(m_indices[i]);
+        writer.writeF32(m_weights[i]);
+    }
+}
+
 static inline void align(util::fstream_reader& reader, u32 amt)
 {
     u32 offs = amt - (reader.tellg() % amt);
@@ -766,6 +787,10 @@ void MOD::read(util::fstream_reader& reader)
             readGenericChunk(reader, m_vtxMatrix);
             std::cout << m_vtxMatrix.size() << " vertex matrice(s) found\n" << std::endl;
             break;
+        case 0x41:
+            readGenericChunk(reader, m_envelopes);
+            std::cout << m_envelopes.size() << " envelope(s) found\n" << std::endl;
+            break;
         case 0xFFFF:
             stopRead = true;
             break;
@@ -838,6 +863,10 @@ void MOD::write(util::fstream_writer& writer)
         finishChunk(writer, start);
     }
 
+    if (m_envelopes.size()) {
+        writeGenericChunk(writer, m_envelopes, 0x41);
+    }
+
     if (m_vtxMatrix.size()) {
         writeGenericChunk(writer, m_vtxMatrix, 0x40);
     }
@@ -860,6 +889,7 @@ void MOD::reset()
     m_materials.m_materials.clear();
     m_materials.m_texEnvironments.clear();
     m_vtxMatrix.clear();
+    m_envelopes.clear();
 }
 
 // clang-format off
