@@ -799,9 +799,32 @@ void BaseCollTriInfo::write(util::fstream_writer& writer)
     m_plane.write(writer);
 }
 
-void CollTriInfo::read(util::fstream_reader& reader) { }
+void CollGroup::read(util::fstream_reader& reader)
+{
+    m_unknown1.resize(reader.readU16());
 
-void CollTriInfo::write(util::fstream_writer& writer) { }
+    m_unknown2.resize(reader.readU16());
+    for (u32& i : m_unknown2) {
+        i = reader.readU32();
+    }
+
+    for (u8& i : m_unknown1) {
+        i = reader.readU8();
+    }
+}
+
+void CollGroup::write(util::fstream_writer& writer)
+{
+    writer.writeU16(m_unknown1.size());
+    writer.writeU16(m_unknown2.size());
+    for (u32& i : m_unknown2) {
+        writer.writeU32(i);
+    }
+
+    for (u8& i : m_unknown1) {
+        writer.writeU8(i);
+    }
+}
 
 static inline const u32 startChunk(util::fstream_writer& writer, u32 chunk)
 {
@@ -981,6 +1004,25 @@ void MOD::read(util::fstream_reader& reader)
             }
             align(reader, 0x20);
             break;
+        case 0x110:
+            align(reader, 0x20);
+            m_collgrid.m_boundsMin.read(reader);
+            m_collgrid.m_boundsMax.read(reader);
+            m_collgrid.m_unknown1 = reader.readF32();
+            m_collgrid.m_gridX    = reader.readU32();
+            m_collgrid.m_gridY    = reader.readU32();
+            m_collgrid.m_groups.resize(reader.readU32());
+            for (CollGroup& group : m_collgrid.m_groups) {
+                group.read(reader);
+            }
+
+            for (u32 x = 0; x < m_collgrid.m_gridX; x++) {
+                for (u32 y = 0; y < m_collgrid.m_gridY; y++) {
+                    m_collgrid.m_unknown2.push_back(reader.readS32());
+                }
+            }
+            align(reader, 0x20);
+            break;
         case 0xFFFF:
             reader.seekg(static_cast<std::basic_istream<char, std::char_traits<char>>::off_type>(length),
                          std::ios_base::cur);
@@ -1105,9 +1147,22 @@ void MOD::write(util::fstream_writer& writer)
         }
         finishChunk(writer, start);
 
-        // start = startChunk(writer, 0x110);
-        // writer.align(0x20);
-        // finishChunk(writer, start);
+        start = startChunk(writer, 0x110);
+        writer.align(0x20);
+        m_collgrid.m_boundsMin.write(writer);
+        m_collgrid.m_boundsMax.write(writer);
+        writer.writeF32(m_collgrid.m_unknown1);
+        writer.writeU32(m_collgrid.m_gridX);
+        writer.writeU32(m_collgrid.m_gridY);
+        writer.writeU32(m_collgrid.m_groups.size());
+        for (CollGroup& group : m_collgrid.m_groups) {
+            group.write(writer);
+        }
+        for (s32& i : m_collgrid.m_unknown2) {
+            writer.writeS32(i);
+        }
+        writer.align(0x20);
+        finishChunk(writer, start);
     }
 
     // Finalise writing with 0xFFFF chunk and append any INI file
