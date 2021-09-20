@@ -412,6 +412,42 @@ struct Joint {
     void write(util::fstream_writer& writer);
 };
 
+struct Plane {
+    Vector3f m_position;
+    f32 m_diameter = 0;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
+};
+
+struct BaseRoomInfo {
+    u32 m_unknown1 = 0;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
+};
+
+struct BaseCollTriInfo {
+    u32 m_mapCode = 0;
+    Vector3i m_indice;
+    u16 m_unknown2 = 0;
+    u16 m_unknown3 = 0;
+    u16 m_unknown4 = 0;
+    u16 m_unknown5 = 0;
+    Plane m_plane;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
+};
+
+struct CollTriInfo {
+    std::vector<BaseRoomInfo> m_roominfo;
+    std::vector<BaseCollTriInfo> m_collinfo;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
+};
+
 enum class MODFlags : u8 { UseNBT = 0x01 };
 
 struct MOD {
@@ -439,5 +475,6 @@ struct MOD {
     std::vector<Mesh> m_meshes;
     std::vector<Joint> m_joints;
     std::vector<std::string> m_jointNames;
+    CollTriInfo m_colltris;
     std::vector<u8> m_eofBytes;
 };

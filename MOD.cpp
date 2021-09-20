@@ -758,6 +758,51 @@ void Joint::write(util::fstream_writer& writer)
     }
 }
 
+void Plane::read(util::fstream_reader& reader)
+{
+    m_position.read(reader);
+    m_diameter = reader.readF32();
+}
+
+void Plane::write(util::fstream_writer& writer)
+{
+    m_position.write(writer);
+    writer.writeF32(m_diameter);
+}
+
+void BaseRoomInfo::read(util::fstream_reader& reader) { m_unknown1 = reader.readU32(); }
+void BaseRoomInfo::write(util::fstream_writer& writer) { writer.writeU32(m_unknown1); }
+
+void BaseCollTriInfo::read(util::fstream_reader& reader)
+{
+    m_mapCode = reader.readU32();
+    m_indice.read(reader);
+
+    m_unknown2 = reader.readU16();
+    m_unknown3 = reader.readU16();
+    m_unknown4 = reader.readU16();
+    m_unknown5 = reader.readU16();
+
+    m_plane.read(reader);
+}
+
+void BaseCollTriInfo::write(util::fstream_writer& writer)
+{
+    writer.writeU32(m_mapCode);
+    m_indice.write(writer);
+
+    writer.writeU16(m_unknown2);
+    writer.writeU16(m_unknown3);
+    writer.writeU16(m_unknown4);
+    writer.writeU16(m_unknown5);
+
+    m_plane.write(writer);
+}
+
+void CollTriInfo::read(util::fstream_reader& reader) { }
+
+void CollTriInfo::write(util::fstream_writer& writer) { }
+
 static inline const u32 startChunk(util::fstream_writer& writer, u32 chunk)
 {
     writer.writeU32(chunk);
@@ -921,6 +966,21 @@ void MOD::read(util::fstream_reader& reader)
             align(reader, 0x20);
             std::cout << m_jointNames.size() << " joint name(s) found\n" << std::endl;
             break;
+        case 0x100:
+            m_colltris.m_collinfo.resize(reader.readU32());
+            m_colltris.m_roominfo.resize(reader.readU32());
+
+            align(reader, 0x20);
+            for (BaseRoomInfo& info : m_colltris.m_roominfo) {
+                info.read(reader);
+            }
+            align(reader, 0x20);
+
+            for (BaseCollTriInfo& info : m_colltris.m_collinfo) {
+                info.read(reader);
+            }
+            align(reader, 0x20);
+            break;
         case 0xFFFF:
             reader.seekg(static_cast<std::basic_istream<char, std::char_traits<char>>::off_type>(length),
                          std::ios_base::cur);
@@ -1028,6 +1088,26 @@ void MOD::write(util::fstream_writer& writer)
             }
             finishChunk(writer, start);
         }
+    }
+
+    if (m_colltris.m_collinfo.size()) {
+        std::cout << "Writing 0x100, " << MOD::getChunkName(0x100).value() << std::endl;
+        u32 start = startChunk(writer, 0x100);
+        writer.writeU32(m_colltris.m_collinfo.size());
+        writer.writeU32(m_colltris.m_roominfo.size());
+        writer.align(0x20);
+        for (BaseRoomInfo& info : m_colltris.m_roominfo) {
+            info.write(writer);
+        }
+        writer.align(0x20);
+        for (BaseCollTriInfo& info : m_colltris.m_collinfo) {
+            info.write(writer);
+        }
+        finishChunk(writer, start);
+
+        // start = startChunk(writer, 0x110);
+        // writer.align(0x20);
+        // finishChunk(writer, start);
     }
 
     // Finalise writing with 0xFFFF chunk and append any INI file
