@@ -869,6 +869,7 @@ void TEVStage::read(util::fstream_reader& reader)
     m_unknown4 = reader.readU8();
     m_unknown5 = reader.readU8();
     m_unknown6 = reader.readU8();
+    reader.readU16();
     m_unknown7.read(reader);
     m_unknown8.read(reader);
 }
@@ -881,6 +882,7 @@ void TEVStage::write(util::fstream_writer& writer)
     writer.writeU8(m_unknown4);
     writer.writeU8(m_unknown5);
     writer.writeU8(m_unknown6);
+    writer.writeU16(0);
     m_unknown7.write(writer);
     m_unknown8.write(writer);
 }
