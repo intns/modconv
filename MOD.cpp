@@ -791,6 +791,18 @@ void MOD::read(util::fstream_reader& reader)
             readGenericChunk(reader, m_envelopes);
             std::cout << m_envelopes.size() << " envelope(s) found\n" << std::endl;
             break;
+        case 0x61:
+            m_jointNames.resize(reader.readU32());
+            align(reader, 0x20);
+            for (std::string& str : m_jointNames)
+            {
+                str.resize(reader.readU32());
+                for (u32 i = 0; i < str.size(); i++) {
+                    str[i] = reader.readU8();
+                }
+            }
+            align(reader, 0x20);
+            break;
         case 0xFFFF:
             stopRead = true;
             break;
@@ -869,6 +881,19 @@ void MOD::write(util::fstream_writer& writer)
 
     if (m_vtxMatrix.size()) {
         writeGenericChunk(writer, m_vtxMatrix, 0x40);
+    }
+
+    if (m_jointNames.size()) {
+        const u32 start = startChunk(writer, 0x61);
+        writer.writeU32(m_jointNames.size());
+        writer.align(0x20);
+        for (std::string& name : m_jointNames) {
+            writer.writeU32(name.size());
+            for (std::size_t i = 0; i < name.size(); i++) {
+                writer.writeU8(name[i]);
+            }
+        }
+        finishChunk(writer, start);
     }
 
     // Finalise writing with 0xFFFF chunk and append any INI file

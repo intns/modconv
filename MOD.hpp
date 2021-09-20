@@ -376,4 +376,6 @@ struct MOD {
     MaterialContainer m_materials;
     std::vector<VtxMatrix> m_vtxMatrix;
     std::vector<Envelope> m_envelopes;
+
+    std::vector<std::string> m_jointNames;
 };
