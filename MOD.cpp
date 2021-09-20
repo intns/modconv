@@ -714,6 +714,50 @@ void Mesh::write(util::fstream_writer& writer)
     }
 }
 
+void JointMatPoly::read(util::fstream_reader& reader)
+{
+    m_matIdx  = reader.readU16();
+    m_meshIdx = reader.readU16();
+}
+
+void JointMatPoly::write(util::fstream_writer& writer)
+{
+    writer.writeU16(m_matIdx);
+    writer.writeU16(m_meshIdx);
+}
+
+void Joint::read(util::fstream_reader& reader)
+{
+    m_parentIdx = reader.readU32();
+    m_flags     = reader.readU32();
+    m_boundsMax.read(reader);
+    m_boundsMin.read(reader);
+    m_volumeRadius = reader.readF32();
+    m_scale.read(reader);
+    m_rotation.read(reader);
+    m_position.read(reader);
+    m_matpolys.resize(reader.readU32());
+    for (JointMatPoly& poly : m_matpolys) {
+        poly.read(reader);
+    }
+}
+
+void Joint::write(util::fstream_writer& writer)
+{
+    writer.writeU32(m_parentIdx);
+    writer.writeU32(m_flags);
+    m_boundsMax.write(writer);
+    m_boundsMin.write(writer);
+    writer.writeF32(m_volumeRadius);
+    m_scale.write(writer);
+    m_rotation.write(writer);
+    m_position.write(writer);
+    writer.writeU32(m_matpolys.size());
+    for (JointMatPoly& poly : m_matpolys) {
+        poly.write(writer);
+    }
+}
+
 static inline const u32 startChunk(util::fstream_writer& writer, u32 chunk)
 {
     writer.writeU32(chunk);
@@ -861,6 +905,10 @@ void MOD::read(util::fstream_reader& reader)
             readGenericChunk(reader, m_meshes);
             std::cout << m_meshes.size() << " mesh(es) found\n" << std::endl;
             break;
+        case 0x60:
+            readGenericChunk(reader, m_joints);
+            std::cout << m_joints.size() << " joint(s) found\n" << std::endl;
+            break;
         case 0x61:
             m_jointNames.resize(reader.readU32());
             align(reader, 0x20);
@@ -871,8 +919,17 @@ void MOD::read(util::fstream_reader& reader)
                 }
             }
             align(reader, 0x20);
+            std::cout << m_jointNames.size() << " joint name(s) found\n" << std::endl;
             break;
         case 0xFFFF:
+            reader.seekg(static_cast<std::basic_istream<char, std::char_traits<char>>::off_type>(length),
+                         std::ios_base::cur);
+
+            while (!reader.eof()) {
+                m_eofBytes.push_back(reader.get());
+                reader.peek();
+            }
+
             stopRead = true;
             break;
         default:
@@ -956,21 +1013,29 @@ void MOD::write(util::fstream_writer& writer)
         writeGenericChunk(writer, m_meshes, 0x50);
     }
 
-    if (m_jointNames.size()) {
-        const u32 start = startChunk(writer, 0x61);
-        writer.writeU32(m_jointNames.size());
-        writer.align(0x20);
-        for (std::string& name : m_jointNames) {
-            writer.writeU32(name.size());
-            for (std::size_t i = 0; i < name.size(); i++) {
-                writer.writeU8(name[i]);
+    if (m_joints.size()) {
+        writeGenericChunk(writer, m_joints, 0x60);
+
+        if (m_jointNames.size()) {
+            const u32 start = startChunk(writer, 0x61);
+            writer.writeU32(m_jointNames.size());
+            writer.align(0x20);
+            for (std::string& name : m_jointNames) {
+                writer.writeU32(name.size());
+                for (std::size_t i = 0; i < name.size(); i++) {
+                    writer.writeU8(name[i]);
+                }
             }
+            finishChunk(writer, start);
         }
-        finishChunk(writer, start);
     }
 
     // Finalise writing with 0xFFFF chunk and append any INI file
     finishChunk(writer, startChunk(writer, 0xFFFF));
+    if (m_eofBytes.size()) {
+        std::cout << "Writing EOF bytes" << std::endl;
+        writer.write(reinterpret_cast<char*>(m_eofBytes.data()), m_eofBytes.size());
+    }
 }
 
 void MOD::reset()
@@ -988,6 +1053,10 @@ void MOD::reset()
     m_materials.m_texEnvironments.clear();
     m_vtxMatrix.clear();
     m_envelopes.clear();
+    m_meshes.clear();
+    m_joints.clear();
+    m_jointNames.clear();
+    m_eofBytes.clear();
 }
 
 // clang-format off
