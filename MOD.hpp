@@ -148,7 +148,7 @@ struct PCI_Unk2 {
 };
 
 struct PolygonColourInfo {
-    Colour m_unknown1;
+    Colour m_diffuseColour;
     s32 m_unknown2 = 0;
     f32 m_unknown3 = 0;
     std::vector<PCI_Unk1> m_unknown4;
@@ -159,7 +159,7 @@ struct PolygonColourInfo {
 };
 
 struct LightingInfo {
-    s32 m_unknown1 = 0;
+    u32 m_unknown1 = 0;
     f32 m_unknown2 = 0;
 
     void read(util::fstream_reader& reader);
@@ -206,7 +206,7 @@ struct TextureData {
     u8 m_unknown6 = 0;
     u8 m_unknown7 = 0;
 
-    s32 m_unknown8 = 0;
+    u32 m_unknown8 = 0;
     s32 m_unknown9 = 0;
 
     f32 m_unknown10 = 0;
@@ -283,18 +283,18 @@ struct TEVColReg {
 };
 
 struct PVWCombiner {
-    u8 m_unknown1;
-    u8 m_unknown2;
-    u8 m_unknown3;
-    u8 m_unknown4;
-    u8 m_unknown5;
-    u8 m_unknown6;
-    u8 m_unknown7;
-    u8 m_unknown8;
-    u8 m_unknown9;
-    u8 m_unknown10;
-    u8 m_unknown11;
-    u8 m_unknown12;
+    u8 m_unknown1  = 0;
+    u8 m_unknown2  = 0;
+    u8 m_unknown3  = 0;
+    u8 m_unknown4  = 0;
+    u8 m_unknown5  = 0;
+    u8 m_unknown6  = 0;
+    u8 m_unknown7  = 0;
+    u8 m_unknown8  = 0;
+    u8 m_unknown9  = 0;
+    u8 m_unknown10 = 0;
+    u8 m_unknown11 = 0;
+    u8 m_unknown12 = 0;
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
@@ -333,7 +333,6 @@ struct TEVInfo {
 } // namespace mat
 
 struct MaterialContainer {
-
     std::vector<mat::Material> m_materials;
     std::vector<mat::TEVInfo> m_texEnvironments;
 };

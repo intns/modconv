@@ -469,7 +469,8 @@ void KeyInfoU8::write(util::fstream_writer& writer)
 {
     writer.writeU8(m_unknown1);
     writer.writeU8(0);
-    writer.writeU16(0);
+    writer.writeU8(0);
+    writer.writeU8(0);
 
     writer.writeF32(m_unknown2);
     writer.writeF32(m_unknown3);
@@ -535,7 +536,7 @@ void PCI_Unk2::write(util::fstream_writer& writer)
 
 void PolygonColourInfo::read(util::fstream_reader& reader)
 {
-    m_unknown1.read(reader);
+    m_diffuseColour.read(reader);
     m_unknown2 = reader.readS32();
     m_unknown3 = reader.readF32();
 
@@ -552,7 +553,7 @@ void PolygonColourInfo::read(util::fstream_reader& reader)
 
 void PolygonColourInfo::write(util::fstream_writer& writer)
 {
-    m_unknown1.write(writer);
+    m_diffuseColour.write(writer);
     writer.writeS32(m_unknown2);
     writer.writeF32(m_unknown3);
 
@@ -569,13 +570,13 @@ void PolygonColourInfo::write(util::fstream_writer& writer)
 
 void LightingInfo::read(util::fstream_reader& reader)
 {
-    m_unknown1 = reader.readS32();
+    m_unknown1 = reader.readU32();
     m_unknown2 = reader.readF32();
 }
 
 void LightingInfo::write(util::fstream_writer& writer)
 {
-    writer.writeS32(m_unknown1);
+    writer.writeU32(m_unknown1);
     writer.writeF32(m_unknown2);
 }
 
@@ -639,7 +640,7 @@ void TextureData::read(util::fstream_reader& reader)
     m_unknown6 = reader.readU8();
     m_unknown7 = reader.readU8();
 
-    m_unknown8 = reader.readS32();
+    m_unknown8 = reader.readU32();
     m_unknown9 = reader.readS32();
 
     m_unknown10 = reader.readF32();
@@ -670,6 +671,7 @@ void TextureData::read(util::fstream_reader& reader)
 void TextureData::write(util::fstream_writer& writer)
 {
     writer.writeS32(m_unknown1);
+
     writer.writeS16(m_unknown2);
     writer.writeS16(m_unknown3);
 
@@ -678,7 +680,7 @@ void TextureData::write(util::fstream_writer& writer)
     writer.writeU8(m_unknown6);
     writer.writeU8(m_unknown7);
 
-    writer.writeS32(m_unknown8);
+    writer.writeU32(m_unknown8);
     writer.writeS32(m_unknown9);
 
     writer.writeF32(m_unknown10);

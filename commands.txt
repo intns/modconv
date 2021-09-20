@@ -1,7 +1,3 @@
-load hibaA.mod
-write hibaA_new.mod
-close
-
-load route.mod
-write route.mod
+load mizu.mod
+write mizu_new.mod
 close
