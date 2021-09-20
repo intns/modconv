@@ -316,12 +316,28 @@ void MOD::write(util::fstream_writer& writer)
 
     if (m_vertices.size()) {
         writeGenericChunk(m_vertices, 0x10, writer);
-    } else if (m_vcolors.size()) {
+    }
+
+    if (m_vcolors.size()) {
         writeGenericChunk(m_vcolors, 0x13, writer);
-    } else if (m_vnormals.size()) {
+    }
+
+    if (m_vnormals.size()) {
         writeGenericChunk(m_vnormals, 0x11, writer);
-    } else if (m_header.m_flags & static_cast<u32>(MODFlags::UseNBT) && m_vertexnbt.size()) {
+    }
+
+    if (m_header.m_flags & static_cast<u32>(MODFlags::UseNBT) && m_vertexnbt.size()) {
         writeGenericChunk(m_vnormals, 0x12, writer);
+    }
+
+    for (std::size_t i = 0; i < m_texcoords.size(); i++) {
+        if (m_texcoords[i].size()) {
+            writeGenericChunk(m_texcoords[i], i + 0x18, writer);
+        }
+    }
+
+    if (m_textures.size()) {
+        writeGenericChunk(m_textures, 0x20, writer);
     }
 
     // Finalise writing with 0xFFFF chunk and append any INI file
