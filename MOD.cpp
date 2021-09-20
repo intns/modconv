@@ -289,8 +289,13 @@ static void finishChunk(util::fstream_writer& writer, u32 chunkStart)
     writer.seekp(position, std::ios_base::beg);
 }
 
-static inline void writeGenericChunk(auto& vector, u32 chunkIdentifier, util::fstream_writer& writer)
+static inline void writeGenericChunk(util::fstream_writer& writer, auto& vector, u32 chunkIdentifier)
 {
+    std::optional<std::string_view> chunkName = MOD::getChunkName(chunkIdentifier);
+    if (chunkName.has_value()) {
+        std::cout << "Writing " << chunkName.value() << std::endl;
+    }
+
     u32 subchunkPos = startChunk(writer, chunkIdentifier);
     writer.writeU32(vector.size());
 
@@ -305,6 +310,8 @@ static inline void writeGenericChunk(auto& vector, u32 chunkIdentifier, util::fs
 // decompiled version of the DMD->MOD process, found in plugTexConv
 void MOD::write(util::fstream_writer& writer)
 {
+    std::cout << std::endl;
+
     // Write header
     u32 headerPos = startChunk(writer, 0);
     writer.align(0x20);
@@ -315,29 +322,29 @@ void MOD::write(util::fstream_writer& writer)
     finishChunk(writer, headerPos);
 
     if (m_vertices.size()) {
-        writeGenericChunk(m_vertices, 0x10, writer);
+        writeGenericChunk(writer, m_vertices, 0x10);
     }
 
     if (m_vcolors.size()) {
-        writeGenericChunk(m_vcolors, 0x13, writer);
+        writeGenericChunk(writer, m_vcolors, 0x13);
     }
 
     if (m_vnormals.size()) {
-        writeGenericChunk(m_vnormals, 0x11, writer);
+        writeGenericChunk(writer, m_vnormals, 0x11);
     }
 
     if (m_header.m_flags & static_cast<u32>(MODFlags::UseNBT) && m_vertexnbt.size()) {
-        writeGenericChunk(m_vnormals, 0x12, writer);
+        writeGenericChunk(writer, m_vnormals, 0x12);
     }
 
     for (std::size_t i = 0; i < m_texcoords.size(); i++) {
         if (m_texcoords[i].size()) {
-            writeGenericChunk(m_texcoords[i], i + 0x18, writer);
+            writeGenericChunk(writer, m_texcoords[i], i + 0x18);
         }
     }
 
     if (m_textures.size()) {
-        writeGenericChunk(m_textures, 0x20, writer);
+        writeGenericChunk(writer, m_textures, 0x20);
     }
 
     // Finalise writing with 0xFFFF chunk and append any INI file

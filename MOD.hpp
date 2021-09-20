@@ -94,7 +94,7 @@ struct MOD {
     void write(util::fstream_writer& writer);
     void reset();
 
-    const std::optional<std::string_view> getChunkName(u32 opcode);
+    static const std::optional<std::string_view> getChunkName(u32 opcode);
 
     Header m_header;
     std::vector<Vector3f> m_vertices;
