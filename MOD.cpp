@@ -815,8 +815,8 @@ void CollGroup::read(util::fstream_reader& reader)
 
 void CollGroup::write(util::fstream_writer& writer)
 {
-    writer.writeU16(m_unknown1.size());
-    writer.writeU16(m_unknown2.size());
+    writer.writeU16(static_cast<u16>(m_unknown1.size()));
+    writer.writeU16(static_cast<u16>(m_unknown2.size()));
     for (u32& i : m_unknown2) {
         writer.writeU32(i);
     }
