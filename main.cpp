@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 #include <sstream>
+#include <conio.h>
 #include <util/tokeniser.hpp>
 
 static const u32 calcTxeSize(u32 fmt, u32 x, u32 y)
@@ -27,8 +28,20 @@ static const u32 calcTxeSize(u32 fmt, u32 x, u32 y)
     }
 }
 
+static void exitfunc()
+{
+    std::cout << "Press any key to exit";
+#ifdef _MSC_VER
+    ((void)_getch());
+#else
+    ((void)getch());
+#endif
+}
+
 int main(int argc, char** argv)
 {
+    std::atexit(exitfunc);
+
     if (argc != 2) {
         std::cout << "MODConv by Axiot\nUsage: MODConv.exe [commands file]";
         return EXIT_FAILURE;
@@ -283,8 +296,6 @@ int main(int argc, char** argv)
             std::cout << "Unknown token (" << token << ")\n" << std::endl;
         }
     }
-
-    ((void)std::getchar());
 
     return EXIT_SUCCESS;
 }
