@@ -202,6 +202,39 @@ int main(int argc, char** argv)
             }
 
             std::cout << std::endl;
+        } else if (token == "ini_export") {
+            std::cout << "Enter INI output path: ";
+            std::string input = "";
+            std::getline(std::cin, input);
+
+            std::ofstream outStream(input);
+            if (!outStream.is_open()) {
+                std::cout << "Error can't open " << input << std::endl;
+                continue;
+            }
+
+            outStream.write(reinterpret_cast<char*>(modFile.m_eofBytes.data()), modFile.m_eofBytes.size());
+            outStream.close();
+
+            std::cout << std::endl;
+        } else if (token == "ini_import") {
+            std::cout << "Enter INI input path: ";
+            std::string input = "";
+            std::getline(std::cin, input);
+
+            std::ifstream inStream(input);
+            if (!inStream.is_open()) {
+                std::cout << "Error can't open " << input << std::endl;
+                continue;
+            }
+
+            modFile.m_eofBytes.clear();
+            std::string str((std::istreambuf_iterator<char>(inStream)), std::istreambuf_iterator<char>());
+            for (const auto& c : str) {
+                modFile.m_eofBytes.push_back(c);
+            }
+
+            std::cout << std::endl;
         } else if (token == "close") {
             modFile.reset();
             std::cout << std::endl;

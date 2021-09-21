@@ -1,5 +1,5 @@
 load practice.mod
-tex_swap
-tex_export
+ini_export
+ini_import
 write practice_new.mod
 close
