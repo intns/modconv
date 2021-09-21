@@ -1168,7 +1168,7 @@ void MOD::write(util::fstream_writer& writer)
     // Finalise writing with 0xFFFF chunk and append any INI file
     finishChunk(writer, startChunk(writer, 0xFFFF));
     if (m_eofBytes.size()) {
-        std::cout << "Writing EOF bytes" << std::endl;
+        std::cout << "Writing EOF" << std::endl;
         writer.write(reinterpret_cast<char*>(m_eofBytes.data()), m_eofBytes.size());
     }
 }
