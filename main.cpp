@@ -262,6 +262,11 @@ int main(int argc, char** argv)
             if (modFile.m_materials.m_texEnvironments.size()) {
                 oss << "TEV_SECTION" << std::endl;
             }
+            u32 tevIdx = 0;
+            for (mat::TEVInfo& mat : modFile.m_materials.m_texEnvironments) {
+                oss << "TEV " << tevIdx++ << std::endl;
+                oss << mat;
+            }
 
             std::ofstream output(input);
             if (!output.is_open()) {

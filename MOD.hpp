@@ -47,6 +47,7 @@ struct ShortColour {
 
     void read(util::fstream_reader&);
     void write(util::fstream_writer&);
+    friend std::ostream& operator<<(std::ostream&, ShortColour const&);
 };
 
 struct Header {
@@ -130,6 +131,7 @@ struct KeyInfoS10 {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream& os, KeyInfoS10 const& k);
 };
 
 struct PCI_Unk1 {
@@ -274,6 +276,7 @@ struct TCR_Unk1 {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, TCR_Unk1 const&);
 };
 
 struct TCR_Unk2 {
@@ -282,6 +285,7 @@ struct TCR_Unk2 {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, TCR_Unk2 const&);
 };
 
 struct TEVColReg {
@@ -293,6 +297,7 @@ struct TEVColReg {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, TEVColReg const&);
 };
 
 struct PVWCombiner {
@@ -311,6 +316,7 @@ struct PVWCombiner {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, PVWCombiner const&);
 };
 
 struct TEVStage {
@@ -325,6 +331,7 @@ struct TEVStage {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, TEVStage const&);
 };
 
 struct TEVInfo {
@@ -342,6 +349,7 @@ struct TEVInfo {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, TEVInfo const&);
 };
 } // namespace mat
 

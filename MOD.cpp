@@ -145,7 +145,8 @@ void Colour::write(util::fstream_writer& writer)
 
 std::ostream& operator<<(std::ostream& os, Colour const& c)
 {
-    os << (u32)c.r << " " << (u32)c.g << " " << (u32)c.b << " " << (u32)c.a << std::endl;
+    os << std::hex << "0x" << (u32)c.r << " 0x" << (u32)c.g << " 0x" << (u32)c.b << " 0x" << (u32)c.a << std::dec
+       << std::endl;
     return os;
 }
 
@@ -163,6 +164,12 @@ void ShortColour::write(util::fstream_writer& writer)
     writer.writeU16(g);
     writer.writeU16(b);
     writer.writeU16(a);
+}
+
+std::ostream& operator<<(std::ostream& os, ShortColour const& c)
+{
+    os << std::hex << "0x" << c.r << " 0x" << c.g << " 0x" << c.b << " 0x" << c.a << std::dec << std::endl;
+    return os;
 }
 
 void Texture::read(util::fstream_reader& reader)
@@ -271,6 +278,12 @@ void KeyInfoS10::write(util::fstream_writer& writer)
     writer.writeS16(0);
     writer.writeF32(m_unknown2);
     writer.writeF32(m_unknown3);
+}
+
+std::ostream& operator<<(std::ostream& os, KeyInfoS10 const& k)
+{
+    os << k.m_unknown1 << " " << k.m_unknown2 << " " << k.m_unknown3;
+    return os;
 }
 
 void PCI_Unk1::read(util::fstream_reader& reader)
@@ -671,9 +684,8 @@ void Material::write(util::fstream_writer& writer)
 std::ostream& operator<<(std::ostream& os, Material const& m)
 {
     os << "\tH_FLAGS " << m.m_flags << std::endl;
-    os << "\tH_UNK1 " << m.m_unknown1 << std::endl;
-    os << "\tH_COL " << (u32)m.m_colour.r << " " << (u32)m.m_colour.g << " " << (u32)m.m_colour.b << " "
-       << (u32)m.m_colour.a << std::endl;
+    os << "\tH_UNK1 " << std::hex << "0x" << m.m_unknown1 << std::dec << std::endl;
+    os << "\tH_COL " << m.m_colour;
 
     if (m.m_flags & static_cast<u32>(mat::MaterialFlags::UsePVW)) {
         os << "\tH_PVW_UNK " << m.m_unknown2 << std::endl;
@@ -703,6 +715,15 @@ void TCR_Unk1::write(util::fstream_writer& writer)
     m_unknown4.write(writer);
 }
 
+std::ostream& operator<<(std::ostream& os, TCR_Unk1 const& t)
+{
+    os << "\t\t\tUNK1 " << t.m_unknown1 << std::endl;
+    os << "\t\t\tUNK2 " << t.m_unknown2 << std::endl;
+    os << "\t\t\tUNK3 " << t.m_unknown3 << std::endl;
+    os << "\t\t\tUNK4 " << t.m_unknown3 << std::endl;
+    return os;
+}
+
 void TCR_Unk2::read(util::fstream_reader& reader)
 {
     m_unknown1 = reader.readS32();
@@ -713,6 +734,13 @@ void TCR_Unk2::write(util::fstream_writer& writer)
 {
     writer.writeS32(m_unknown1);
     m_unknown2.write(writer);
+}
+
+std::ostream& operator<<(std::ostream& os, TCR_Unk2 const& t)
+{
+    os << "\t\t\tUNK1 " << t.m_unknown1 << std::endl;
+    os << "\t\t\tUNK2 " << t.m_unknown2 << std::endl;
+    return os;
 }
 
 void TEVColReg::read(util::fstream_reader& reader)
@@ -749,6 +777,27 @@ void TEVColReg::write(util::fstream_writer& writer)
     }
 }
 
+std::ostream& operator<<(std::ostream& os, TEVColReg const& t)
+{
+    os << "\t\tTEVCOLREG1 " << t.m_unknown1;
+    os << "\t\tUNK2 " << t.m_unknown2 << std::endl;
+    os << "\t\tUNK3 " << t.m_unknown3 << std::endl;
+
+    os << "\t\tUNK4_SIZE " << t.m_unknown4.size() << std::endl;
+    for (const TCR_Unk1& elem : t.m_unknown4) {
+        os << elem;
+    }
+
+    os << "\t\tUNK5_SIZE " << t.m_unknown5.size() << std::endl;
+    for (const TCR_Unk2& elem : t.m_unknown5) {
+        os << elem;
+    }
+
+    os << std::endl;
+
+    return os;
+}
+
 void PVWCombiner::read(util::fstream_reader& reader)
 {
     m_unknown1  = reader.readU8();
@@ -781,6 +830,16 @@ void PVWCombiner::write(util::fstream_writer& writer)
     writer.writeU8(m_unknown12);
 }
 
+std::ostream& operator<<(std::ostream& os, PVWCombiner const& i)
+{
+    os << (u32)i.m_unknown1 << " " << (u32)i.m_unknown2 << " " << (u32)i.m_unknown3 << " " << (u32)i.m_unknown4 << " "
+       << (u32)i.m_unknown5 << " " << (u32)i.m_unknown6 << " " << (u32)i.m_unknown7 << " " << (u32)i.m_unknown8 << " "
+       << (u32)i.m_unknown9 << " " << (u32)i.m_unknown10 << " " << (u32)i.m_unknown11 << " " << (u32)i.m_unknown12
+       << std::endl;
+
+    return os;
+}
+
 void TEVStage::read(util::fstream_reader& reader)
 {
     m_unknown1 = reader.readU8();
@@ -805,6 +864,21 @@ void TEVStage::write(util::fstream_writer& writer)
     writer.writeU16(0);
     m_unknown7.write(writer);
     m_unknown8.write(writer);
+}
+
+std::ostream& operator<<(std::ostream& os, TEVStage const& i)
+{
+    os << "\t\t\tUNK1 " << (u32)i.m_unknown1 << std::endl;
+    os << "\t\t\tUNK2 " << (u32)i.m_unknown2 << std::endl;
+    os << "\t\t\tUNK3 " << (u32)i.m_unknown3 << std::endl;
+    os << "\t\t\tUNK4 " << (u32)i.m_unknown4 << std::endl;
+    os << "\t\t\tUNK5 " << (u32)i.m_unknown5 << std::endl;
+    os << "\t\t\tUNK6 " << (u32)i.m_unknown6 << std::endl;
+    os << "\t\t\tUNK7 " << i.m_unknown7;
+    os << "\t\t\tUNK8 " << i.m_unknown8;
+    os << std::endl;
+
+    return os;
 }
 
 void TEVInfo::read(util::fstream_reader& reader)
@@ -839,6 +913,27 @@ void TEVInfo::write(util::fstream_writer& writer)
     for (mat::TEVStage& stage : m_unknown8) {
         stage.write(writer);
     }
+}
+
+std::ostream& operator<<(std::ostream& os, TEVInfo const& i)
+{
+    os << "\tTEVCOLREG1" << std::endl << i.m_unknown1;
+    os << "\tTEVCOLREG2" << std::endl << i.m_unknown2;
+    os << "\tTEVCOLREG3" << std::endl << i.m_unknown3;
+    os << "\tUNK4 " << i.m_unknown4;
+    os << "\tUNK5 " << i.m_unknown5;
+    os << "\tUNK6 " << i.m_unknown6;
+    os << "\tUNK7 " << i.m_unknown7;
+    os << "\tUNK8_SIZE " << i.m_unknown8.size() << std::endl;
+    u32 tevIdx = 0;
+    for (const TEVStage& elem : i.m_unknown8) {
+        os << "\t\tTEVSTAGE" << tevIdx++ << std::endl;
+        os << elem;
+    }
+
+    os << std::endl;
+
+    return os;
 }
 
 } // namespace mat
