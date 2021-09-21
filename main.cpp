@@ -49,7 +49,7 @@ int main(int argc, char** argv)
             reader.open(filename, std::ios_base::binary);
             if (!reader.is_open()) {
                 std::cerr << "Unable to open " << filename << std::endl;
-                return EXIT_FAILURE;
+                continue;
             }
             std::cout << "Loading " << filename << std::endl;
             reader.endianness() = util::fstream_reader::Endianness::Big;
@@ -63,7 +63,7 @@ int main(int argc, char** argv)
             writer.open(filename, std::ios_base::binary);
             if (!writer.is_open()) {
                 std::cerr << "Unable to open " << filename << std::endl;
-                return EXIT_FAILURE;
+                continue;
             }
             std::cout << "Writing " << filename << std::endl << std::endl;
             modFile.write(writer);
@@ -203,8 +203,10 @@ int main(int argc, char** argv)
 
             std::cout << std::endl;
         } else if (token == "close") {
-            std::cout << std::endl;
             modFile.reset();
+            std::cout << std::endl;
+        } else {
+            std::cout << "Unknown token (" << token << ")\n" << std::endl;
         }
     }
 
