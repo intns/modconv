@@ -2,7 +2,6 @@
 #include <filesystem>
 #include <iostream>
 #include <sstream>
-#include <conio.h>
 #include <util/tokeniser.hpp>
 
 static const u32 calcTxeSize(u32 fmt, u32 x, u32 y)
@@ -28,6 +27,8 @@ static const u32 calcTxeSize(u32 fmt, u32 x, u32 y)
     }
 }
 
+#ifdef _MSC_VER
+#include <conio.h>
 static void exitfunc()
 {
     std::cout << "Press any key to exit";
@@ -37,6 +38,13 @@ static void exitfunc()
     ((void)getch());
 #endif
 }
+#else
+static void exitfunc()
+{
+    std::cout << "Press enter to exit";
+    ((void)std::getchar());
+}
+#endif
 
 int main(int argc, char** argv)
 {
