@@ -10,6 +10,49 @@ static inline void align(util::fstream_reader& reader, u32 amt)
         reader.seekg(offs, std::ios_base::cur);
     }
 }
+
+static inline const u32 startChunk(util::fstream_writer& writer, u32 chunk)
+{
+    writer.writeU32(chunk);
+    const u32 position = static_cast<u32>(writer.tellp());
+    writer.writeU32(0);
+    return position;
+}
+
+static inline void finishChunk(util::fstream_writer& writer, u32 chunkStart)
+{
+    writer.align(0x20);
+    const u32 position = static_cast<u32>(writer.tellp());
+    writer.seekp(chunkStart, std::ios_base::beg);
+    writer.writeU32(position - chunkStart - 4);
+    writer.seekp(position, std::ios_base::beg);
+}
+
+static inline void writeGenericChunk(util::fstream_writer& writer, auto& vector, u32 chunkIdentifier)
+{
+    std::cout << "Writing 0x" << std::hex << chunkIdentifier << std::dec << ", "
+              << MOD::getChunkName(chunkIdentifier).value() << std::endl;
+
+    u32 subchunkPos = startChunk(writer, chunkIdentifier);
+    writer.writeU32(vector.size());
+
+    writer.align(0x20);
+    for (auto& contents : vector) {
+        contents.write(writer);
+    }
+    finishChunk(writer, subchunkPos);
+}
+
+static inline void readGenericChunk(util::fstream_reader& reader, auto& vector)
+{
+    vector.resize(reader.readU32());
+
+    align(reader, 0x20);
+    for (auto& elem : vector) {
+        elem.read(reader);
+    }
+    align(reader, 0x20);
+}
 } // namespace
 
 void Vector2i::read(util::fstream_reader& reader)
@@ -64,6 +107,12 @@ void Vector3f::write(util::fstream_writer& writer)
     writer.writeF32(z);
 }
 
+std::ostream& operator<<(std::ostream& os, Vector3f const& v)
+{
+    os << v.x << " " << v.y << " " << v.z << std::endl;
+    return os;
+}
+
 void NBT::read(util::fstream_reader& reader)
 {
     m_normals.read(reader);
@@ -92,6 +141,12 @@ void Colour::write(util::fstream_writer& writer)
     writer.writeU8(g);
     writer.writeU8(b);
     writer.writeU8(a);
+}
+
+std::ostream& operator<<(std::ostream& os, Colour const& c)
+{
+    os << (u32)c.r << " " << (u32)c.g << " " << (u32)c.b << " " << (u32)c.a << std::endl;
+    return os;
 }
 
 void ShortColour::read(util::fstream_reader& reader)
@@ -176,6 +231,12 @@ void KeyInfoU8::write(util::fstream_writer& writer)
     writer.writeF32(m_unknown3);
 }
 
+std::ostream& operator<<(std::ostream& os, KeyInfoU8 const& k)
+{
+    os << (u32)k.m_unknown1 << " " << k.m_unknown2 << " " << k.m_unknown3;
+    return os;
+}
+
 void KeyInfoF32::read(util::fstream_reader& reader)
 {
     m_unknown1 = reader.readF32();
@@ -188,6 +249,12 @@ void KeyInfoF32::write(util::fstream_writer& writer)
     writer.writeF32(m_unknown1);
     writer.writeF32(m_unknown2);
     writer.writeF32(m_unknown3);
+}
+
+std::ostream& operator<<(std::ostream& os, KeyInfoF32 const& k)
+{
+    os << k.m_unknown1 << " " << k.m_unknown2 << " " << k.m_unknown3;
+    return os;
 }
 
 void KeyInfoS10::read(util::fstream_reader& reader)
@@ -222,6 +289,16 @@ void PCI_Unk1::write(util::fstream_writer& writer)
     m_unknown4.write(writer);
 }
 
+std::ostream& operator<<(std::ostream& os, PCI_Unk1 const& p)
+{
+    os << "\t\tPCI_UNK1" << std::endl;
+    os << "\t\t\tUNK1 " << p.m_unknown1 << std::endl;
+    os << "\t\t\tUNK2_KEYFRAME " << p.m_unknown2 << std::endl;
+    os << "\t\t\tUNK3_KEYFRAME " << p.m_unknown3 << std::endl;
+    os << "\t\t\tUNK4_KEYFRAME " << p.m_unknown4 << std::endl;
+    return os;
+}
+
 void PCI_Unk2::read(util::fstream_reader& reader)
 {
     m_unknown1 = reader.readS32();
@@ -232,6 +309,14 @@ void PCI_Unk2::write(util::fstream_writer& writer)
 {
     writer.writeS32(m_unknown1);
     m_unknown2.write(writer);
+}
+
+std::ostream& operator<<(std::ostream& os, PCI_Unk2 const& p)
+{
+    os << "\t\tPCI_UNK2" << std::endl;
+    os << "\t\t\tUNK1 " << p.m_unknown1 << std::endl;
+    os << "\t\t\tUNK2_KEYFRAME " << p.m_unknown2 << std::endl;
+    return os;
 }
 
 void PolygonColourInfo::read(util::fstream_reader& reader)
@@ -268,6 +353,24 @@ void PolygonColourInfo::write(util::fstream_writer& writer)
     }
 }
 
+std::ostream& operator<<(std::ostream& os, PolygonColourInfo const& p)
+{
+    os << "\tPOLYGON_COLOUR_INFO" << std::endl;
+    os << "\t\tDIFFUSE_COLOUR " << p.m_diffuseColour;
+    os << "\t\tUNK2 " << p.m_unknown2 << std::endl;
+    os << "\t\tUNK3 " << p.m_unknown3 << std::endl;
+    os << "\t\tUNK4_SIZE " << p.m_unknown4.size() << std::endl;
+    for (const PCI_Unk1& unk1 : p.m_unknown4) {
+        os << unk1;
+    }
+
+    os << "\t\tUNK5_SIZE " << p.m_unknown5.size() << std::endl;
+    for (const PCI_Unk2& unk2 : p.m_unknown5) {
+        os << unk2;
+    }
+    return os;
+}
+
 void LightingInfo::read(util::fstream_reader& reader)
 {
     m_unknown1 = reader.readU32();
@@ -278,6 +381,14 @@ void LightingInfo::write(util::fstream_writer& writer)
 {
     writer.writeU32(m_unknown1);
     writer.writeF32(m_unknown2);
+}
+
+std::ostream& operator<<(std::ostream& os, LightingInfo const& l)
+{
+    os << "\tLIGHTING_INFO" << std::endl;
+    os << "\t\tUNK1 " << l.m_unknown1 << std::endl;
+    os << "\t\tUNK2 " << l.m_unknown2 << std::endl;
+    return os;
 }
 
 void PeInfo::read(util::fstream_reader& reader)
@@ -296,6 +407,16 @@ void PeInfo::write(util::fstream_writer& writer)
     writer.writeS32(m_unknown4);
 }
 
+std::ostream& operator<<(std::ostream& os, PeInfo const& p)
+{
+    os << "\tPE_INFO" << std::endl;
+    os << "\t\tUNK1 " << p.m_unknown1 << std::endl;
+    os << "\t\tUNK2 " << p.m_unknown2 << std::endl;
+    os << "\t\tUNK3 " << p.m_unknown3 << std::endl;
+    os << "\t\tUNK4 " << p.m_unknown4 << std::endl;
+    return os;
+}
+
 void TexGenData::read(util::fstream_reader& reader)
 {
     m_unknown1 = reader.readU8();
@@ -312,6 +433,13 @@ void TexGenData::write(util::fstream_writer& writer)
     writer.writeU8(m_unknown4);
 }
 
+std::ostream& operator<<(std::ostream& os, TexGenData const& t)
+{
+    os << (u32)t.m_unknown1 << " " << (u32)t.m_unknown2 << " " << (u32)t.m_unknown3 << " " << (u32)t.m_unknown4
+       << std::endl;
+    return os;
+}
+
 void TXD_Unk1::read(util::fstream_reader& reader)
 {
     m_unknown1 = reader.readS32();
@@ -326,6 +454,15 @@ void TXD_Unk1::write(util::fstream_writer& writer)
     m_unknown2.write(writer);
     m_unknown3.write(writer);
     m_unknown4.write(writer);
+}
+
+std::ostream& operator<<(std::ostream& os, TXD_Unk1 const& t)
+{
+    os << "UNK1" << t.m_unknown1 << std::endl;
+    os << "UNK2 " << t.m_unknown2 << std::endl;
+    os << "UNK3 " << t.m_unknown3 << std::endl;
+    os << "UNK4 " << t.m_unknown4 << std::endl;
+    return os;
 }
 
 void TextureData::read(util::fstream_reader& reader)
@@ -393,19 +530,56 @@ void TextureData::write(util::fstream_writer& writer)
     writer.writeF32(m_unknown17);
 
     writer.writeU32(m_unknown18.size());
-    for (mat::TXD_Unk1& unk : m_unknown18) {
+    for (TXD_Unk1& unk : m_unknown18) {
         unk.write(writer);
     }
 
     writer.writeU32(m_unknown19.size());
-    for (mat::TXD_Unk1& unk : m_unknown19) {
+    for (TXD_Unk1& unk : m_unknown19) {
         unk.write(writer);
     }
 
     writer.writeU32(m_unknown20.size());
-    for (mat::TXD_Unk1& unk : m_unknown20) {
+    for (TXD_Unk1& unk : m_unknown20) {
         unk.write(writer);
     }
+}
+
+std::ostream& operator<<(std::ostream& os, TextureData const& t)
+{
+    os << "\t\t\t\tUNK1 " << t.m_unknown1 << std::endl;
+    os << "\t\t\t\tUNK2 " << t.m_unknown2 << std::endl;
+    os << "\t\t\t\tUNK3 " << t.m_unknown3 << std::endl;
+    os << "\t\t\t\tUNK4 " << (u32)t.m_unknown4 << std::endl;
+    os << "\t\t\t\tUNK5 " << (u32)t.m_unknown5 << std::endl;
+    os << "\t\t\t\tUNK6 " << (u32)t.m_unknown6 << std::endl;
+    os << "\t\t\t\tUNK7 " << (u32)t.m_unknown7 << std::endl;
+    os << "\t\t\t\tUNK8 " << (u32)t.m_unknown8 << std::endl;
+    os << "\t\t\t\tUNK9 " << (u32)t.m_unknown9 << std::endl;
+    os << "\t\t\t\tUNK10 " << t.m_unknown10 << std::endl;
+    os << "\t\t\t\tUNK11 " << t.m_unknown11 << std::endl;
+    os << "\t\t\t\tUNK12 " << t.m_unknown12 << std::endl;
+    os << "\t\t\t\tUNK13 " << t.m_unknown13 << std::endl;
+    os << "\t\t\t\tUNK14 " << t.m_unknown14 << std::endl;
+    os << "\t\t\t\tUNK15 " << t.m_unknown15 << std::endl;
+    os << "\t\t\t\tUNK16 " << t.m_unknown16 << std::endl;
+    os << "\t\t\t\tUNK17 " << t.m_unknown17 << std::endl;
+
+    os << "\t\t\t\tUNK18_SIZE " << t.m_unknown18.size() << std::endl;
+    for (const TXD_Unk1& unk : t.m_unknown18) {
+        os << "\t\t\t\t\t" << unk;
+    }
+
+    os << "\t\t\t\tUNK19_SIZE " << t.m_unknown19.size() << std::endl;
+    for (const TXD_Unk1& unk : t.m_unknown19) {
+        os << "\t\t\t\t\t" << unk;
+    }
+
+    os << "\t\t\t\tUNK20_SIZE " << t.m_unknown20.size() << std::endl;
+    for (const TXD_Unk1& unk : t.m_unknown20) {
+        os << "\t\t\t\t\t" << unk;
+    }
+    return os;
 }
 
 void TextureInfo::read(util::fstream_reader& reader)
@@ -440,6 +614,30 @@ void TextureInfo::write(util::fstream_writer& writer)
     }
 }
 
+std::ostream& operator<<(std::ostream& os, TextureInfo const& ti)
+{
+    os << "\tTEXTURE_INFO" << std::endl;
+    os << "\t\tUNK1 " << ti.m_unknown1 << std::endl;
+    os << "\t\tUNK2 " << ti.m_unknown2;
+
+    u32 idx = 0;
+    os << "\t\tTEXGEN_SIZE " << ti.m_unknown3.size() << std::endl;
+    for (const TexGenData& txgen : ti.m_unknown3) {
+        os << "\t\t\t"
+           << "TXG" << idx << " " << txgen;
+        idx++;
+    }
+
+    idx = 0;
+    os << "\t\tTEXDATA_SIZE " << ti.m_unknown4.size() << std::endl;
+    for (const TextureData& txdat : ti.m_unknown4) {
+        os << "\t\t\tTXD" << idx << std::endl << txdat;
+        idx++;
+    }
+
+    return os;
+}
+
 void Material::read(util::fstream_reader& reader)
 {
     m_flags    = reader.readU32();
@@ -468,6 +666,25 @@ void Material::write(util::fstream_writer& writer)
         m_peInfo.write(writer);
         m_texInfo.write(writer);
     }
+}
+
+std::ostream& operator<<(std::ostream& os, Material const& m)
+{
+    os << "\tH_FLAGS " << m.m_flags << std::endl;
+    os << "\tH_UNK1 " << m.m_unknown1 << std::endl;
+    os << "\tH_COL " << (u32)m.m_colour.r << " " << (u32)m.m_colour.g << " " << (u32)m.m_colour.b << " "
+       << (u32)m.m_colour.a << std::endl;
+
+    if (m.m_flags & static_cast<u32>(mat::MaterialFlags::UsePVW)) {
+        os << "\tH_PVW_UNK " << m.m_unknown2 << std::endl;
+        os << m.m_colourInfo;
+        os << m.m_lightingInfo;
+        os << m.m_peInfo;
+        os << m.m_texInfo;
+    }
+    os << std::endl;
+
+    return os;
 }
 
 void TCR_Unk1::read(util::fstream_reader& reader)
@@ -799,6 +1016,39 @@ void BaseCollTriInfo::write(util::fstream_writer& writer)
     m_plane.write(writer);
 }
 
+void CollTriInfo::read(util::fstream_reader& reader)
+{
+    m_collinfo.resize(reader.readU32());
+    m_roominfo.resize(reader.readU32());
+
+    align(reader, 0x20);
+    for (BaseRoomInfo& info : m_roominfo) {
+        info.read(reader);
+    }
+    align(reader, 0x20);
+
+    for (BaseCollTriInfo& info : m_collinfo) {
+        info.read(reader);
+    }
+    align(reader, 0x20);
+}
+
+void CollTriInfo::write(util::fstream_writer& writer)
+{
+    const u32 start = startChunk(writer, 0x100);
+    writer.writeU32(m_collinfo.size());
+    writer.writeU32(m_roominfo.size());
+    writer.align(0x20);
+    for (BaseRoomInfo& info : m_roominfo) {
+        info.write(writer);
+    }
+    writer.align(0x20);
+    for (BaseCollTriInfo& info : m_collinfo) {
+        info.write(writer);
+    }
+    finishChunk(writer, start);
+}
+
 void CollGroup::read(util::fstream_reader& reader)
 {
     m_unknown1.resize(reader.readU16());
@@ -826,47 +1076,45 @@ void CollGroup::write(util::fstream_writer& writer)
     }
 }
 
-static inline const u32 startChunk(util::fstream_writer& writer, u32 chunk)
+void CollGrid::read(util::fstream_reader& reader)
 {
-    writer.writeU32(chunk);
-    const u32 position = static_cast<u32>(writer.tellp());
-    writer.writeU32(0);
-    return position;
-}
-
-static inline void finishChunk(util::fstream_writer& writer, u32 chunkStart)
-{
-    writer.align(0x20);
-    const u32 position = static_cast<u32>(writer.tellp());
-    writer.seekp(chunkStart, std::ios_base::beg);
-    writer.writeU32(position - chunkStart - 4);
-    writer.seekp(position, std::ios_base::beg);
-}
-
-static inline void writeGenericChunk(util::fstream_writer& writer, auto& vector, u32 chunkIdentifier)
-{
-    std::cout << "Writing 0x" << std::hex << chunkIdentifier << std::dec << ", "
-              << MOD::getChunkName(chunkIdentifier).value() << std::endl;
-
-    u32 subchunkPos = startChunk(writer, chunkIdentifier);
-    writer.writeU32(vector.size());
-
-    writer.align(0x20);
-    for (auto& contents : vector) {
-        contents.write(writer);
-    }
-    finishChunk(writer, subchunkPos);
-}
-
-static inline void readGenericChunk(util::fstream_reader& reader, auto& vector)
-{
-    vector.resize(reader.readU32());
-
     align(reader, 0x20);
-    for (auto& elem : vector) {
-        elem.read(reader);
+    m_boundsMin.read(reader);
+    m_boundsMax.read(reader);
+    m_unknown1 = reader.readF32();
+    m_gridX    = reader.readU32();
+    m_gridY    = reader.readU32();
+    m_groups.resize(reader.readU32());
+    for (CollGroup& group : m_groups) {
+        group.read(reader);
+    }
+
+    for (u32 x = 0; x < m_gridX; x++) {
+        for (u32 y = 0; y < m_gridY; y++) {
+            m_unknown2.push_back(reader.readS32());
+        }
     }
     align(reader, 0x20);
+}
+
+void CollGrid::write(util::fstream_writer& writer)
+{
+    const u32 start = startChunk(writer, 0x110);
+    writer.align(0x20);
+    m_boundsMin.write(writer);
+    m_boundsMax.write(writer);
+    writer.writeF32(m_unknown1);
+    writer.writeU32(m_gridX);
+    writer.writeU32(m_gridY);
+    writer.writeU32(m_groups.size());
+    for (CollGroup& group : m_groups) {
+        group.write(writer);
+    }
+    for (s32& i : m_unknown2) {
+        writer.writeS32(i);
+    }
+    writer.align(0x20);
+    finishChunk(writer, start);
 }
 
 void MOD::read(util::fstream_reader& reader)
@@ -990,38 +1238,10 @@ void MOD::read(util::fstream_reader& reader)
             std::cout << m_jointNames.size() << " joint name(s) found\n" << std::endl;
             break;
         case 0x100:
-            m_colltris.m_collinfo.resize(reader.readU32());
-            m_colltris.m_roominfo.resize(reader.readU32());
-
-            align(reader, 0x20);
-            for (BaseRoomInfo& info : m_colltris.m_roominfo) {
-                info.read(reader);
-            }
-            align(reader, 0x20);
-
-            for (BaseCollTriInfo& info : m_colltris.m_collinfo) {
-                info.read(reader);
-            }
-            align(reader, 0x20);
+            m_colltris.read(reader);
             break;
         case 0x110:
-            align(reader, 0x20);
-            m_collgrid.m_boundsMin.read(reader);
-            m_collgrid.m_boundsMax.read(reader);
-            m_collgrid.m_unknown1 = reader.readF32();
-            m_collgrid.m_gridX    = reader.readU32();
-            m_collgrid.m_gridY    = reader.readU32();
-            m_collgrid.m_groups.resize(reader.readU32());
-            for (CollGroup& group : m_collgrid.m_groups) {
-                group.read(reader);
-            }
-
-            for (u32 x = 0; x < m_collgrid.m_gridX; x++) {
-                for (u32 y = 0; y < m_collgrid.m_gridY; y++) {
-                    m_collgrid.m_unknown2.push_back(reader.readS32());
-                }
-            }
-            align(reader, 0x20);
+            m_collgrid.read(reader);
             break;
         case 0xFFFF:
             reader.seekg(static_cast<std::basic_istream<char, std::char_traits<char>>::off_type>(length),
@@ -1134,20 +1354,9 @@ void MOD::write(util::fstream_writer& writer)
 
     if (m_colltris.m_collinfo.size()) {
         std::cout << "Writing 0x100, " << MOD::getChunkName(0x100).value() << std::endl;
-        u32 start = startChunk(writer, 0x100);
-        writer.writeU32(m_colltris.m_collinfo.size());
-        writer.writeU32(m_colltris.m_roominfo.size());
-        writer.align(0x20);
-        for (BaseRoomInfo& info : m_colltris.m_roominfo) {
-            info.write(writer);
-        }
-        writer.align(0x20);
-        for (BaseCollTriInfo& info : m_colltris.m_collinfo) {
-            info.write(writer);
-        }
-        finishChunk(writer, start);
+        m_colltris.write(writer);
 
-        start = startChunk(writer, 0x110);
+        const u32 start = startChunk(writer, 0x110);
         writer.align(0x20);
         m_collgrid.m_boundsMin.write(writer);
         m_collgrid.m_boundsMax.write(writer);

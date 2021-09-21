@@ -1,6 +1,7 @@
 #include <MOD.hpp>
 #include <filesystem>
 #include <iostream>
+#include <sstream>
 #include <util/tokeniser.hpp>
 
 static const u32 calcTxeSize(u32 fmt, u32 x, u32 y)
@@ -235,6 +236,41 @@ int main(int argc, char** argv)
             }
 
             std::cout << std::endl;
+        } else if (token == "export_material") {
+            std::cout << "Enter output path: ";
+            std::string input = "";
+            std::getline(std::cin, input);
+
+            if (!modFile.m_materials.m_materials.size() && !modFile.m_materials.m_texEnvironments.size()) {
+                std::cout << "Loaded file has no materials!" << std::endl;
+                continue;
+            }
+
+            std::ostringstream oss = {};
+            oss << "MATERIAL_FILE" << std::endl;
+
+            if (modFile.m_materials.m_materials.size()) {
+                oss << "MAT_SECTION" << std::endl;
+            }
+
+            u32 matIdx = 0;
+            for (mat::Material& mat : modFile.m_materials.m_materials) {
+                oss << "MAT " << matIdx++ << std::endl;
+                oss << mat;
+            }
+
+            if (modFile.m_materials.m_texEnvironments.size()) {
+                oss << "TEV_SECTION" << std::endl;
+            }
+
+            std::ofstream output(input);
+            if (!output.is_open()) {
+                std::cout << "Error can't open " << input << std::endl;
+                continue;
+            }
+
+            output.write(oss.str().c_str(), oss.str().size());
+            output.close();
         } else if (token == "close") {
             modFile.reset();
             std::cout << std::endl;

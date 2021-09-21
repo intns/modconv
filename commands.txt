@@ -1,5 +1,11 @@
-load practice.mod
-ini_export
-ini_import
-write practice_new.mod
+load soto5.mod
+export_material
+close
+
+load arrow.mod
+export_material
+close
+
+load callCirc.mod
+export_material
 close

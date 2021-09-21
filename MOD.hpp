@@ -31,6 +31,7 @@ struct Vector3f {
 
     void read(util::fstream_reader&);
     void write(util::fstream_writer&);
+    friend std::ostream& operator<<(std::ostream& os, Vector3f const& v);
 };
 
 struct Colour {
@@ -38,6 +39,7 @@ struct Colour {
 
     void read(util::fstream_reader&);
     void write(util::fstream_writer&);
+    friend std::ostream& operator<<(std::ostream&, Colour const&);
 };
 
 struct ShortColour {
@@ -108,6 +110,7 @@ struct KeyInfoU8 {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream& os, KeyInfoU8 const& k);
 };
 
 struct KeyInfoF32 {
@@ -117,6 +120,7 @@ struct KeyInfoF32 {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream& os, KeyInfoF32 const& k);
 };
 
 struct KeyInfoS10 {
@@ -136,6 +140,7 @@ struct PCI_Unk1 {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, PCI_Unk1 const&);
 };
 
 struct PCI_Unk2 {
@@ -144,6 +149,7 @@ struct PCI_Unk2 {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, PCI_Unk2 const&);
 };
 
 struct PolygonColourInfo {
@@ -155,6 +161,7 @@ struct PolygonColourInfo {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, PolygonColourInfo const&);
 };
 
 struct LightingInfo {
@@ -163,6 +170,7 @@ struct LightingInfo {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, LightingInfo const&);
 };
 
 struct PeInfo {
@@ -173,6 +181,7 @@ struct PeInfo {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, PeInfo const&);
 };
 
 struct TexGenData {
@@ -183,6 +192,7 @@ struct TexGenData {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream& os, TexGenData const& t);
 };
 
 struct TXD_Unk1 {
@@ -193,6 +203,7 @@ struct TXD_Unk1 {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream& os, TXD_Unk1 const& t);
 };
 
 struct TextureData {
@@ -223,6 +234,7 @@ struct TextureData {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream& os, TextureData const& t);
 };
 
 struct TextureInfo {
@@ -233,6 +245,7 @@ struct TextureInfo {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream& os, TextureInfo const& ti);
 };
 
 enum class MaterialFlags : u8 { UsePVW = 1 };
@@ -250,6 +263,7 @@ struct Material {
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
+    friend std::ostream& operator<<(std::ostream&, Material const&);
 };
 
 struct TCR_Unk1 {
@@ -442,6 +456,9 @@ struct BaseCollTriInfo {
 struct CollTriInfo {
     std::vector<BaseRoomInfo> m_roominfo;
     std::vector<BaseCollTriInfo> m_collinfo;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
 };
 
 struct CollGroup {
@@ -460,6 +477,9 @@ struct CollGrid {
     u32 m_gridY    = 0;
     std::vector<CollGroup> m_groups;
     std::vector<s32> m_unknown2;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
 };
 
 enum class MODFlags : u8 { UseNBT = 0x01 };
