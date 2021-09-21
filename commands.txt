@@ -1,4 +1,5 @@
 load practice.mod
-texswap
+tex_swap
+tex_export
 write practice_new.mod
 close
