@@ -33,7 +33,7 @@ static std::vector<Command> gCommands
         { "help", {}, "re-generate this command list", showCommands } };
 } // namespace
 
-static void showCommands()
+void showCommands()
 {
     std::cout << std::endl << "Commands:" << std::endl;
     for (const Command& cmd : gCommands) {
