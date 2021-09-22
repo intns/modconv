@@ -29,6 +29,7 @@ namespace mod {
         reader.seekg(0, std::ios_base::beg);
         gModFile.read(reader);
         reader.close();
+
         std::cout << "Done!" << std::endl;
     }
 
@@ -48,6 +49,7 @@ namespace mod {
         }
         gModFile.write(writer);
         writer.close();
+
         std::cout << "Done!" << std::endl;
     }
 
@@ -60,6 +62,8 @@ namespace mod {
 
         gModFile.reset();
         gModFileName = "";
+
+        std::cout << "Done!" << std::endl;
     }
 
     void importTexture()
@@ -147,6 +151,8 @@ namespace mod {
         for (const auto& c : str) {
             gModFile.m_eofBytes.push_back(c);
         }
+
+        std::cout << "Done!" << std::endl;
     }
 
     void exportObj()
@@ -313,6 +319,8 @@ namespace mod {
 
         outStream.write(reinterpret_cast<char*>(gModFile.m_eofBytes.data()), gModFile.m_eofBytes.size());
         outStream.close();
+
+        std::cout << "Done!" << std::endl;
     }
 } // namespace mod
 
