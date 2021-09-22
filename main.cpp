@@ -4,12 +4,6 @@
 #include <sstream>
 #include <util/tokeniser.hpp>
 
-static const u32 calcTxeSize(u32 fmt, u32 x, u32 y)
-{
-    switch (fmt) {
-    case 0:
-    case 2:
-    case 6:
         return 2 * y * x;
     case 1:
         return 4 * (y * x / 8);

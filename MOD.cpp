@@ -1226,9 +1226,9 @@ void MOD::read(util::fstream_reader& reader)
             return;
         }
 
-        std::cout << "Got chunk 0x" << std::hex << opcode << std::dec;
         const auto ocString = getChunkName(opcode);
-        std::cout << ", " << (ocString.has_value() ? ocString.value() : "Unknown chunk") << std::endl;
+        std::cout << "Reading 0x" << std::hex << opcode << std::dec << ", "
+                  << (ocString.has_value() ? ocString.value() : "Unknown chunk") << std::endl;
 
         switch (opcode) {
         case 0:
@@ -1238,26 +1238,18 @@ void MOD::read(util::fstream_reader& reader)
             m_header.m_dateTime.m_day   = reader.readU8();
             m_header.m_flags            = reader.readU32();
             align(reader, 0x20);
-
-            std::cout << "File creation date (YYYY/MM/DD): " << (u32)m_header.m_dateTime.m_year << "/"
-                      << (u32)m_header.m_dateTime.m_month << "/" << (u32)m_header.m_dateTime.m_day << '\n'
-                      << std::endl;
             break;
         case 0x10:
             readGenericChunk(reader, m_vertices);
-            std::cout << m_vertices.size() << " vertice(s) found\n" << std::endl;
             break;
         case 0x11:
             readGenericChunk(reader, m_vnormals);
-            std::cout << m_vnormals.size() << " vertex normal(s) found\n" << std::endl;
             break;
         case 0x12:
             readGenericChunk(reader, m_vertexnbt);
-            std::cout << m_vertexnbt.size() << " vertex NBT(s) found\n" << std::endl;
             break;
         case 0x13:
             readGenericChunk(reader, m_vcolours);
-            std::cout << m_vertexnbt.size() << " vertex colour(s) found\n" << std::endl;
             break;
         case 0x18:
         case 0x19:
@@ -1266,21 +1258,14 @@ void MOD::read(util::fstream_reader& reader)
         case 0x1C:
         case 0x1D:
         case 0x1E:
-        case 0x1F: {
-            const u32 texcoordNum = opcode - 0x18;
-            readGenericChunk(reader, m_texcoords[texcoordNum]);
-            std::cout << "Texture Coordinate " << texcoordNum << " has " << m_texcoords[texcoordNum].size()
-                      << " coordinate(s)\n"
-                      << std::endl;
+        case 0x1F:
+            readGenericChunk(reader, m_texcoords[opcode - 0x18]);
             break;
-        }
         case 0x20:
             readGenericChunk(reader, m_textures);
-            std::cout << m_textures.size() << " texture(s) found\n" << std::endl;
             break;
         case 0x22:
             readGenericChunk(reader, m_texattrs);
-            std::cout << m_texattrs.size() << " texture attribute(s) found\n" << std::endl;
             break;
         case 0x30:
             m_materials.m_materials.resize(reader.readU32());
@@ -1299,26 +1284,18 @@ void MOD::read(util::fstream_reader& reader)
                 }
             }
             align(reader, 0x20);
-
-            std::cout << m_materials.m_materials.size() << " material(s) found, "
-                      << m_materials.m_texEnvironments.size() << " texture environment(s) found\n"
-                      << std::endl;
             break;
         case 0x40:
             readGenericChunk(reader, m_vtxMatrix);
-            std::cout << m_vtxMatrix.size() << " vertex matrice(s) found\n" << std::endl;
             break;
         case 0x41:
             readGenericChunk(reader, m_envelopes);
-            std::cout << m_envelopes.size() << " envelope(s) found\n" << std::endl;
             break;
         case 0x50:
             readGenericChunk(reader, m_meshes);
-            std::cout << m_meshes.size() << " mesh(es) found\n" << std::endl;
             break;
         case 0x60:
             readGenericChunk(reader, m_joints);
-            std::cout << m_joints.size() << " joint(s) found\n" << std::endl;
             break;
         case 0x61:
             m_jointNames.resize(reader.readU32());
@@ -1330,7 +1307,6 @@ void MOD::read(util::fstream_reader& reader)
                 }
             }
             align(reader, 0x20);
-            std::cout << m_jointNames.size() << " joint name(s) found\n" << std::endl;
             break;
         case 0x100:
             m_colltris.read(reader);
@@ -1434,6 +1410,8 @@ void MOD::write(util::fstream_writer& writer)
         writeGenericChunk(writer, m_joints, 0x60);
 
         if (m_jointNames.size()) {
+            std::cout << "Writing 0x61, " << MOD::getChunkName(0x61).value() << std::endl;
+
             const u32 start = startChunk(writer, 0x61);
             writer.writeU32(m_jointNames.size());
             writer.align(0x20);
@@ -1472,7 +1450,8 @@ void MOD::write(util::fstream_writer& writer)
     // Finalise writing with 0xFFFF chunk and append any INI file
     finishChunk(writer, startChunk(writer, 0xFFFF));
     if (m_eofBytes.size()) {
-        std::cout << "Writing EOF" << std::endl;
+        std::cout << "Writing 0xffff, " << MOD::getChunkName(0xffff).value() << std::endl;
+
         writer.write(reinterpret_cast<char*>(m_eofBytes.data()), m_eofBytes.size());
     }
 }
