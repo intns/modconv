@@ -287,6 +287,56 @@ namespace mod {
         os << "\tembossbump\t" << (gModFile.m_vertexnbt.size() ? "on" : "off") << std::endl;
         os << "\tscalingrule\tsoftimage" << std::endl;
         os << "}" << std::endl << std::endl;
+
+        if (gModFile.m_vertices.size()) {
+            os << "<VTX_POS>\n{" << std::endl;
+            os << "\tsize\t" << gModFile.m_vertices.size() << std::endl;
+
+            Vector3f minbounds = gModFile.m_vertices[0];
+            Vector3f maxbounds = gModFile.m_vertices[0];
+            for (const Vector3f& vertex : gModFile.m_vertices) {
+                maxbounds.x = std::max(maxbounds.x, vertex.x);
+                maxbounds.y = std::max(maxbounds.y, vertex.y);
+                maxbounds.z = std::max(maxbounds.z, vertex.z);
+
+                minbounds.x = std::min(minbounds.x, vertex.x);
+                minbounds.y = std::min(minbounds.y, vertex.y);
+                minbounds.z = std::min(minbounds.z, vertex.z);
+            }
+
+            os << "\tmin\t" << minbounds;
+            os << "\tmax\t" << maxbounds << std::endl;
+            for (const Vector3f& c : gModFile.m_vertices) {
+                os << "\tfloat\t" << c;
+            }
+            os << "}" << std::endl << std::endl;
+
+            os << "<ENVELOPE_XYZ>\n{" << std::endl;
+            os << "\tsize\t" << gModFile.m_vertices.size() << std::endl;
+            os << "\tmin\t" << minbounds;
+            os << "\tmax\t" << maxbounds << std::endl;
+            for (const Vector3f& c : gModFile.m_vertices) {
+                os << "\tfloat\t" << c;
+            }
+            os << "}" << std::endl << std::endl;
+        }
+
+        if (gModFile.m_vnormals.size()) {
+            os << "<VTX_NRM>\n{" << std::endl;
+            os << "\tsize\t" << gModFile.m_vnormals.size() << std::endl << std::endl;
+            for (const Vector3f& c : gModFile.m_vnormals) {
+                os << "\tfloat\t" << c;
+            }
+            os << "}" << std::endl << std::endl;
+
+            os << "<ENVELOPE_NRM>\n{" << std::endl;
+            os << "\tsize\t" << gModFile.m_vnormals.size() << std::endl << std::endl;
+            for (const Vector3f& c : gModFile.m_vnormals) {
+                os << "\tfloat\t" << c;
+            }
+            os << "}" << std::endl << std::endl;
+        }
+
         for (u32 i = 0; i < gModFile.m_texcoords.size(); i++) {
             std::vector<Vector2f>& texcoords = gModFile.m_texcoords[i];
             if (!texcoords.size()) {
@@ -295,8 +345,19 @@ namespace mod {
 
             os << "<TEXCOORD" << i << ">\n{" << std::endl;
             os << "\tsize\t" << texcoords.size() << std::endl;
-            os << "\tmin\t0.000000 0.000000" << std::endl;
-            os << "\tmax\t1.000000 1.000000" << std::endl << std::endl;
+
+            Vector2f minbounds = texcoords[0];
+            Vector2f maxbounds = texcoords[0];
+            for (const Vector2f& coord : texcoords) {
+                maxbounds.x = std::max(maxbounds.x, coord.x);
+                maxbounds.y = std::max(maxbounds.y, coord.y);
+
+                minbounds.x = std::min(minbounds.x, coord.x);
+                minbounds.y = std::min(minbounds.y, coord.y);
+            }
+
+            os << "\tmin\t" << minbounds.x << " " << minbounds.y << std::endl;
+            os << "\tmax\t" << maxbounds.x << " " << maxbounds.y << std::endl << std::endl;
 
             os << std::fixed << std::setprecision(6);
             for (const Vector2f& coord : texcoords) {
