@@ -1082,8 +1082,8 @@ void Plane::write(util::fstream_writer& writer)
     writer.writeF32(m_diameter);
 }
 
-void BaseRoomInfo::read(util::fstream_reader& reader) { m_unknown1 = reader.readU32(); }
-void BaseRoomInfo::write(util::fstream_writer& writer) { writer.writeU32(m_unknown1); }
+void BaseRoomInfo::read(util::fstream_reader& reader) { m_index = reader.readU32(); }
+void BaseRoomInfo::write(util::fstream_writer& writer) { writer.writeU32(m_index); }
 
 void BaseCollTriInfo::read(util::fstream_reader& reader)
 {

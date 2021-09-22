@@ -442,7 +442,7 @@ struct Plane {
 };
 
 struct BaseRoomInfo {
-    u32 m_unknown1 = 0;
+    u32 m_index = 0;
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
