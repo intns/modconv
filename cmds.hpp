@@ -13,9 +13,9 @@ namespace mod {
     void closeFile();
 
     void importTexture();
-
     void importIni();
 
+    void exportObj();
     void exportTextures();
     void exportMaterials();
     void exportIni();

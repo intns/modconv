@@ -9,7 +9,7 @@ std::string gModFileName;
 util::tokeniser gTokeniser;
 
 namespace mod {
-    static inline constexpr bool isModOpen() { return static_cast<bool>(gModFileName.size() != 0); }
+    static inline const bool isModOpen() { return static_cast<bool>(gModFileName.size() != 0); }
 
     void loadFile()
     {
@@ -147,6 +147,52 @@ namespace mod {
         for (const auto& c : str) {
             gModFile.m_eofBytes.push_back(c);
         }
+    }
+
+    void exportObj()
+    {
+        if (!isModOpen()) {
+            std::cout << "You haven't opened a MOD file!" << std::endl;
+            return;
+        }
+
+        if (!gModFile.m_vertices.size() && !gModFile.m_vnormals.size() && !gModFile.m_colltris.m_collinfo.size()) {
+            std::cout << "Loaded file has nothing to export!" << std::endl;
+            return;
+        }
+
+        std::string filename = gTokeniser.next();
+        std::ofstream os(filename);
+        if (!os.is_open()) {
+            std::cout << "Error can't open " << filename << std::endl;
+            return;
+        }
+
+        Header& header = gModFile.m_header;
+        os << "# Date " << (u32)header.m_dateTime.m_year << " " << (u32)header.m_dateTime.m_month << " "
+           << (u32)header.m_dateTime.m_day << std::endl;
+
+        os << "o mesh0" << std::endl;
+
+        os << "# Vertices" << std::endl;
+        for (const Vector3f& vpos : gModFile.m_vertices) {
+            os << "v " << vpos;
+        }
+
+        os << "# Vertex normals" << std::endl;
+        for (const Vector3f& vnrm : gModFile.m_vnormals) {
+            os << "vn " << vnrm;
+        }
+
+        os << "# Collision faces" << std::endl;
+        for (const BaseCollTriInfo& colInfo : gModFile.m_colltris.m_collinfo) {
+            os << "f " << colInfo.m_indice.x + 1 << " " << colInfo.m_indice.y + 1 << " " << colInfo.m_indice.z + 1
+               << " " << std::endl;
+        }
+        os.flush();
+        os.close();
+
+        std::cout << "Done!" << std::endl;
     }
 
     void exportTextures()
