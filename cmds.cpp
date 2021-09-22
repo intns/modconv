@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 #include <util/misc.hpp>
+#include <util/vector_reader.hpp>
 
 namespace cmd {
 MOD gModFile;
@@ -178,8 +179,6 @@ namespace mod {
         os << "# Date " << (u32)header.m_dateTime.m_year << " " << (u32)header.m_dateTime.m_month << " "
            << (u32)header.m_dateTime.m_day << std::endl;
 
-        os << "o mesh0" << std::endl;
-
         os << "# Vertices" << std::endl;
         for (const Vector3f& vpos : gModFile.m_vertices) {
             os << "v " << vpos;
@@ -190,11 +189,62 @@ namespace mod {
             os << "vn " << vnrm;
         }
 
-        os << "# Collision faces" << std::endl;
-        for (const BaseCollTriInfo& colInfo : gModFile.m_colltris.m_collinfo) {
-            os << "f " << colInfo.m_indice.x + 1 << " " << colInfo.m_indice.y + 1 << " " << colInfo.m_indice.z + 1
-               << " " << std::endl;
+        if (gModFile.m_colltris.m_collinfo.size()) {
+            os << "o collision_mesh" << std::endl;
+            for (const BaseCollTriInfo& colInfo : gModFile.m_colltris.m_collinfo) {
+                os << "f " << colInfo.m_indice.x + 1 << " " << colInfo.m_indice.y + 1 << " " << colInfo.m_indice.z + 1
+                   << " " << std::endl;
+            }
         }
+
+        /*os << "# Mesh data" << std::endl;
+        for (std::size_t i = 0; i < gModFile.m_meshes.size(); i++) {
+            const Mesh& mesh = gModFile.m_meshes[i];
+            os << "o mesh" << i << std::endl;
+            for (const MeshPacket& packet : mesh.m_packets) {
+                for (const DisplayList& dlist : packet.m_displaylists) {
+                    util::vector_reader reader(dlist.m_dlistData, 0, util::vector_reader::Endianness::Big);
+
+                    while (reader.getRemaining()) {
+                        u8 opcode = reader.readU8();
+
+                        if (opcode != 0x98 && opcode != 0xA0) {
+                            continue;
+                        }
+
+                        enum Vtx {
+                            PosMatIdx,
+                            Tex0MatIdx,
+                            Tex1MatIdx,
+                            Tex2MatIdx,
+                            Tex3MatIdx,
+                            Tex4MatIdx,
+                            Tex5MatIdx,
+                            Tex6MatIdx,
+                            Tex7MatIdx,
+                            Position,
+                            Normal,
+                            Color0,
+                            Color1,
+                            Tex0Coord,
+                            Tex1Coord,
+                            Tex2Coord,
+                            Tex3Coord,
+                            Tex4Coord,
+                            Tex5Coord,
+                            Tex6Coord,
+                            Tex7Coord
+                        };
+
+                        enum VtxFmt { NOT_PRESENT, DIRECT, INDEX8, INDEX16 };
+
+                        u16 faceCount = reader.readU16();
+                        for (u32 j = 0; j < faceCount; j++) { }
+                    }
+                }
+            }
+        }*/
+
         os.flush();
         os.close();
 
@@ -237,12 +287,10 @@ namespace mod {
             writer.writeU16(tex.m_height);
             writer.writeU16(tex.m_format);
             writer.writeU16(0);
-
             writer.writeU32(0);
-            writer.writeU32(0);
-            writer.writeU32(0);
-            writer.writeU32(0);
-            writer.writeU32(0);
+            for (u32 i = 0; i < 10; i++) {
+                writer.writeU16(0);
+            }
 
             writer.write(reinterpret_cast<char*>(tex.m_imageData.data()), tex.m_imageData.size());
             writer.close();
