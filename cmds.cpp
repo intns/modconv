@@ -213,7 +213,7 @@ namespace mod {
             return;
         }
 
-        std::string pathStr = std::filesystem::path(gTokeniser.next()).string();
+        std::string pathStr = std::filesystem::path(gTokeniser.isEnd() ? "./" : gTokeniser.next()).string();
         if (!pathStr.ends_with('/')) {
             pathStr += "/";
         }
@@ -258,10 +258,11 @@ namespace mod {
             return;
         }
 
-        const std::string& filename = gTokeniser.next();
-        if (!filename.size()) {
-            std::cout << "Filename not provided!" << std::endl;
+        if (gTokeniser.isEnd()) {
+            std::cout << "Filename not provided, defaulting to material_dump.txt!" << std::endl;
         }
+
+        const std::string& filename = gTokeniser.isEnd() ? "material_dump.txt" : gTokeniser.next();
 
         if (!gModFile.m_materials.m_materials.size() && !gModFile.m_materials.m_texEnvironments.size()) {
             std::cout << "Loaded file has no materials!" << std::endl;
@@ -310,7 +311,11 @@ namespace mod {
             return;
         }
 
-        std::string filename = gTokeniser.next();
+        if (gTokeniser.isEnd()) {
+            std::cout << "Filename not provided, defaulting to ini_dump.txt!" << std::endl;
+        }
+
+        const std::string& filename = gTokeniser.isEnd() ? "ini_dump.txt" : gTokeniser.next();
         std::ofstream outStream(filename);
         if (!outStream.is_open()) {
             std::cout << "Error can't open " << filename << std::endl;
