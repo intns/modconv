@@ -289,9 +289,6 @@ namespace mod {
         os << "}" << std::endl << std::endl;
 
         if (gModFile.m_vertices.size()) {
-            os << "<VTX_POS>\n{" << std::endl;
-            os << "\tsize\t" << gModFile.m_vertices.size() << std::endl;
-
             Vector3f minbounds = gModFile.m_vertices[0];
             Vector3f maxbounds = gModFile.m_vertices[0];
             for (const Vector3f& vertex : gModFile.m_vertices) {
@@ -304,13 +301,6 @@ namespace mod {
                 minbounds.z = std::min(minbounds.z, vertex.z);
             }
 
-            os << "\tmin\t" << minbounds;
-            os << "\tmax\t" << maxbounds << std::endl;
-            for (const Vector3f& c : gModFile.m_vertices) {
-                os << "\tfloat\t" << c;
-            }
-            os << "}" << std::endl << std::endl;
-
             os << "<ENVELOPE_XYZ>\n{" << std::endl;
             os << "\tsize\t" << gModFile.m_vertices.size() << std::endl;
             os << "\tmin\t" << minbounds;
@@ -322,13 +312,6 @@ namespace mod {
         }
 
         if (gModFile.m_vnormals.size()) {
-            os << "<VTX_NRM>\n{" << std::endl;
-            os << "\tsize\t" << gModFile.m_vnormals.size() << std::endl << std::endl;
-            for (const Vector3f& c : gModFile.m_vnormals) {
-                os << "\tfloat\t" << c;
-            }
-            os << "}" << std::endl << std::endl;
-
             os << "<ENVELOPE_NRM>\n{" << std::endl;
             os << "\tsize\t" << gModFile.m_vnormals.size() << std::endl << std::endl;
             for (const Vector3f& c : gModFile.m_vnormals) {
