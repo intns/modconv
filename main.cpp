@@ -12,27 +12,30 @@ struct Command {
     std::function<void()> m_function;
 };
 
+// clang-format off
 namespace {
-static std::vector<Command> gCommands
-    = { { "load", { "input filename" }, "loads a specified MOD file", cmd::mod::loadFile },
-        { "write", { "output filename" }, "writes the MOD file to a specified output", cmd::mod::writeFile },
-        { "close", {}, "closes the currently opened MOD file", cmd::mod::closeFile },
+static std::vector<Command> gCommands = {
+    { "load", { "input filename" }, "loads a MOD file", cmd::mod::loadFile },
+    { "write", { "output filename" }, "writes the MOD file", cmd::mod::writeFile },
+    { "close", {}, "closes the MOD file", cmd::mod::closeFile },
 
-        { "NEW_LINE" },
+    { "NEW_LINE" },
 
-        { "import_texture", {}, "swaps a texture with an external TXE file", cmd::mod::importTexture },
-        { "import_ini", { "input filename" }, "imports an external ini", cmd::mod::importIni },
+    { "import_texture", {}, "swaps a texture with an external TXE file", cmd::mod::importTexture },
+    { "import_ini", { "input filename" }, "imports an external ini", cmd::mod::importIni },
 
-        { "NEW_LINE" },
+    { "NEW_LINE" },
 
-        { "export_materials ", { "output filename" }, " exports all materials to a file ", cmd::mod::exportMaterials },
-        { "export_textures", { "output directory" }, "exports all textures to a directory", cmd::mod::exportTextures },
-        { "export_ini", { "output filename" }, "exports the ini to a file", cmd::mod::exportMaterials },
-        { "export_obj", { "output filename" }, "exports the model to an obj file", cmd::mod::exportObj},
+    { "export_materials ", { "output filename" }, " exports all materials to a file ", cmd::mod::exportMaterials },
+    { "export_textures", { "output directory"}, "exports all textures to a directory", cmd::mod::exportTextures },
+    { "export_ini", { "output filename" }, "exports the ini to a file", cmd::mod::exportMaterials },
+    { "export_obj", { "output filename" }, "exports the model to an obj file", cmd::mod::exportObj },
 
-        { "NEW_LINE" },
-        { "help", {}, "re-generate this command list", showCommands } };
+    { "NEW_LINE" },
+    { "help", {}, "re-generate this command list", showCommands }
+};
 } // namespace
+// clang-format on
 
 void showCommands()
 {

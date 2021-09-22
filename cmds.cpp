@@ -226,6 +226,7 @@ namespace mod {
                 std::cout << "Error unable to open " << fileName << std::endl;
                 return;
             }
+
             writer.writeU16(tex.m_width);
             writer.writeU16(tex.m_height);
             writer.writeU16(tex.m_format);
