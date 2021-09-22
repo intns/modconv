@@ -33,6 +33,9 @@
     <ClCompile Include="util\fstream_writer.cpp">
       <Filter>Header Files\utillib</Filter>
     </ClCompile>
+    <ClCompile Include="cmds.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="types.hpp">
@@ -55,6 +58,9 @@
     </ClInclude>
     <ClInclude Include="util\fstream_writer.hpp">
       <Filter>Header Files\utillib</Filter>
+    </ClInclude>
+    <ClInclude Include="cmds.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cmds.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MOD.cpp" />
     <ClCompile Include="util\fstream_reader.cpp" />
@@ -154,6 +155,7 @@
     <ClCompile Include="util\vector_reader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cmds.hpp" />
     <ClInclude Include="MOD.hpp" />
     <ClInclude Include="types.hpp" />
     <ClInclude Include="util\fstream_reader.hpp" />
