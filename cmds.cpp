@@ -179,18 +179,34 @@ namespace mod {
         os << "# Date " << (u32)header.m_dateTime.m_year << " " << (u32)header.m_dateTime.m_month << " "
            << (u32)header.m_dateTime.m_day << std::endl;
 
-        os << "# Vertices" << std::endl;
-        for (const Vector3f& vpos : gModFile.m_vertices) {
-            os << "v " << vpos;
+        if (gModFile.m_vertices.size()) {
+            os << "\n# Vertices" << std::endl;
+            for (const Vector3f& vpos : gModFile.m_vertices) {
+                os << "v " << vpos;
+            }
         }
 
-        os << "# Vertex normals" << std::endl;
-        for (const Vector3f& vnrm : gModFile.m_vnormals) {
-            os << "vn " << vnrm;
+        if (gModFile.m_vnormals.size()) {
+            os << "\n# Vertex normals" << std::endl;
+            for (const Vector3f& vnrm : gModFile.m_vnormals) {
+                os << "vn " << vnrm;
+            }
+        }
+
+        for (u32 i = 0; i < gModFile.m_texcoords.size(); i++) {
+            std::vector<Vector2f>& coords = gModFile.m_texcoords[i];
+            if (!coords.size()) {
+                continue;
+            }
+
+            os << "\n# Texture coordinate " << i << std::endl;
+            for (const Vector2f& vt : coords) {
+                os << "vt " << vt.x << " " << vt.y << std::endl;
+            }
         }
 
         if (gModFile.m_colltris.m_collinfo.size()) {
-            os << "o collision_mesh" << std::endl;
+            os << "\no collision_mesh" << std::endl;
             for (const BaseCollTriInfo& colInfo : gModFile.m_colltris.m_collinfo) {
                 os << "f " << colInfo.m_indice.x + 1 << " " << colInfo.m_indice.y + 1 << " " << colInfo.m_indice.z + 1
                    << " " << std::endl;
