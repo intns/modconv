@@ -965,7 +965,7 @@ void Envelope::write(util::fstream_writer& writer)
 void DisplayList::read(util::fstream_reader& reader)
 {
     m_flags.intView = reader.readU32();
-    m_unknown1      = reader.readU32();
+    m_cmdCount      = reader.readU32();
     m_dlistData.resize(reader.readU32());
     align(reader, 0x20);
     reader.read(reinterpret_cast<char*>(m_dlistData.data()), m_dlistData.size());
@@ -974,7 +974,7 @@ void DisplayList::read(util::fstream_reader& reader)
 void DisplayList::write(util::fstream_writer& writer)
 {
     writer.writeU32(m_flags.intView);
-    writer.writeU32(m_unknown1);
+    writer.writeU32(m_cmdCount);
     writer.writeU32(m_dlistData.size());
     writer.align(0x20);
     writer.write(reinterpret_cast<char*>(m_dlistData.data()), m_dlistData.size());

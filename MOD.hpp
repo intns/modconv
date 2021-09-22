@@ -375,7 +375,7 @@ struct Envelope {
 
 struct DisplayList {
     union {
-        // https://github.com/KillzXGaming/010-Templates/blob/816cfc57e2ee998b953cf488e4fed25c54e7861a/Pikmin/MOD.bt#L312
+        // THANKS: https://github.com/KillzXGaming/010-Templates/blob/816cfc57e2ee998b953cf488e4fed25c54e7861a/Pikmin/MOD.bt#L312
         struct {
             char b1 : 8;
             char b2 : 8;
@@ -386,7 +386,8 @@ struct DisplayList {
         int intView;
     } m_flags = { 0 };
 
-    u32 m_unknown1 = 0;
+    // THANKS: Yoshi2's mod2obj
+    u32 m_cmdCount = 0;
     std::vector<u8> m_dlistData;
 
     void read(util::fstream_reader& reader);
