@@ -3,6 +3,8 @@
 #include <iostream>
 #include <util/misc.hpp>
 
+// clang-format off
+namespace {
 void showCommands();
 
 struct Command {
@@ -12,8 +14,6 @@ struct Command {
     std::function<void()> m_function;
 };
 
-// clang-format off
-namespace {
 static std::vector<Command> gCommands = {
     { "load", { "input filename" }, "loads a MOD file", cmd::mod::loadFile },
     { "write", { "output filename" }, "writes the MOD file", cmd::mod::writeFile },
@@ -32,10 +32,9 @@ static std::vector<Command> gCommands = {
     { "export_obj", { "output filename" }, "exports the model to an obj file", cmd::mod::exportObj },
 
     { "NEW_LINE" },
+
     { "help", {}, "re-generate this command list", showCommands }
 };
-} // namespace
-// clang-format on
 
 void showCommands()
 {
@@ -56,6 +55,8 @@ void showCommands()
     }
     std::cout << std::endl;
 }
+} // namespace
+// clang-format on
 
 int main(int argc, char** argv)
 {
