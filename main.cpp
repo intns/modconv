@@ -25,7 +25,7 @@ static std::vector<Command> gCommands
 
         { "NEW_LINE" },
 
-        { "export_materials ", { " output filename " }, " exports all materials to a file ", cmd::mod::exportMaterials },
+        { "export_materials ", { "output filename" }, " exports all materials to a file ", cmd::mod::exportMaterials },
         { "export_textures", { "output directory" }, "exports all textures to a directory", cmd::mod::exportTextures },
         { "export_ini", { "output filename" }, "exports the ini to a file", cmd::mod::exportMaterials },
 
