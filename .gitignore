@@ -372,3 +372,4 @@ FodyWeavers.xsd
 *.ini
 material_dump.txt
 *.bak
+*.dmd

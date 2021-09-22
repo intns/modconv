@@ -16,6 +16,7 @@ namespace mod {
     void importIni();
 
     void exportObj();
+    void exportDmd();
     void exportTextures();
     void exportMaterials();
     void exportIni();

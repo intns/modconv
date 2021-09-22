@@ -168,7 +168,7 @@ namespace mod {
             return;
         }
 
-        std::string filename = gTokeniser.next();
+        std::string filename = gTokeniser.isEnd() ? gModFileName + ".obj" : gTokeniser.next();
         std::ofstream os(filename);
         if (!os.is_open()) {
             std::cout << "Error can't open " << filename << std::endl;
@@ -244,6 +244,59 @@ namespace mod {
                 }
             }
         }*/
+
+        os.flush();
+        os.close();
+
+        std::cout << "Done!" << std::endl;
+    }
+
+    void exportDmd()
+    {
+        if (!isModOpen()) {
+            std::cout << "You haven't opened a MOD file!" << std::endl;
+            return;
+        }
+
+        std::string filename = gTokeniser.isEnd() ? gModFileName + ".dmd" : gTokeniser.next();
+        std::ofstream os(filename);
+        if (!os.is_open()) {
+            std::cout << "Error can't open " << filename << std::endl;
+            return;
+        }
+
+        os << "<INFORMATION>\n{" << std::endl;
+        os << "\tnumjoints\t" << gModFile.m_joints.size() << std::endl;
+        os << "\tprimitive\tTriangleStrip" << std::endl;
+        os << "\tembossbump\t" << (gModFile.m_vertexnbt.size() ? "on" : "off") << std::endl;
+        os << "\tscalingrule\tsoftimage" << std::endl;
+        os << "}" << std::endl << std::endl;
+        for (u32 i = 0; i < gModFile.m_texcoords.size(); i++) {
+            std::vector<Vector2f>& texcoords = gModFile.m_texcoords[i];
+            if (!texcoords.size()) {
+                continue;
+            }
+
+            os << "<TEXCOORD" << i << ">\n{" << std::endl;
+            os << "\tsize\t" << texcoords.size() << std::endl;
+            os << "\tmin\t0.000000 0.000000" << std::endl;
+            os << "\tmax\t1.000000 1.000000" << std::endl << std::endl;
+
+            os << std::fixed << std::setprecision(6);
+            for (const Vector2f& coord : texcoords) {
+                os << "\tfloat\t" << coord.x << " " << coord.y << std::endl;
+            }
+            os << "}" << std::endl << std::endl;
+        }
+
+        if (gModFile.m_vcolours.size()) {
+            os << "<COLOR0>\n{" << std::endl;
+            os << "\tsize\t" << gModFile.m_vcolours.size() << std::endl << std::endl;
+            for (const Colour& c : gModFile.m_vcolours) {
+                os << "\tbyte\t" << (u32)c.r << " " << (u32)c.g << " " << (u32)c.b << " " << (u32)c.a << std::endl;
+            }
+            os << "}" << std::endl << std::endl;
+        }
 
         os.flush();
         os.close();
