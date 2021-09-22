@@ -11,6 +11,31 @@
 #include <types.hpp>
 #include <vector>
 
+namespace mod {
+static const u32 CalculateTxeSize(u32 format, u32 x, u32 y)
+{
+    switch (format) {
+    case 0:
+    case 2:
+    case 6:
+        return 2 * y * x;
+    case 1:
+        return 4 * (y * x / 8);
+    case 3:
+        return y * x / 2;
+    case 4:
+    case 5:
+    case 8:
+    case 9:
+        return y * x;
+    case 7:
+        return 4 * y * x;
+    default:
+        return 0;
+    }
+}
+} // namespace mod
+
 namespace util {
 
 static inline bool IsAnagramOf(std::string a, std::string b)
@@ -20,7 +45,8 @@ static inline bool IsAnagramOf(std::string a, std::string b)
     return a == b;
 }
 
-static std::optional<std::vector<std::string>> IsAnagramOfList(std::string anagram, std::vector<std::string>& possibleCandidates)
+static std::optional<std::vector<std::string>> IsAnagramOfList(std::string anagram,
+                                                               std::vector<std::string>& possibleCandidates)
 {
     std::vector<std::string> foundAnagrams = {};
 
@@ -75,6 +101,6 @@ static bool DumpFileToCppHeader(std::string originalFile)
     return true;
 }
 
-}
+} // namespace util
 
 #endif
