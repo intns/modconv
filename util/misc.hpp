@@ -12,24 +12,11 @@
 #include <vector>
 
 namespace util {
-#ifdef _MSC_VER
-#include <conio.h>
-static void ExitHook()
-{
-    std::cout << "Press any key to exit";
-#ifdef _MSC_VER
-    ((void)_getch());
-#else
-    ((void)getch());
-#endif
-}
-#else
 static void ExitHook()
 {
     std::cout << "Press enter to exit";
     ((void)std::getchar());
 }
-#endif
 
 static const u32 CalculateTxeSize(u32 format, u32 x, u32 y)
 {
