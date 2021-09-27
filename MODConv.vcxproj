@@ -147,7 +147,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cmds.cpp" />
+    <ClCompile Include="commands.cpp" />
+    <ClCompile Include="common\collision.cpp" />
+    <ClCompile Include="common\colour.cpp" />
+    <ClCompile Include="common\envelope.cpp" />
+    <ClCompile Include="common\joint.cpp" />
+    <ClCompile Include="common\material.cpp" />
+    <ClCompile Include="common\mesh.cpp" />
+    <ClCompile Include="common\nbt.cpp" />
+    <ClCompile Include="common\plane.cpp" />
+    <ClCompile Include="common\texture.cpp" />
+    <ClCompile Include="common\vector2.cpp" />
+    <ClCompile Include="common\vector3.cpp" />
+    <ClCompile Include="common\vtxmatrix.cpp" />
+    <ClCompile Include="DMD.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MOD.cpp" />
     <ClCompile Include="util\fstream_reader.cpp" />
@@ -155,7 +168,21 @@
     <ClCompile Include="util\vector_reader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cmds.hpp" />
+    <ClInclude Include="commands.hpp" />
+    <ClInclude Include="common.hpp" />
+    <ClInclude Include="common\collision.hpp" />
+    <ClInclude Include="common\colour.hpp" />
+    <ClInclude Include="common\envelope.hpp" />
+    <ClInclude Include="common\joint.hpp" />
+    <ClInclude Include="common\material.hpp" />
+    <ClInclude Include="common\mesh.hpp" />
+    <ClInclude Include="common\nbt.hpp" />
+    <ClInclude Include="common\plane.hpp" />
+    <ClInclude Include="common\texture.hpp" />
+    <ClInclude Include="common\vector2.hpp" />
+    <ClInclude Include="common\vector3.hpp" />
+    <ClInclude Include="common\vtxmatrix.hpp" />
+    <ClInclude Include="DMD.hpp" />
     <ClInclude Include="MOD.hpp" />
     <ClInclude Include="types.hpp" />
     <ClInclude Include="util\fstream_reader.hpp" />

@@ -22,4 +22,6 @@ namespace mod {
     void exportIni();
 } // namespace mod
 
+void objToDmd();
+
 } // namespace cmd

@@ -16,6 +16,9 @@
     <Filter Include="Header Files\utillib">
       <UniqueIdentifier>{29d68e7c-f203-4d56-9cca-b41369fa2d52}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\common">
+      <UniqueIdentifier>{76c3cbbe-3407-462d-af4e-6669fb180134}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -33,8 +36,47 @@
     <ClCompile Include="util\fstream_writer.cpp">
       <Filter>Header Files\utillib</Filter>
     </ClCompile>
-    <ClCompile Include="cmds.cpp">
+    <ClCompile Include="commands.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DMD.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="common\vector2.cpp">
+      <Filter>Header Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\colour.cpp">
+      <Filter>Header Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\vtxmatrix.cpp">
+      <Filter>Header Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\envelope.cpp">
+      <Filter>Header Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\mesh.cpp">
+      <Filter>Header Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\joint.cpp">
+      <Filter>Header Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\collision.cpp">
+      <Filter>Header Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\plane.cpp">
+      <Filter>Header Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\vector3.cpp">
+      <Filter>Header Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\nbt.cpp">
+      <Filter>Header Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\texture.cpp">
+      <Filter>Header Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\material.cpp">
+      <Filter>Header Files\common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -59,8 +101,50 @@
     <ClInclude Include="util\fstream_writer.hpp">
       <Filter>Header Files\utillib</Filter>
     </ClInclude>
-    <ClInclude Include="cmds.hpp">
+    <ClInclude Include="commands.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DMD.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="common.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="common\vector2.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\colour.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\vtxmatrix.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\envelope.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\mesh.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\joint.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\collision.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\plane.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\vector3.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\nbt.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\texture.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\material.hpp">
+      <Filter>Header Files\common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

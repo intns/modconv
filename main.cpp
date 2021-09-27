@@ -1,4 +1,4 @@
-#include <cmds.hpp>
+#include <commands.hpp>
 #include <functional>
 #include <iostream>
 #include <util/misc.hpp>
@@ -29,9 +29,13 @@ static std::vector<Command> gCommands = {
     { "export_materials", { "output filename" }, " exports all materials to a file ", cmd::mod::exportMaterials },
     { "export_textures", { "output directory"}, "exports all textures to a directory", cmd::mod::exportTextures },
     { "export_ini", { "output filename" }, "exports the ini to a file", cmd::mod::exportIni },
-    { "export_obj", { "output filename" }, "exports the model to an obj file", cmd::mod::exportObj },
-    { "export_dmd", { "output filename" }, "exports the model to a dmd file", cmd::mod::exportDmd },
+    { "export_obj", { "output filename" }, "exports the model to an obj file [WIP]", cmd::mod::exportObj },
+    { "export_dmd", { "output filename" }, "exports the model to a dmd file [WIP]", cmd::mod::exportDmd },
 
+    { "NEW_LINE" },
+
+    { "obj_to_dmd", { "input filename", "output filename" }, "converts an obj file to dmd [WIP]", cmd::objToDmd },
+    
     { "NEW_LINE" },
 
     { "help", {}, "re-generate this command list", showCommands }

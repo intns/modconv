@@ -23,6 +23,14 @@ public:
     inline Endianness& endianness() { return m_endianness; }
     inline const Endianness& endianness() const { return m_endianness; }
 
+    inline void align(u32 amt)
+    {
+        u32 offs = amt - (tellg() % amt);
+        if (offs != amt) {
+            seekg(offs, std::ios_base::cur);
+        }
+    }
+
     inline void open_fstream(std::size_t position = 0, Endianness endianness = Endianness::Little)
     {
         m_endianness = endianness;
