@@ -282,7 +282,7 @@ std::ostream& operator<<(std::ostream& os, TXD_Unk1 const& t)
 
 void TextureData::read(util::fstream_reader& reader)
 {
-    m_unknown1 = reader.readS32();
+    m_texAttrIndex = reader.readS32();
 
     m_unknown2 = reader.readS16();
     m_unknown3 = reader.readS16();
@@ -322,7 +322,7 @@ void TextureData::read(util::fstream_reader& reader)
 
 void TextureData::write(util::fstream_writer& writer)
 {
-    writer.writeS32(m_unknown1);
+    writer.writeS32(m_texAttrIndex);
 
     writer.writeS16(m_unknown2);
     writer.writeS16(m_unknown3);
@@ -362,7 +362,7 @@ void TextureData::write(util::fstream_writer& writer)
 
 std::ostream& operator<<(std::ostream& os, TextureData const& t)
 {
-    os << "\tUNK1 " << t.m_unknown1 << std::endl;
+    os << "\tTEX_ATTR_IDX " << t.m_texAttrIndex << std::endl;
     PrintIndent(os, 5, "UNK2 " << t.m_unknown2);
     PrintIndent(os, 5, "UNK3 " << t.m_unknown3);
     PrintIndent(os, 5, "UNK4 " << (u32)t.m_unknown4);
@@ -397,8 +397,8 @@ void TextureInfo::read(util::fstream_reader& reader)
         genData.read(reader);
     }
 
-    m_unknown4.resize(reader.readU32());
-    for (mat::TextureData& texData : m_unknown4) {
+    m_textures.resize(reader.readU32());
+    for (mat::TextureData& texData : m_textures) {
         texData.read(reader);
     }
 }
@@ -413,8 +413,8 @@ void TextureInfo::write(util::fstream_writer& writer)
         genData.write(writer);
     }
 
-    writer.writeU32(m_unknown4.size());
-    for (mat::TextureData& texData : m_unknown4) {
+    writer.writeU32(m_textures.size());
+    for (mat::TextureData& texData : m_textures) {
         texData.write(writer);
     }
 }
@@ -433,7 +433,7 @@ std::ostream& operator<<(std::ostream& os, TextureInfo const& ti)
         idx++;
     }
 
-    PrintList(os, ti.m_unknown4, "TEXDATA_SIZE", "TEXDATA_IDX", 4);
+    PrintList(os, ti.m_textures, "TEXDATA_SIZE", "TEXDATA_IDX", 4);
     /*idx = 0;
     os << "\t\tTEXDATA_SIZE " << ti.m_unknown4.size() << std::endl;
     for (const TextureData& txdat : ti.m_unknown4) {

@@ -9,17 +9,17 @@
 #include <util/fstream_writer.hpp>
 #include <vector>
 
+enum class MODFlags : u8 { None = 0x00, UseNBT = 0x01 };
+
 struct MODHeader {
     struct {
         u16 m_year = 2021;
-        u8 m_month = 9;
-        u8 m_day   = 18;
+        u8 m_month = 10;
+        u8 m_day   = 11;
     } m_dateTime;
 
-    u32 m_flags = 0;
+    u32 m_flags = static_cast<u32>(MODFlags::None);
 };
-
-enum class MODFlags : u8 { UseNBT = 0x01 };
 
 struct MOD {
     MOD() = default;

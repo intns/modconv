@@ -130,7 +130,7 @@ struct TXD_Unk1 {
 };
 
 struct TextureData {
-    s32 m_unknown1 = 0;
+    s32 m_texAttrIndex = 0;
     s16 m_unknown2 = 0;
     s16 m_unknown3 = 0;
 
@@ -164,7 +164,7 @@ struct TextureInfo {
     s32 m_unknown1 = 0;
     Vector3f m_unknown2;
     std::vector<TexGenData> m_unknown3;
-    std::vector<TextureData> m_unknown4;
+    std::vector<TextureData> m_textures;
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
