@@ -22,6 +22,41 @@ struct MODHeader {
 };
 
 struct MOD {
+    enum class EChunkType {
+        Header = 0x00,
+
+        Vertex        = 0x10,
+        VertexNormal  = 0x11,
+        VertexNBT     = 0x12,
+        VertexColour = 0x13,
+
+        TexCoord0 = 0x18,
+        TexCoord1 = 0x19,
+        TexCoord2 = 0x1A,
+        TexCoord3 = 0x1B,
+        TexCoord4 = 0x1C,
+        TexCoord5 = 0x1D,
+        TexCoord6 = 0x1E,
+        TexCoord7 = 0x1F,
+
+        Texture          = 0x20,
+        TextureAttribute = 0x22,
+
+        Material = 0x30,
+
+        VertexMatrix   = 0x40,
+        MatrixEnvelope = 0x41,
+
+        Mesh      = 0x50,
+        Joint     = 0x60,
+        JointName = 0x61,
+
+        CollisionPrism = 0x100,
+        CollisionGrid = 0x110,
+
+        EndOfFile = 0xFFFF
+    };
+
     MOD() = default;
     MOD(util::fstream_reader& reader) { read(reader); }
     ~MOD() = default;
@@ -31,6 +66,7 @@ struct MOD {
     void reset();
 
     static const std::optional<std::string_view> getChunkName(u32 opcode);
+    static const std::optional<std::string_view> getChunkName(EChunkType chunkType);
 
     MODHeader m_header;
     std::vector<Vector3f> m_vertices;

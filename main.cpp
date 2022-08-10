@@ -66,6 +66,12 @@ void showCommands()
 int main(int argc, char** argv)
 {
     std::atexit(util::ExitHook);
+
+    cmd::gTokeniser.read("garden.mod");
+    cmd::mod::loadFile();
+    cmd::mod::exportMaterials();
+    return 0;
+
     std::cout << "MODConv by Axiot, 2021" << std::endl;
     std::cout << "Don't forget to write the file after editing it" << std::endl;
 

@@ -36,8 +36,8 @@ void MOD::read(util::fstream_reader& reader)
     bool stopRead = false;
     while (!stopRead) {
         std::streampos position = reader.tellg();
-        u32 opcode              = reader.readU32();
-        u32 length              = reader.readU32();
+        const u32 opcode        = reader.readU32();
+        const u32 length        = reader.readU32();
 
         if (position & 0x1F) {
             std::cout << "Error in chunk " << opcode << ", offset " << position
@@ -52,8 +52,8 @@ void MOD::read(util::fstream_reader& reader)
                   << (ocString.has_value() ? ocString.value() : "Unknown chunk")
                   << std::endl;
 
-        switch (opcode) {
-        case 0:
+        switch (static_cast<EChunkType>(opcode)) {
+        case EChunkType::Header:
             reader.align(0x20);
             m_header.m_dateTime.m_year  = reader.readU16();
             m_header.m_dateTime.m_month = reader.readU8();
@@ -61,35 +61,35 @@ void MOD::read(util::fstream_reader& reader)
             m_header.m_flags            = reader.readU32();
             reader.align(0x20);
             break;
-        case 0x10:
+        case EChunkType::Vertex:
             readGenericChunk(reader, m_vertices);
             break;
-        case 0x11:
+        case EChunkType::VertexNormal:
             readGenericChunk(reader, m_vnormals);
             break;
-        case 0x12:
+        case EChunkType::VertexNBT:
             readGenericChunk(reader, m_vertexnbt);
             break;
-        case 0x13:
+        case EChunkType::VertexColour:
             readGenericChunk(reader, m_vcolours);
             break;
-        case 0x18:
-        case 0x19:
-        case 0x1A:
-        case 0x1B:
-        case 0x1C:
-        case 0x1D:
-        case 0x1E:
-        case 0x1F:
+        case EChunkType::TexCoord0:
+        case EChunkType::TexCoord1:
+        case EChunkType::TexCoord2:
+        case EChunkType::TexCoord3:
+        case EChunkType::TexCoord4:
+        case EChunkType::TexCoord5:
+        case EChunkType::TexCoord6:
+        case EChunkType::TexCoord7:
             readGenericChunk(reader, m_texcoords[opcode - 0x18]);
             break;
-        case 0x20:
+        case EChunkType::Texture:
             readGenericChunk(reader, m_textures);
             break;
-        case 0x22:
+        case EChunkType::TextureAttribute:
             readGenericChunk(reader, m_texattrs);
             break;
-        case 0x30:
+        case EChunkType::Material:
             m_materials.m_materials.resize(reader.readU32());
             m_materials.m_texEnvironments.resize(reader.readU32());
 
@@ -107,19 +107,19 @@ void MOD::read(util::fstream_reader& reader)
             }
             reader.align(0x20);
             break;
-        case 0x40:
+        case EChunkType::VertexMatrix:
             readGenericChunk(reader, m_vtxMatrix);
             break;
-        case 0x41:
+        case EChunkType::MatrixEnvelope:
             readGenericChunk(reader, m_envelopes);
             break;
-        case 0x50:
+        case EChunkType::Mesh:
             readGenericChunk(reader, m_meshes);
             break;
-        case 0x60:
+        case EChunkType::Joint:
             readGenericChunk(reader, m_joints);
             break;
-        case 0x61:
+        case EChunkType::JointName:
             m_jointNames.resize(reader.readU32());
             reader.align(0x20);
             for (std::string& str : m_jointNames) {
@@ -130,19 +130,21 @@ void MOD::read(util::fstream_reader& reader)
             }
             reader.align(0x20);
             break;
-        case 0x100:
+        case EChunkType::CollisionPrism:
             m_colltris.read(reader);
             break;
-        case 0x110:
+        case EChunkType::CollisionGrid:
             m_collgrid.read(reader);
             break;
-        case 0xFFFF:
+        case EChunkType::EndOfFile:
+            // Seek ahead to the end of the chunk subheader
             reader.seekg(
                 static_cast<
                     std::basic_istream<char, std::char_traits<char>>::off_type>(
                     length),
                 std::ios_base::cur);
 
+            // Read the end of file bytes (ini file, most often)
             while (!reader.eof()) {
                 m_eofBytes.push_back(reader.get());
                 reader.peek();
@@ -151,6 +153,7 @@ void MOD::read(util::fstream_reader& reader)
             stopRead = true;
             break;
         default:
+            // If we don't recognise the chunk then skip it
             reader.seekg(
                 static_cast<
                     std::basic_istream<char, std::char_traits<char>>::off_type>(
@@ -356,6 +359,15 @@ const std::optional<std::string_view> MOD::getChunkName(u32 opcode)
 {
     if (gChunkNames.contains(opcode)) {
         return gChunkNames.at(opcode);
+    }
+
+    return std::nullopt;
+}
+
+const std::optional<std::string_view> MOD::getChunkName(EChunkType chunkType)
+{
+    if (gChunkNames.contains(static_cast<u32>(chunkType))) {
+        return gChunkNames.at(static_cast<u32>(chunkType));
     }
 
     return std::nullopt;
