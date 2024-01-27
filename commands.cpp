@@ -123,14 +123,14 @@ namespace mod {
             Texture texture;
             texture.m_width  = txeReader.readU16();
             texture.m_height = txeReader.readU16();
-            texture.m_format = txeReader.readU16();
+            texture.m_format = static_cast<TextureFormat>(txeReader.readU16());
             txeReader.readU16();
             txeReader.readU32();
             for (u32 i = 0; i < 10; i++) {
                 txeReader.readU16();
             }
             texture.m_imageData.resize(util::CalculateTxeSize(
-                texture.m_format, texture.m_width, texture.m_height));
+                (u32)texture.m_format, texture.m_width, texture.m_height));
             txeReader.read(reinterpret_cast<char*>(texture.m_imageData.data()),
                            texture.m_imageData.size());
             txeReader.close();
@@ -422,7 +422,7 @@ namespace mod {
 
             writer.writeU16(tex.m_width);
             writer.writeU16(tex.m_height);
-            writer.writeU16(tex.m_format);
+            writer.writeU16((u16)tex.m_format);
             writer.writeU16(0);
             writer.writeU32(0);
             for (u32 i = 0; i < 10; i++) {
@@ -454,7 +454,7 @@ namespace mod {
             = gTokeniser.isEnd() ? "material_dump.txt" : gTokeniser.next();
 
         if (!gModFile.m_materials.m_materials.size()
-            && !gModFile.m_materials.m_texEnvironments.size()) {
+            && !gModFile.m_materials.m_tevEnvInfo.size()) {
             std::cout << "Loaded file has no materials!" << std::endl;
             return;
         }
@@ -473,12 +473,12 @@ namespace mod {
             oss << mat;
         }
 
-        if (gModFile.m_materials.m_texEnvironments.size()) {
+        if (gModFile.m_materials.m_tevEnvInfo.size()) {
             oss << "TEV_SECTION" << std::endl;
         }
 
         u32 tevIdx = 0;
-        for (mat::TEVInfo& mat : gModFile.m_materials.m_texEnvironments) {
+        for (mat::TEVInfo& mat : gModFile.m_materials.m_tevEnvInfo) {
             oss << "TEV " << tevIdx++ << std::endl;
             oss << mat;
         }

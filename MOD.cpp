@@ -91,11 +91,11 @@ void MOD::read(util::fstream_reader& reader)
             break;
         case EChunkType::Material:
             m_materials.m_materials.resize(reader.readU32());
-            m_materials.m_texEnvironments.resize(reader.readU32());
+            m_materials.m_tevEnvInfo.resize(reader.readU32());
 
             reader.align(0x20);
-            if (m_materials.m_texEnvironments.size()) {
-                for (mat::TEVInfo& info : m_materials.m_texEnvironments) {
+            if (m_materials.m_tevEnvInfo.size()) {
+                for (mat::TEVInfo& info : m_materials.m_tevEnvInfo) {
                     info.read(reader);
                 }
             }
@@ -214,10 +214,10 @@ void MOD::write(util::fstream_writer& writer)
 
         const u32 start = startChunk(writer, 0x30);
         writer.writeU32(m_materials.m_materials.size());
-        writer.writeU32(m_materials.m_texEnvironments.size());
+        writer.writeU32(m_materials.m_tevEnvInfo.size());
         writer.align(0x20);
 
-        for (mat::TEVInfo& tevInfo : m_materials.m_texEnvironments) {
+        for (mat::TEVInfo& tevInfo : m_materials.m_tevEnvInfo) {
             tevInfo.write(writer);
         }
 
@@ -305,7 +305,7 @@ void MOD::reset()
     m_textures.clear();
     m_texattrs.clear();
     m_materials.m_materials.clear();
-    m_materials.m_texEnvironments.clear();
+    m_materials.m_tevEnvInfo.clear();
     m_vtxMatrix.clear();
     m_envelopes.clear();
     m_meshes.clear();

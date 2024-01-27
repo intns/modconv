@@ -5,22 +5,38 @@
 #include <util/fstream_reader.hpp>
 #include <util/fstream_writer.hpp>
 
+enum class TextureFormat {
+    RGB565 = 0,
+    CMPR   = 1,
+    RGB5A3 = 2,
+    I4     = 3,
+    I8     = 4,
+    IA4    = 5,
+    IA8    = 6,
+    RGBA32 = 7,
+};
+
 struct Texture {
-    u16 m_width   = 0;
-    u16 m_height  = 0;
-    u32 m_format  = 0;
-    u32 m_unknown = 0;
+    u16 m_width            = 0;
+    u16 m_height           = 0;
+    TextureFormat m_format = TextureFormat::RGB565;
     std::vector<u8> m_imageData;
 
     void read(util::fstream_reader&);
     void write(util::fstream_writer&);
 };
 
+enum class TextureTilingMode {
+    Repeat = 0,
+    Clamp  = 1,
+    Mirror = 2,
+};
+
 struct TextureAttributes {
-    u16 m_index      = 0;
-    u16 m_tilingMode = 0;
-    u16 m_unknown1   = 0;
-    f32 m_unknown2   = 0;
+    u16 m_index        = 0;
+    u16 m_tilingModeS  = 0;
+    u16 m_tilingModeT  = 0;
+    f32 m_widthPercent = 0;
 
     void read(util::fstream_reader&);
     void write(util::fstream_writer&);

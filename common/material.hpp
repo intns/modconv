@@ -276,7 +276,7 @@ struct TEVInfo {
 
 struct MaterialContainer {
     std::vector<mat::Material> m_materials;
-    std::vector<mat::TEVInfo> m_texEnvironments;
+    std::vector<mat::TEVInfo> m_tevEnvInfo;
 };
 
 #endif

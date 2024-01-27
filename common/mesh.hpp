@@ -5,23 +5,31 @@
 #include <util/fstream_reader.hpp>
 #include <util/fstream_writer.hpp>
 
+class MeshPacket {
+public:
+    std::vector<u16> indices;
+    std::vector<DisplayList> displaylists;
+
+    void read(util::fstream_reader& reader);
+    void write(util::fstream_writer& writer);
+};
+
+enum class DLCullMode { Front = 0, Back = 1, Both = 2, None = 3 };
+
 struct DisplayList {
     union {
-        // THANKS:
-        // https://github.com/KillzXGaming/010-Templates/blob/816cfc57e2ee998b953cf488e4fed25c54e7861a/Pikmin/MOD.bt#L312
         struct {
             char b1 : 8;
             char b2 : 8;
             char b3 : 8;
-            char cullMode : 8;
+            DLCullMode cullMode : 8;
         } byteView;
 
         int intView;
     } m_flags = { 0 };
 
-    // THANKS: Yoshi2's mod2obj
     u32 m_cmdCount = 0;
-    std::vector<u8> m_dlistData;
+    std::vector<u8> m_data;
 
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
@@ -43,6 +51,5 @@ struct Mesh {
     void read(util::fstream_reader& reader);
     void write(util::fstream_writer& writer);
 };
-
 
 #endif
