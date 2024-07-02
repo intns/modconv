@@ -179,7 +179,7 @@ struct TextureInfo {
 	friend std::ostream& operator<<(std::ostream& os, TextureInfo const& ti);
 };
 
-enum class MaterialFlags : u8 {
+enum class MaterialFlags : u32 {
 	IsEnabled          = 0x1,
 	Opaque             = 0x100,
 	AlphaClip          = 0x200,

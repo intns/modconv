@@ -134,7 +134,7 @@ void AlphaAnimInfo::write(util::fstream_writer& writer)
 std::ostream& operator<<(std::ostream& os, AlphaAnimInfo const& p)
 {
 	os << "\t\tALPHA_ANIM" << std::endl;
-	os << "\t\t\INDEX " << p.mIndex << std::endl;
+	os << "\t\t\tINDEX " << p.mIndex << std::endl;
 	os << "\t\t\tALPHA_KEYFRAME " << p.mKeyData << std::endl;
 	return os;
 }
