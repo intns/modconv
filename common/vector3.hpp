@@ -36,6 +36,16 @@ struct Vector3f : public Vector3Base<f32> {
         os << v.x << " " << v.y << " " << v.z;
         return os;
     }
+
+    Vector3f operator+(const Vector3f& rhs) const
+    {
+		return Vector3f(x + rhs.x, y + rhs.y, z + rhs.z);
+	}
+
+    Vector3f operator-(const Vector3f& rhs) const
+    {
+		return Vector3f(x - rhs.x, y - rhs.y, z - rhs.z);
+	}
 };
 
 struct Vector3i : public Vector3Base<u32> {

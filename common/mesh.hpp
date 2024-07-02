@@ -5,15 +5,6 @@
 #include <util/fstream_reader.hpp>
 #include <util/fstream_writer.hpp>
 
-class MeshPacket {
-public:
-    std::vector<u16> indices;
-    std::vector<DisplayList> displaylists;
-
-    void read(util::fstream_reader& reader);
-    void write(util::fstream_writer& writer);
-};
-
 enum class DLCullMode { Front = 0, Back = 1, Both = 2, None = 3 };
 
 struct DisplayList {

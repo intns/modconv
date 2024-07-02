@@ -16,7 +16,9 @@ struct BaseRoomInfo {
 
 struct BaseCollTriInfo {
     u32 m_mapCode = 0;
-    Vector3i m_indice;
+	u32 m_vertexIndex;
+	u32 _08;
+	u32 _0C;
     u16 m_unknown2 = 0;
     u16 m_unknown3 = 0;
     u16 m_unknown4 = 0;

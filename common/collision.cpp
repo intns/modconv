@@ -13,7 +13,10 @@ void BaseRoomInfo::write(util::fstream_writer& writer)
 void BaseCollTriInfo::read(util::fstream_reader& reader)
 {
     m_mapCode = reader.readU32();
-    m_indice.read(reader);
+
+    m_vertexIndex = reader.readU32();
+    _08    = reader.readU32();
+    _0C    = reader.readU32();
 
     m_unknown2 = reader.readU16();
     m_unknown3 = reader.readU16();
@@ -26,7 +29,10 @@ void BaseCollTriInfo::read(util::fstream_reader& reader)
 void BaseCollTriInfo::write(util::fstream_writer& writer)
 {
     writer.writeU32(m_mapCode);
-    m_indice.write(writer);
+   
+    writer.writeU32(m_vertexIndex);
+    writer.writeU32(_08);
+    writer.writeU32(_0C);
 
     writer.writeU16(m_unknown2);
     writer.writeU16(m_unknown3);

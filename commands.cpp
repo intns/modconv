@@ -220,12 +220,7 @@ namespace mod {
 
         if (gModFile.m_colltris.m_collinfo.size()) {
             os << "\no collision_mesh" << std::endl;
-            for (const BaseCollTriInfo& colInfo :
-                 gModFile.m_colltris.m_collinfo) {
-                os << "f " << colInfo.m_indice.x + 1 << " "
-                   << colInfo.m_indice.y + 1 << " " << colInfo.m_indice.z + 1
-                   << " " << std::endl;
-            }
+            // TODO: Implement this
         }
 
         /*os << "# Mesh data" << std::endl;
