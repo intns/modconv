@@ -7,8 +7,8 @@
 #include <util/fstream_writer.hpp>
 
 struct Plane {
-	Vector3f m_normal;
-	f32 m_distance = 0;
+	Vector3f mNormal;
+	f32 mDistance = 0;
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);

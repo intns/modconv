@@ -3,321 +3,304 @@
 #include <map>
 
 namespace {
-static inline void writeGenericChunk(util::fstream_writer& writer, auto& vector,
-                                     u32 chunkIdentifier)
+static inline void writeGenericChunk(util::fstream_writer& writer, auto& vector, u32 chunkIdentifier)
 {
-    std::cout << "Writing 0x" << std::hex << chunkIdentifier << std::dec << ", "
-              << MOD::getChunkName(chunkIdentifier).value() << std::endl;
+	std::cout << "Writing 0x" << std::hex << chunkIdentifier << std::dec << ", " << MOD::getChunkName(chunkIdentifier).value() << std::endl;
 
-    u32 subchunkPos = startChunk(writer, chunkIdentifier);
-    writer.writeU32(vector.size());
+	u32 subchunkPos = startChunk(writer, chunkIdentifier);
+	writer.writeU32(static_cast<u32>(vector.size()));
 
-    writer.align(0x20);
-    for (auto& contents : vector) {
-        contents.write(writer);
-    }
-    finishChunk(writer, subchunkPos);
+	writer.align(0x20);
+	for (auto& contents : vector) {
+		contents.write(writer);
+	}
+	finishChunk(writer, subchunkPos);
 }
 
 static inline void readGenericChunk(util::fstream_reader& reader, auto& vector)
 {
-    vector.resize(reader.readU32());
+	vector.resize(reader.readU32());
 
-    reader.align(0x20);
-    for (auto& elem : vector) {
-        elem.read(reader);
-    }
-    reader.align(0x20);
+	reader.align(0x20);
+	for (auto& elem : vector) {
+		elem.read(reader);
+	}
+	reader.align(0x20);
 }
 } // namespace
 
 void MOD::read(util::fstream_reader& reader)
 {
-    bool stopRead = false;
-    while (!stopRead) {
-        std::streampos position = reader.tellg();
-        const u32 opcode        = reader.readU32();
-        const u32 length        = reader.readU32();
+	bool stopRead = false;
+	while (!stopRead) {
+		std::streampos position = reader.tellg();
+		const u32 opcode        = reader.readU32();
+		const u32 length        = reader.readU32();
 
-        if (position & 0x1F) {
-            std::cout << "Error in chunk " << opcode << ", offset " << position
-                      << ", chunk start isn't aligned to 0x20, this means an "
-                         "improper read occured."
-                      << std::endl;
-            return;
-        }
+		if (position & 0x1F) {
+			std::cout << "Error in chunk " << opcode << ", offset " << position
+			          << ", chunk start isn't aligned to 0x20, this means an "
+			             "improper read occured."
+			          << std::endl;
+			return;
+		}
 
-        const auto ocString = getChunkName(opcode);
-        std::cout << "Reading 0x" << std::hex << opcode << std::dec << ", "
-                  << (ocString.has_value() ? ocString.value() : "Unknown chunk")
-                  << std::endl;
+		const auto ocString = getChunkName(opcode);
+		std::cout << "Reading 0x" << std::hex << opcode << std::dec << ", " << (ocString.has_value() ? ocString.value() : "Unknown chunk")
+		          << std::endl;
 
-        switch (static_cast<EChunkType>(opcode)) {
-        case EChunkType::Header:
-            reader.align(0x20);
-            m_header.m_dateTime.m_year  = reader.readU16();
-            m_header.m_dateTime.m_month = reader.readU8();
-            m_header.m_dateTime.m_day   = reader.readU8();
-            m_header.m_flags            = reader.readU32();
-            reader.align(0x20);
-            break;
-        case EChunkType::Vertex:
-            readGenericChunk(reader, m_vertices);
-            break;
-        case EChunkType::VertexNormal:
-            readGenericChunk(reader, m_vnormals);
-            break;
-        case EChunkType::VertexNBT:
-            readGenericChunk(reader, m_vertexnbt);
-            break;
-        case EChunkType::VertexColour:
-            readGenericChunk(reader, m_vcolours);
-            break;
-        case EChunkType::TexCoord0:
-        case EChunkType::TexCoord1:
-        case EChunkType::TexCoord2:
-        case EChunkType::TexCoord3:
-        case EChunkType::TexCoord4:
-        case EChunkType::TexCoord5:
-        case EChunkType::TexCoord6:
-        case EChunkType::TexCoord7:
-            readGenericChunk(reader, m_texcoords[opcode - 0x18]);
-            break;
-        case EChunkType::Texture:
-            readGenericChunk(reader, m_textures);
-            break;
-        case EChunkType::TextureAttribute:
-            readGenericChunk(reader, m_texattrs);
-            break;
-        case EChunkType::Material:
-            m_materials.m_materials.resize(reader.readU32());
-            m_materials.m_tevEnvInfo.resize(reader.readU32());
+		switch (static_cast<EChunkType>(opcode)) {
+		case EChunkType::Header:
+			reader.align(0x20);
+			mHeader.mDateTime.mYear  = reader.readU16();
+			mHeader.mDateTime.mMonth = reader.readU8();
+			mHeader.mDateTime.mDay   = reader.readU8();
+			mHeader.mFlags           = reader.readU32();
+			reader.align(0x20);
+			break;
+		case EChunkType::Vertex:
+			readGenericChunk(reader, mVertices);
+			break;
+		case EChunkType::VertexNormal:
+			readGenericChunk(reader, mVertexNormals);
+			break;
+		case EChunkType::VertexNBT:
+			readGenericChunk(reader, mVertexNbt);
+			break;
+		case EChunkType::VertexColour:
+			readGenericChunk(reader, mVertexColours);
+			break;
+		case EChunkType::TexCoord0:
+		case EChunkType::TexCoord1:
+		case EChunkType::TexCoord2:
+		case EChunkType::TexCoord3:
+		case EChunkType::TexCoord4:
+		case EChunkType::TexCoord5:
+		case EChunkType::TexCoord6:
+		case EChunkType::TexCoord7:
+			readGenericChunk(reader, mTextureCoords[opcode - 0x18]);
+			break;
+		case EChunkType::Texture:
+			readGenericChunk(reader, mTextures);
+			break;
+		case EChunkType::TextureAttribute:
+			readGenericChunk(reader, mTextureAttributes);
+			break;
+		case EChunkType::Material:
+			mMaterials.mMaterials.resize(reader.readU32());
+			mMaterials.mTevEnvironmentInfo.resize(reader.readU32());
 
-            reader.align(0x20);
-            if (m_materials.m_tevEnvInfo.size()) {
-                for (mat::TEVInfo& info : m_materials.m_tevEnvInfo) {
-                    info.read(reader);
-                }
-            }
+			reader.align(0x20);
+			if (mMaterials.mTevEnvironmentInfo.size()) {
+				for (mat::TEVInfo& info : mMaterials.mTevEnvironmentInfo) {
+					info.read(reader);
+				}
+			}
 
-            if (m_materials.m_materials.size()) {
-                for (mat::Material& mat : m_materials.m_materials) {
-                    mat.read(reader);
-                }
-            }
-            reader.align(0x20);
-            break;
-        case EChunkType::VertexMatrix:
-            readGenericChunk(reader, m_vtxMatrix);
-            break;
-        case EChunkType::MatrixEnvelope:
-            readGenericChunk(reader, m_envelopes);
-            break;
-        case EChunkType::Mesh:
-            readGenericChunk(reader, m_meshes);
-            break;
-        case EChunkType::Joint:
-            readGenericChunk(reader, m_joints);
-            break;
-        case EChunkType::JointName:
-            m_jointNames.resize(reader.readU32());
-            reader.align(0x20);
-            for (std::string& str : m_jointNames) {
-                str.resize(reader.readU32());
-                for (u32 i = 0; i < str.size(); i++) {
-                    str[i] = reader.readU8();
-                }
-            }
-            reader.align(0x20);
-            break;
-        case EChunkType::CollisionPrism:
-            m_colltris.read(reader);
-            break;
-        case EChunkType::CollisionGrid:
-            m_collgrid.read(reader);
-            break;
-        case EChunkType::EndOfFile:
-            // Seek ahead to the end of the chunk subheader
-            reader.seekg(
-                static_cast<
-                    std::basic_istream<char, std::char_traits<char>>::off_type>(
-                    length),
-                std::ios_base::cur);
+			if (mMaterials.mMaterials.size()) {
+				for (mat::Material& mat : mMaterials.mMaterials) {
+					mat.read(reader);
+				}
+			}
+			reader.align(0x20);
+			break;
+		case EChunkType::VertexMatrix:
+			readGenericChunk(reader, mVertexMatrices);
+			break;
+		case EChunkType::MatrixEnvelope:
+			readGenericChunk(reader, mVertexEnvelopes);
+			break;
+		case EChunkType::Mesh:
+			readGenericChunk(reader, mMeshes);
+			break;
+		case EChunkType::Joint:
+			readGenericChunk(reader, mJoints);
+			break;
+		case EChunkType::JointName:
+			mJointNames.resize(reader.readU32());
+			reader.align(0x20);
+			for (std::string& str : mJointNames) {
+				str.resize(reader.readU32());
+				for (u32 i = 0; i < str.size(); i++) {
+					str[i] = reader.readU8();
+				}
+			}
+			reader.align(0x20);
+			break;
+		case EChunkType::CollisionPrism:
+			mCollisionTriangles.read(reader);
+			break;
+		case EChunkType::CollisionGrid:
+			mCollisionGridInfo.read(reader);
+			break;
+		case EChunkType::EndOfFile:
+			// Seek ahead to the end of the chunk subheader
+			reader.seekg(static_cast<std::basic_istream<char, std::char_traits<char>>::off_type>(length), std::ios_base::cur);
 
-            // Read the end of file bytes (ini file, most often)
-            while (!reader.eof()) {
-                m_eofBytes.push_back(reader.get());
-                reader.peek();
-            }
+			// Read the end of file bytes (ini file, most often)
+			while (!reader.eof()) {
+				mEndOfFileData.push_back(reader.get());
+				reader.peek();
+			}
 
-            stopRead = true;
-            break;
-        default:
-            // If we don't recognise the chunk then skip it
-            reader.seekg(
-                static_cast<
-                    std::basic_istream<char, std::char_traits<char>>::off_type>(
-                    length),
-                std::ios_base::cur);
-            break;
-        }
-    }
+			stopRead = true;
+			break;
+		default:
+			// If we don't recognise the chunk then skip it
+			reader.seekg(static_cast<std::basic_istream<char, std::char_traits<char>>::off_type>(length), std::ios_base::cur);
+			break;
+		}
+	}
 }
 
 // NOTE: the control flow and layout of this function is a replica of a
 // decompiled version of the DMD->MOD process, found in plugTexConv
 void MOD::write(util::fstream_writer& writer)
 {
-    // Write header
-    u32 headerPos = startChunk(writer, 0);
-    writer.align(0x20);
-    writer.writeU16(m_header.m_dateTime.m_year);
-    writer.writeU8(m_header.m_dateTime.m_month);
-    writer.writeU8(m_header.m_dateTime.m_day);
-    writer.writeU32(m_header.m_flags);
-    finishChunk(writer, headerPos);
+	// Write header
+	u32 headerPos = startChunk(writer, 0);
+	writer.align(0x20);
+	writer.writeU16(mHeader.mDateTime.mYear);
+	writer.writeU8(mHeader.mDateTime.mMonth);
+	writer.writeU8(mHeader.mDateTime.mDay);
+	writer.writeU32(mHeader.mFlags);
+	finishChunk(writer, headerPos);
 
-    if (m_vertices.size()) {
-        writeGenericChunk(writer, m_vertices, 0x10);
-    }
+	if (mVertices.size()) {
+		writeGenericChunk(writer, mVertices, 0x10);
+	}
 
-    if (m_vcolours.size()) {
-        writeGenericChunk(writer, m_vcolours, 0x13);
-    }
+	if (mVertexColours.size()) {
+		writeGenericChunk(writer, mVertexColours, 0x13);
+	}
 
-    if (m_vnormals.size()) {
-        writeGenericChunk(writer, m_vnormals, 0x11);
-    }
+	if (mVertexNormals.size()) {
+		writeGenericChunk(writer, mVertexNormals, 0x11);
+	}
 
-    if (m_header.m_flags & static_cast<u32>(MODFlags::UseNBT)
-        && m_vertexnbt.size()) {
-        writeGenericChunk(writer, m_vnormals, 0x12);
-    }
+	if (mHeader.mFlags & static_cast<u32>(MODFlags::UseNBT) && mVertexNbt.size()) {
+		writeGenericChunk(writer, mVertexNormals, 0x12);
+	}
 
-    for (std::size_t i = 0; i < m_texcoords.size(); i++) {
-        if (m_texcoords[i].size()) {
-            writeGenericChunk(writer, m_texcoords[i], i + 0x18);
-        }
-    }
+	for (std::size_t i = 0; i < mTextureCoords.size(); i++) {
+		if (mTextureCoords[i].size()) {
+			writeGenericChunk(writer, mTextureCoords[i], static_cast<u32>(i + 0x18));
+		}
+	}
 
-    if (m_textures.size()) {
-        writeGenericChunk(writer, m_textures, 0x20);
-    }
+	if (mTextures.size()) {
+		writeGenericChunk(writer, mTextures, 0x20);
+	}
 
-    if (m_texattrs.size()) {
-        writeGenericChunk(writer, m_texattrs, 0x22);
-    }
+	if (mTextureAttributes.size()) {
+		writeGenericChunk(writer, mTextureAttributes, 0x22);
+	}
 
-    if (m_materials.m_materials.size()) {
-        std::cout << "Writing 0x30, " << MOD::getChunkName(0x30).value()
-                  << std::endl;
+	if (mMaterials.mMaterials.size()) {
+		std::cout << "Writing 0x30, " << MOD::getChunkName(0x30).value() << std::endl;
 
-        const u32 start = startChunk(writer, 0x30);
-        writer.writeU32(m_materials.m_materials.size());
-        writer.writeU32(m_materials.m_tevEnvInfo.size());
-        writer.align(0x20);
+		const u32 start = startChunk(writer, 0x30);
+		writer.writeU32(static_cast<u32>(mMaterials.mMaterials.size()));
+		writer.writeU32(static_cast<u32>(mMaterials.mTevEnvironmentInfo.size()));
+		writer.align(0x20);
 
-        for (mat::TEVInfo& tevInfo : m_materials.m_tevEnvInfo) {
-            tevInfo.write(writer);
-        }
+		for (mat::TEVInfo& tevInfo : mMaterials.mTevEnvironmentInfo) {
+			tevInfo.write(writer);
+		}
 
-        for (mat::Material& material : m_materials.m_materials) {
-            material.write(writer);
-        }
-        finishChunk(writer, start);
-    }
+		for (mat::Material& material : mMaterials.mMaterials) {
+			material.write(writer);
+		}
+		finishChunk(writer, start);
+	}
 
-    if (m_envelopes.size()) {
-        writeGenericChunk(writer, m_envelopes, 0x41);
-    }
+	if (mVertexEnvelopes.size()) {
+		writeGenericChunk(writer, mVertexEnvelopes, 0x41);
+	}
 
-    if (m_vtxMatrix.size()) {
-        writeGenericChunk(writer, m_vtxMatrix, 0x40);
-    }
+	if (mVertexMatrices.size()) {
+		writeGenericChunk(writer, mVertexMatrices, 0x40);
+	}
 
-    if (m_meshes.size()) {
-        writeGenericChunk(writer, m_meshes, 0x50);
-    }
+	if (mMeshes.size()) {
+		writeGenericChunk(writer, mMeshes, 0x50);
+	}
 
-    if (m_joints.size()) {
-        writeGenericChunk(writer, m_joints, 0x60);
+	if (mJoints.size()) {
+		writeGenericChunk(writer, mJoints, 0x60);
 
-        if (m_jointNames.size()) {
-            std::cout << "Writing 0x61, " << MOD::getChunkName(0x61).value()
-                      << std::endl;
+		if (mJointNames.size()) {
+			std::cout << "Writing 0x61, " << MOD::getChunkName(0x61).value() << std::endl;
 
-            const u32 start = startChunk(writer, 0x61);
-            writer.writeU32(m_jointNames.size());
-            writer.align(0x20);
-            for (std::string& name : m_jointNames) {
-                writer.writeU32(name.size());
-                for (std::size_t i = 0; i < name.size(); i++) {
-                    writer.writeU8(name[i]);
-                }
-            }
-            finishChunk(writer, start);
-        }
-    }
+			const u32 start = startChunk(writer, 0x61);
+			writer.writeU32(static_cast<u32>(mJointNames.size()));
+			writer.align(0x20);
+			for (std::string& name : mJointNames) {
+				writer.writeU32(static_cast<u32>(name.size()));
+				for (std::size_t i = 0; i < name.size(); i++) {
+					writer.writeU8(name[i]);
+				}
+			}
+			finishChunk(writer, start);
+		}
+	}
 
-    if (m_colltris.m_collinfo.size()) {
-        std::cout << "Writing 0x100, " << MOD::getChunkName(0x100).value()
-                  << std::endl;
-        m_colltris.write(writer);
+	if (mCollisionTriangles.mCollInfo.size()) {
+		std::cout << "Writing 0x100, " << MOD::getChunkName(0x100).value() << std::endl;
+		mCollisionTriangles.write(writer);
 
-        const u32 start = startChunk(writer, 0x110);
-        writer.align(0x20);
-        m_collgrid.m_boundsMin.write(writer);
-        m_collgrid.m_boundsMax.write(writer);
-        writer.writeF32(m_collgrid.m_unknown1);
-        writer.writeU32(m_collgrid.m_gridX);
-        writer.writeU32(m_collgrid.m_gridY);
-        writer.writeU32(m_collgrid.m_groups.size());
-        for (CollGroup& group : m_collgrid.m_groups) {
-            group.write(writer);
-        }
-        for (s32& i : m_collgrid.m_unknown2) {
-            writer.writeS32(i);
-        }
-        writer.align(0x20);
-        finishChunk(writer, start);
-    }
+		const u32 start = startChunk(writer, 0x110);
+		writer.align(0x20);
+		mCollisionGridInfo.mBoundsMin.write(writer);
+		mCollisionGridInfo.mBoundsMax.write(writer);
+		writer.writeF32(mCollisionGridInfo.mGridSize);
+		writer.writeU32(mCollisionGridInfo.mGridSizeX);
+		writer.writeU32(mCollisionGridInfo.mGridSizeY);
+		writer.writeU32(static_cast<u32>(mCollisionGridInfo.m_groups.size()));
+		for (CollGroup& group : mCollisionGridInfo.m_groups) {
+			group.write(writer);
+		}
+		for (s32& i : mCollisionGridInfo.m_unknown2) {
+			writer.writeS32(i);
+		}
+		writer.align(0x20);
+		finishChunk(writer, start);
+	}
 
-    // Finalise writing with 0xFFFF chunk and append any INI file
-    finishChunk(writer, startChunk(writer, 0xFFFF));
-    if (m_eofBytes.size()) {
-        std::cout << "Writing 0xffff, " << MOD::getChunkName(0xffff).value()
-                  << std::endl;
+	// Finalise writing with 0xFFFF chunk and append any INI file
+	finishChunk(writer, startChunk(writer, 0xFFFF));
+	if (mEndOfFileData.size()) {
+		std::cout << "Writing 0xffff, " << MOD::getChunkName(0xffff).value() << std::endl;
 
-        writer.write(reinterpret_cast<char*>(m_eofBytes.data()),
-                     m_eofBytes.size());
-    }
+		writer.write(reinterpret_cast<char*>(mEndOfFileData.data()), mEndOfFileData.size());
+	}
 }
 
 void MOD::reset()
 {
-    m_vertices.clear();
-    m_vnormals.clear();
-    m_vertexnbt.clear();
-    m_vcolours.clear();
-    for (u32 i = 0; i < 8; i++) {
-        m_texcoords[i].clear();
-    }
-    m_textures.clear();
-    m_texattrs.clear();
-    m_materials.m_materials.clear();
-    m_materials.m_tevEnvInfo.clear();
-    m_vtxMatrix.clear();
-    m_envelopes.clear();
-    m_meshes.clear();
-    m_joints.clear();
-    m_jointNames.clear();
+	mVertices.clear();
+	mVertexNormals.clear();
+	mVertexNbt.clear();
+	mVertexColours.clear();
+	for (u32 i = 0; i < 8; i++) {
+		mTextureCoords[i].clear();
+	}
+	mTextures.clear();
+	mTextureAttributes.clear();
+	mMaterials.mMaterials.clear();
+	mMaterials.mTevEnvironmentInfo.clear();
+	mVertexMatrices.clear();
+	mVertexEnvelopes.clear();
+	mMeshes.clear();
+	mJoints.clear();
+	mJointNames.clear();
 
-    m_colltris.m_collinfo.clear();
-    m_colltris.m_roominfo.clear();
+	mCollisionTriangles.mCollInfo.clear();
+	mCollisionTriangles.mRoomInfo.clear();
 
-    m_collgrid.clear();
+	mCollisionGridInfo.clear();
 
-    m_eofBytes.clear();
+	mEndOfFileData.clear();
 }
 
 // clang-format off
@@ -357,18 +340,18 @@ const std::map<u32, std::string_view> gChunkNames =
 
 const std::optional<std::string_view> MOD::getChunkName(u32 opcode)
 {
-    if (gChunkNames.contains(opcode)) {
-        return gChunkNames.at(opcode);
-    }
+	if (gChunkNames.contains(opcode)) {
+		return gChunkNames.at(opcode);
+	}
 
-    return std::nullopt;
+	return std::nullopt;
 }
 
 const std::optional<std::string_view> MOD::getChunkName(EChunkType chunkType)
 {
-    if (gChunkNames.contains(static_cast<u32>(chunkType))) {
-        return gChunkNames.at(static_cast<u32>(chunkType));
-    }
+	if (gChunkNames.contains(static_cast<u32>(chunkType))) {
+		return gChunkNames.at(static_cast<u32>(chunkType));
+	}
 
-    return std::nullopt;
+	return std::nullopt;
 }

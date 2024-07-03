@@ -6,10 +6,10 @@
 #include <util/fstream_writer.hpp>
 
 struct VtxMatrix {
-    u16 m_index = 0;
+	u16 mIndex = 0;
 
-    void read(util::fstream_reader&);
-    void write(util::fstream_writer&);
+	void read(util::fstream_reader&);
+	void write(util::fstream_writer&) const;
 };
 
 #endif

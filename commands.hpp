@@ -8,18 +8,18 @@ extern std::string gModFileName;
 extern util::tokeniser gTokeniser;
 
 namespace mod {
-    void loadFile();
-    void writeFile();
-    void closeFile();
+void loadFile();
+void writeFile();
+void closeFile();
 
-    void importTexture();
-    void importIni();
+void importTexture();
+void importIni();
 
-    void exportObj();
-    void exportDmd();
-    void exportTextures();
-    void exportMaterials();
-    void exportIni();
+void exportObj();
+void exportDmd();
+void exportTextures();
+void exportMaterials();
+void exportIni();
 } // namespace mod
 
 void objToDmd();

@@ -7,9 +7,9 @@
 #include <util/fstream_writer.hpp>
 
 struct NBT {
-    Vector3f m_normals;
-    Vector3f m_binormals;
-    Vector3f m_tangent;
+    Vector3f mNormal;
+    Vector3f mBinormal;
+    Vector3f mTangent;
 
     void read(util::fstream_reader&);
     void write(util::fstream_writer&);

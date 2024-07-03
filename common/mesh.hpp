@@ -8,39 +8,39 @@
 enum class DLCullMode { Front = 0, Back = 1, Both = 2, None = 3 };
 
 struct DisplayList {
-    union {
-        struct {
-            char b1 : 8;
-            char b2 : 8;
-            char b3 : 8;
-            DLCullMode cullMode : 8;
-        } byteView;
+	union {
+		struct {
+			char b1 : 8;
+			char b2 : 8;
+			char b3 : 8;
+			DLCullMode cullMode : 8;
+		} byteView;
 
-        int intView;
-    } m_flags = { 0 };
+		int intView;
+	} mFlags = { 0 };
 
-    u32 m_cmdCount = 0;
-    std::vector<u8> m_data;
+	u32 mCommandCount = 0;
+	std::vector<u8> mData;
 
-    void read(util::fstream_reader& reader);
-    void write(util::fstream_writer& writer);
+	void read(util::fstream_reader& reader);
+	void write(util::fstream_writer& writer);
 };
 
 struct MeshPacket {
-    std::vector<u16> m_indices;
-    std::vector<DisplayList> m_displaylists;
+	std::vector<u16> mIndices;
+	std::vector<DisplayList> mDisplayLists;
 
-    void read(util::fstream_reader& reader);
-    void write(util::fstream_writer& writer);
+	void read(util::fstream_reader& reader);
+	void write(util::fstream_writer& writer);
 };
 
 struct Mesh {
-    u32 m_boneIndex     = 0;
-    u32 m_vtxDescriptor = 0;
-    std::vector<MeshPacket> m_packets;
+	u32 mBoneIndex     = 0;
+	u32 mVtxDescriptor = 0;
+	std::vector<MeshPacket> mPackets;
 
-    void read(util::fstream_reader& reader);
-    void write(util::fstream_writer& writer);
+	void read(util::fstream_reader& reader);
+	void write(util::fstream_writer& writer);
 };
 
 #endif

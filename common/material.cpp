@@ -34,7 +34,7 @@ void KeyInfoU8::read(util::fstream_reader& reader)
 	mEndValue   = reader.readF32();
 }
 
-void KeyInfoU8::write(util::fstream_writer& writer)
+void KeyInfoU8::write(util::fstream_writer& writer) const
 {
 	writer.writeU8(mAnimationFrame);
 	writer.writeU8(0);
@@ -58,7 +58,7 @@ void KeyInfoF32::read(util::fstream_reader& reader)
 	mKeyDataC = reader.readF32();
 }
 
-void KeyInfoF32::write(util::fstream_writer& writer)
+void KeyInfoF32::write(util::fstream_writer& writer) const
 {
 	writer.writeF32(mKeyDataA);
 	writer.writeF32(mKeyDataB);
@@ -79,7 +79,7 @@ void KeyInfoS10::read(util::fstream_reader& reader)
 	mEndValue   = reader.readF32();
 }
 
-void KeyInfoS10::write(util::fstream_writer& writer)
+void KeyInfoS10::write(util::fstream_writer& writer) const
 {
 	writer.writeS16(mAnimationFrame);
 	writer.writeS16(0);
@@ -101,7 +101,7 @@ void ColourAnimInfo::read(util::fstream_reader& reader)
 	mKeyDataB.read(reader);
 }
 
-void ColourAnimInfo::write(util::fstream_writer& writer)
+void ColourAnimInfo::write(util::fstream_writer& writer) const
 {
 	writer.writeS32(mIndex);
 	mKeyDataR.write(writer);
@@ -125,7 +125,7 @@ void AlphaAnimInfo::read(util::fstream_reader& reader)
 	mKeyData.read(reader);
 }
 
-void AlphaAnimInfo::write(util::fstream_writer& writer)
+void AlphaAnimInfo::write(util::fstream_writer& writer) const
 {
 	writer.writeS32(mIndex);
 	mKeyData.write(writer);
@@ -162,12 +162,12 @@ void PolygonColourInfo::write(util::fstream_writer& writer)
 	writer.writeS32(mAnimLength);
 	writer.writeF32(mAnimSpeed);
 
-	writer.writeU32(mColourAnimInfo.size());
+	writer.writeU32(static_cast<u32>(mColourAnimInfo.size()));
 	for (mat::ColourAnimInfo& unk : mColourAnimInfo) {
 		unk.write(writer);
 	}
 
-	writer.writeU32(mAlphaAnimInfo.size());
+	writer.writeU32(static_cast<u32>(mAlphaAnimInfo.size()));
 	for (mat::AlphaAnimInfo& unk : mAlphaAnimInfo) {
 		unk.write(writer);
 	}
@@ -191,7 +191,7 @@ void LightingInfo::read(util::fstream_reader& reader)
 	mUnknown = reader.readF32();
 }
 
-void LightingInfo::write(util::fstream_writer& writer)
+void LightingInfo::write(util::fstream_writer& writer) const
 {
 	writer.writeU32(mFlags);
 	writer.writeF32(mUnknown);
@@ -240,7 +240,7 @@ void PeInfo::read(util::fstream_reader& reader)
 	mBlendMode.value            = reader.readS32();
 }
 
-void PeInfo::write(util::fstream_writer& writer)
+void PeInfo::write(util::fstream_writer& writer) const
 {
 	writer.writeS32(mFlags);
 	writer.writeS32(mAlphaCompareFunction.value);
@@ -275,7 +275,7 @@ void TexGenData::read(util::fstream_reader& reader)
 	mTexMtx            = reader.readU8();
 }
 
-void TexGenData::write(util::fstream_writer& writer)
+void TexGenData::write(util::fstream_writer& writer) const
 {
 	writer.writeU8(mDestinationCoords);
 	writer.writeU8(mFunc);
@@ -309,7 +309,7 @@ void TextureAnimData::read(util::fstream_reader& reader)
 	mValueZ.read(reader);
 }
 
-void TextureAnimData::write(util::fstream_writer& writer)
+void TextureAnimData::write(util::fstream_writer& writer) const
 {
 	writer.writeS32(mAnimationFrame);
 	mValueX.write(writer);
@@ -328,15 +328,15 @@ std::ostream& operator<<(std::ostream& os, TextureAnimData const& t)
 
 void TextureData::read(util::fstream_reader& reader)
 {
-	m_texAttrIndex = reader.readS32();
+	mTextureAttributeIndex = reader.readS32();
 
-	m_unknown2 = reader.readS16();
-	m_unknown3 = reader.readS16();
+	mUnknown  = reader.readS16();
+	mUnknown2 = reader.readS16();
 
-	m_unknown4 = reader.readU8();
-	m_unknown5 = reader.readU8();
-	m_unknown6 = reader.readU8();
-	m_unknown7 = reader.readU8();
+	mUnknown3 = reader.readU8();
+	mUnknown4 = reader.readU8();
+	mUnknown5 = reader.readU8();
+	mUnknown6 = reader.readU8();
 
 	mTextureMtxId = reader.readU32();
 
@@ -366,15 +366,15 @@ void TextureData::read(util::fstream_reader& reader)
 
 void TextureData::write(util::fstream_writer& writer)
 {
-	writer.writeS32(m_texAttrIndex);
+	writer.writeS32(mTextureAttributeIndex);
 
-	writer.writeS16(m_unknown2);
-	writer.writeS16(m_unknown3);
+	writer.writeS16(mUnknown);
+	writer.writeS16(mUnknown2);
 
-	writer.writeU8(m_unknown4);
-	writer.writeU8(m_unknown5);
-	writer.writeU8(m_unknown6);
-	writer.writeU8(m_unknown7);
+	writer.writeU8(mUnknown3);
+	writer.writeU8(mUnknown4);
+	writer.writeU8(mUnknown5);
+	writer.writeU8(mUnknown6);
 
 	writer.writeU32(mTextureMtxId);
 
@@ -386,17 +386,17 @@ void TextureData::write(util::fstream_writer& writer)
 	mPivot.write(writer);
 	mPosition.write(writer);
 
-	writer.writeU32(mPositionAnimData.size());
+	writer.writeU32(static_cast<u32>(mPositionAnimData.size()));
 	for (TextureAnimData& posData : mPositionAnimData) {
 		posData.write(writer);
 	}
 
-	writer.writeU32(mRotationAnimData.size());
+	writer.writeU32(static_cast<u32>(mRotationAnimData.size()));
 	for (TextureAnimData& rotData : mRotationAnimData) {
 		rotData.write(writer);
 	}
 
-	writer.writeU32(mScaleAnimData.size());
+	writer.writeU32(static_cast<u32>(mScaleAnimData.size()));
 	for (TextureAnimData& scaleData : mScaleAnimData) {
 		scaleData.write(writer);
 	}
@@ -404,13 +404,13 @@ void TextureData::write(util::fstream_writer& writer)
 
 std::ostream& operator<<(std::ostream& os, TextureData const& t)
 {
-	os << "\tTEX_ATTR_IDX " << t.m_texAttrIndex << std::endl;
-	PrintIndent(os, 5, "UNK2 " << t.m_unknown2);
-	PrintIndent(os, 5, "UNK3 " << t.m_unknown3);
-	PrintIndent(os, 5, "UNK4 " << (u32)t.m_unknown4);
-	PrintIndent(os, 5, "UNK5 " << (u32)t.m_unknown5);
-	PrintIndent(os, 5, "UNK6 " << (u32)t.m_unknown6);
-	PrintIndent(os, 5, "UNK7 " << (u32)t.m_unknown7);
+	os << "\tTEX_ATTR_IDX " << t.mTextureAttributeIndex << std::endl;
+	PrintIndent(os, 5, "UNK2 " << t.mUnknown);
+	PrintIndent(os, 5, "UNK3 " << t.mUnknown2);
+	PrintIndent(os, 5, "UNK4 " << (u32)t.mUnknown3);
+	PrintIndent(os, 5, "UNK5 " << (u32)t.mUnknown4);
+	PrintIndent(os, 5, "UNK6 " << (u32)t.mUnknown5);
+	PrintIndent(os, 5, "UNK7 " << (u32)t.mUnknown6);
 	PrintIndent(os, 5, "TEXTURE_MATRIX_ID " << (u32)t.mTextureMtxId);
 	PrintIndent(os, 5, "ANIM_LENGTH " << (u32)t.mAnimLength);
 	PrintIndent(os, 5, "ANIM_SPEED " << t.mAnimSpeed);
@@ -428,32 +428,32 @@ std::ostream& operator<<(std::ostream& os, TextureData const& t)
 
 void TextureInfo::read(util::fstream_reader& reader)
 {
-	m_unknown1 = reader.readS32();
-	m_unknown2.read(reader);
+	mUnknown = reader.readS32();
+	mUnknown2.read(reader);
 
-	m_textureGenData.resize(reader.readU32());
-	for (mat::TexGenData& genData : m_textureGenData) {
+	mTextureGenData.resize(reader.readU32());
+	for (mat::TexGenData& genData : mTextureGenData) {
 		genData.read(reader);
 	}
 
-	m_textureData.resize(reader.readU32());
-	for (mat::TextureData& texData : m_textureData) {
+	mTextureData.resize(reader.readU32());
+	for (mat::TextureData& texData : mTextureData) {
 		texData.read(reader);
 	}
 }
 
 void TextureInfo::write(util::fstream_writer& writer)
 {
-	writer.writeS32(m_unknown1);
-	m_unknown2.write(writer);
+	writer.writeS32(mUnknown);
+	mUnknown2.write(writer);
 
-	writer.writeU32(m_textureGenData.size());
-	for (mat::TexGenData& genData : m_textureGenData) {
+	writer.writeU32(static_cast<u32>(mTextureGenData.size()));
+	for (mat::TexGenData& genData : mTextureGenData) {
 		genData.write(writer);
 	}
 
-	writer.writeU32(m_textureData.size());
-	for (mat::TextureData& texData : m_textureData) {
+	writer.writeU32(static_cast<u32>(mTextureData.size()));
+	for (mat::TextureData& texData : mTextureData) {
 		texData.write(writer);
 	}
 }
@@ -461,49 +461,49 @@ void TextureInfo::write(util::fstream_writer& writer)
 std::ostream& operator<<(std::ostream& os, TextureInfo const& ti)
 {
 	os << "\tTEXTURE_INFO" << std::endl;
-	os << "\t\tUNK1 " << ti.m_unknown1 << std::endl;
-	os << "\t\tUNK2 " << ti.m_unknown2 << std::endl;
+	os << "\t\tUNK1 " << ti.mUnknown << std::endl;
+	os << "\t\tUNK2 " << ti.mUnknown2 << std::endl;
 
 	u32 idx = 0;
-	os << "\t\tTEXTURE_GEN_DATA_COUNT " << ti.m_textureGenData.size() << std::endl;
-	for (const TexGenData& txgen : ti.m_textureGenData) {
+	os << "\t\tTEXTURE_GEN_DATA_COUNT " << ti.mTextureGenData.size() << std::endl;
+	for (const TexGenData& txgen : ti.mTextureGenData) {
 		os << "\t\t\t"
 		   << "ENTRY" << idx << std::endl;
 		os << txgen;
 		idx++;
 	}
 
-	PrintList(os, ti.m_textureData, "TEXDATA_SIZE", "TEXDATA_IDX", 4);
+	PrintList(os, ti.mTextureData, "TEXDATA_SIZE", "TEXDATA_IDX", 4);
 	return os;
 }
 
 void Material::read(util::fstream_reader& reader)
 {
-	m_flags    = reader.readU32();
-	m_unknown1 = reader.readU32();
-	m_colourInfo.mDiffuseColour.read(reader);
+	mFlags   = reader.readU32();
+	mUnknown = reader.readU32();
+	mColourInfo.mDiffuseColour.read(reader);
 
-	if (m_flags & static_cast<u32>(MaterialFlags::IsEnabled)) {
+	if (mFlags & static_cast<u32>(MaterialFlags::IsEnabled)) {
 		mTevGroupId = reader.readU32();
-		m_colourInfo.read(reader);
-		m_lightingInfo.read(reader);
-		m_peInfo.read(reader);
-		m_texInfo.read(reader);
+		mColourInfo.read(reader);
+		mLightingInfo.read(reader);
+		mPeInfo.read(reader);
+		mTexInfo.read(reader);
 	}
 }
 
 void Material::write(util::fstream_writer& writer)
 {
-	writer.writeU32(m_flags);
-	writer.writeU32(m_unknown1);
-	m_colourInfo.mDiffuseColour.write(writer);
+	writer.writeU32(mFlags);
+	writer.writeU32(mUnknown);
+	mColourInfo.mDiffuseColour.write(writer);
 
-	if (m_flags & static_cast<u32>(MaterialFlags::IsEnabled)) {
+	if (mFlags & static_cast<u32>(MaterialFlags::IsEnabled)) {
 		writer.writeS32(mTevGroupId);
-		m_colourInfo.write(writer);
-		m_lightingInfo.write(writer);
-		m_peInfo.write(writer);
-		m_texInfo.write(writer);
+		mColourInfo.write(writer);
+		mLightingInfo.write(writer);
+		mPeInfo.write(writer);
+		mTexInfo.write(writer);
 	}
 }
 
@@ -543,16 +543,16 @@ std::string MaterialFlagsToString(u32 flags)
 
 std::ostream& operator<<(std::ostream& os, Material const& m)
 {
-	os << "\tFLAGS " << MaterialFlagsToString(m.m_flags) << std::endl;
-	os << "\tUNK1 " << std::hex << "0x" << m.m_unknown1 << std::dec << std::endl;
-	os << "\tCOLOUR " << m.m_colourInfo.mDiffuseColour << std::endl;
+	os << "\tFLAGS " << MaterialFlagsToString(m.mFlags) << std::endl;
+	os << "\tUNK1 " << std::hex << "0x" << m.mUnknown << std::dec << std::endl;
+	os << "\tCOLOUR " << m.mColourInfo.mDiffuseColour << std::endl;
 
-	if (m.m_flags & static_cast<u32>(mat::MaterialFlags::IsEnabled)) {
+	if (m.mFlags & static_cast<u32>(mat::MaterialFlags::IsEnabled)) {
 		os << "\tTEV_GROUP_ID " << m.mTevGroupId << std::endl;
-		os << m.m_colourInfo;
-		os << m.m_lightingInfo;
-		os << m.m_peInfo;
-		os << m.m_texInfo;
+		os << m.mColourInfo;
+		os << m.mLightingInfo;
+		os << m.mPeInfo;
+		os << m.mTexInfo;
 	}
 	os << std::endl;
 
@@ -561,26 +561,26 @@ std::ostream& operator<<(std::ostream& os, Material const& m)
 
 void PVWAnimInfo_3_S10::read(util::fstream_reader& reader)
 {
-	m_unknown1 = reader.readS32();
-	m_unknown2.read(reader);
-	m_unknown3.read(reader);
-	m_unknown4.read(reader);
+	mKeyframeCount = reader.readS32();
+	mKeyframeA.read(reader);
+	mKeyframeB.read(reader);
+	mKeyframeC.read(reader);
 }
 
-void PVWAnimInfo_3_S10::write(util::fstream_writer& writer)
+void PVWAnimInfo_3_S10::write(util::fstream_writer& writer) const
 {
-	writer.writeS32(m_unknown1);
-	m_unknown2.write(writer);
-	m_unknown3.write(writer);
-	m_unknown4.write(writer);
+	writer.writeS32(mKeyframeCount);
+	mKeyframeA.write(writer);
+	mKeyframeB.write(writer);
+	mKeyframeC.write(writer);
 }
 
 std::ostream& operator<<(std::ostream& os, PVWAnimInfo_3_S10 const& t)
 {
-	os << "\t\t\tUNK1 " << t.m_unknown1 << std::endl;
-	os << "\t\t\tUNK2 " << t.m_unknown2 << std::endl;
-	os << "\t\t\tUNK3 " << t.m_unknown3 << std::endl;
-	os << "\t\t\tUNK4 " << t.m_unknown3 << std::endl;
+	os << "\t\t\tKEYFRAME_COUNT " << t.mKeyframeCount << std::endl;
+	os << "\t\t\tKEYFRAME_A " << t.mKeyframeA << std::endl;
+	os << "\t\t\tKEYFRAME_B " << t.mKeyframeB << std::endl;
+	os << "\t\t\tKEYFRAME_C " << t.mKeyframeC << std::endl;
 	return os;
 }
 
@@ -590,7 +590,7 @@ void PVWAnimInfo_1_S10::read(util::fstream_reader& reader)
 	mKeyframeInfo.read(reader);
 }
 
-void PVWAnimInfo_1_S10::write(util::fstream_writer& writer)
+void PVWAnimInfo_1_S10::write(util::fstream_writer& writer) const
 {
 	writer.writeS32(mKeyframeCount);
 	mKeyframeInfo.write(writer);
@@ -626,12 +626,12 @@ void TEVColReg::write(util::fstream_writer& writer)
 	writer.writeS32(mAnimLength);
 	writer.writeF32(mAnimSpeed);
 
-	writer.writeU32(mColorAnimInfo.size());
+	writer.writeU32(static_cast<u32>(mColorAnimInfo.size()));
 	for (mat::PVWAnimInfo_3_S10& unk : mColorAnimInfo) {
 		unk.write(writer);
 	}
 
-	writer.writeU32(mAlphaAnimInfo.size());
+	writer.writeU32(static_cast<u32>(mAlphaAnimInfo.size()));
 	for (mat::PVWAnimInfo_1_S10& unk : mAlphaAnimInfo) {
 		unk.write(writer);
 	}
@@ -673,7 +673,7 @@ void PVWCombiner::read(util::fstream_reader& reader)
 	}
 }
 
-void PVWCombiner::write(util::fstream_writer& writer)
+void PVWCombiner::write(util::fstream_writer& writer) const
 {
 	for (int i = 0; i < 4; ++i) {
 		writer.writeU8(mInputABCD[i]);
@@ -717,7 +717,7 @@ void TEVStage::read(util::fstream_reader& reader)
 	mTevAlphaCombiner.read(reader);
 }
 
-void TEVStage::write(util::fstream_writer& writer)
+void TEVStage::write(util::fstream_writer& writer) const
 {
 	for (u32 i = 0; i < 4; i++) {
 		writer.writeU8(mTevOrders[i]);
@@ -781,7 +781,7 @@ void TEVInfo::write(util::fstream_writer& writer)
 	mKonstColourC.write(writer);
 	mKonstColourD.write(writer);
 
-	writer.writeU32(mTevStages.size());
+	writer.writeU32(static_cast<u32>(mTevStages.size()));
 	for (mat::TEVStage& stage : mTevStages) {
 		stage.write(writer);
 	}

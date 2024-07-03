@@ -7,4 +7,4 @@ fstream_writer::fstream_writer(Endianness endianness)
 {
 }
 
-}
+} // namespace util

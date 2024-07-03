@@ -8,10 +8,10 @@ namespace {
 void showCommands();
 
 struct Command {
-    std::string_view m_command = "";
-    std::vector<std::string_view> m_parameters;
-    std::string_view m_description = "";
-    std::function<void()> m_function;
+    std::string_view mCommand = "";
+    std::vector<std::string_view> mParameters;
+    std::string_view mDescription = "";
+    std::function<void()> mFunction;
 };
 
 static std::vector<Command> gCommands = {
@@ -45,18 +45,18 @@ void showCommands()
 {
     std::cout << std::endl << "Commands:" << std::endl;
     for (const Command& cmd : gCommands) {
-        if (cmd.m_command == "NEW_LINE") {
+        if (cmd.mCommand == "NEW_LINE") {
             std::cout << std::endl;
             continue;
         }
 
-        std::cout << " " << cmd.m_command << " ";
+        std::cout << " " << cmd.mCommand << " ";
 
-        for (std::size_t i = 0; i < cmd.m_parameters.size(); i++) {
-            std::cout << "[" << cmd.m_parameters[i] << "] ";
+        for (std::size_t i = 0; i < cmd.mParameters.size(); i++) {
+            std::cout << "[" << cmd.mParameters[i] << "] ";
         }
 
-        std::cout << "- " << cmd.m_description << std::endl;
+        std::cout << "- " << cmd.mDescription << std::endl;
     }
     std::cout << std::endl;
 }
@@ -65,48 +65,43 @@ void showCommands()
 
 int main(int argc, char** argv)
 {
-    std::atexit(util::ExitHook);
+	std::atexit(util::ExitHook);
 
-    cmd::gTokeniser.read("garden.mod");
-    cmd::mod::loadFile();
-    cmd::mod::exportMaterials();
-    return 0;
+	std::cout << "MODConv by Axiot, 2021 [Last updated [DD/MM/YYYY] 03/07/2024]" << std::endl;
+	std::cout << "Don't forget to write the file after editing it" << std::endl;
 
-    std::cout << "MODConv by Axiot, 2021" << std::endl;
-    std::cout << "Don't forget to write the file after editing it" << std::endl;
+	showCommands();
 
-    showCommands();
+	while (true) {
+		std::string input = "";
+		std::getline(std::cin, input);
 
-    while (true) {
-        std::string input = "";
-        std::getline(std::cin, input);
+		if (!input.size()) {
+			break;
+		}
 
-        if (!input.size()) {
-            break;
-        }
+		cmd::gTokeniser.read(input);
+		const std::string& token = cmd::gTokeniser.next();
 
-        cmd::gTokeniser.read(input);
-        const std::string& token = cmd::gTokeniser.next();
+		bool foundCmd = false;
+		for (const Command& cmd : gCommands) {
+			if (cmd.mCommand == "NEW_LINE") {
+				continue;
+			}
 
-        bool foundCmd = false;
-        for (const Command& cmd : gCommands) {
-            if (cmd.m_command == "NEW_LINE") {
-                continue;
-            }
+			if (cmd.mCommand == token) {
+				cmd.mFunction();
+				foundCmd = true;
+				break;
+			}
+		}
 
-            if (cmd.m_command == token) {
-                cmd.m_function();
-                foundCmd = true;
-                break;
-            }
-        }
+		if (!foundCmd) {
+			std::cout << "Unknown command " << token << std::endl;
+		}
 
-        if (!foundCmd) {
-            std::cout << "Unknown command " << token << std::endl;
-        }
+		std::cout << std::endl;
+	}
 
-        std::cout << std::endl;
-    }
-
-    return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 }

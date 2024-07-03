@@ -5,16 +5,15 @@
 #include <types.hpp>
 #include <util/tokeniser.hpp>
 
-struct DMDHeader {
-};
+struct DMDHeader { };
 
 struct DMD {
-    DMD()  = default;
-    ~DMD() = default;
+	DMD()  = default;
+	~DMD() = default;
 
-    void read(util::tokeniser& reader);
-    void write(std::ofstream& os);
-    void clear();
+	void read(util::tokeniser& reader);
+	void write(std::ofstream& os);
+	void clear();
 };
 
 #endif

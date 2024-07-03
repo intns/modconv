@@ -15,7 +15,7 @@ struct KeyInfoU8 {
 	f32 mEndValue      = 0;
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream& os, KeyInfoU8 const& k);
 };
 
@@ -25,7 +25,7 @@ struct KeyInfoF32 {
 	f32 mKeyDataC = 0;
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream& os, KeyInfoF32 const& k);
 };
 
@@ -35,7 +35,7 @@ struct KeyInfoS10 {
 	f32 mEndValue       = 0;
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream& os, KeyInfoS10 const& k);
 };
 
@@ -46,7 +46,7 @@ struct ColourAnimInfo {
 	KeyInfoU8 mKeyDataB;
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream&, ColourAnimInfo const&);
 };
 
@@ -55,7 +55,7 @@ struct AlphaAnimInfo {
 	KeyInfoU8 mKeyData;
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream&, AlphaAnimInfo const&);
 };
 
@@ -82,12 +82,12 @@ struct LightingInfo {
 	f32 mUnknown = 0;
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream&, LightingInfo const&);
 };
 
 struct PeInfo {
-	u32 mFlags;
+	u32 mFlags = 0;
 
 	union AlphaCompareFunction {
 		struct {
@@ -98,9 +98,9 @@ struct PeInfo {
 			unsigned int ref1 : 8;
 		} bits;
 		u32 value;
-	} mAlphaCompareFunction;
+	} mAlphaCompareFunction = { 0 };
 
-	u32 mZModeFunction;
+	u32 mZModeFunction = 0;
 
 	union BlendMode {
 		struct {
@@ -110,10 +110,10 @@ struct PeInfo {
 			unsigned int mLogicOp : 4;
 		} bits;
 		u32 value;
-	} mBlendMode;
+	} mBlendMode = { 0 };
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream&, PeInfo const&);
 };
 
@@ -121,10 +121,10 @@ struct TexGenData {
 	u8 mDestinationCoords = 0;
 	u8 mFunc              = 0;
 	u8 mSourceParam       = 0;
-	u8 mTexMtx           = 0;
+	u8 mTexMtx            = 0;
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream& os, TexGenData const& t);
 };
 
@@ -135,19 +135,19 @@ struct TextureAnimData {
 	KeyInfoF32 mValueZ;
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream& os, TextureAnimData const& t);
 };
 
 struct TextureData {
-	s32 m_texAttrIndex = 0;
-	s16 m_unknown2     = 0;
-	s16 m_unknown3     = 0;
+	s32 mTextureAttributeIndex = 0;
+	s16 mUnknown               = 0;
+	s16 mUnknown2              = 0;
 
-	u8 m_unknown4 = 0;
-	u8 m_unknown5 = 0;
-	u8 m_unknown6 = 0;
-	u8 m_unknown7 = 0;
+	u8 mUnknown3 = 0;
+	u8 mUnknown4 = 0;
+	u8 mUnknown5 = 0;
+	u8 mUnknown6 = 0;
 
 	u32 mTextureMtxId = 0;
 
@@ -169,10 +169,10 @@ struct TextureData {
 };
 
 struct TextureInfo {
-	s32 m_unknown1 = 0;
-	Vector3f m_unknown2;
-	std::vector<TexGenData> m_textureGenData;
-	std::vector<TextureData> m_textureData;
+	s32 mUnknown = 0;
+	Vector3f mUnknown2;
+	std::vector<TexGenData> mTextureGenData;
+	std::vector<TextureData> mTextureData;
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);
@@ -189,13 +189,13 @@ enum class MaterialFlags : u32 {
 };
 
 struct Material {
-	u32 m_flags     = 0;
-	u32 m_unknown1  = 0;
+	u32 mFlags      = 0;
+	u32 mUnknown    = 0;
 	u32 mTevGroupId = 0;
-	PolygonColourInfo m_colourInfo;
-	LightingInfo m_lightingInfo;
-	PeInfo m_peInfo;
-	TextureInfo m_texInfo;
+	PolygonColourInfo mColourInfo;
+	LightingInfo mLightingInfo;
+	PeInfo mPeInfo;
+	TextureInfo mTexInfo;
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);
@@ -203,13 +203,13 @@ struct Material {
 };
 
 struct PVWAnimInfo_3_S10 {
-	s32 m_unknown1 = 0;
-	KeyInfoS10 m_unknown2;
-	KeyInfoS10 m_unknown3;
-	KeyInfoS10 m_unknown4;
+	s32 mKeyframeCount = 0;
+	KeyInfoS10 mKeyframeA;
+	KeyInfoS10 mKeyframeB;
+	KeyInfoS10 mKeyframeC;
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream&, PVWAnimInfo_3_S10 const&);
 };
 
@@ -218,7 +218,7 @@ struct PVWAnimInfo_1_S10 {
 	KeyInfoS10 mKeyframeInfo;
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream&, PVWAnimInfo_1_S10 const&);
 };
 
@@ -244,7 +244,7 @@ struct PVWCombiner {
 	char _unused[3];
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream&, PVWCombiner const&);
 };
 
@@ -255,7 +255,7 @@ struct TEVStage {
 	PVWCombiner mTevAlphaCombiner;
 
 	void read(util::fstream_reader& reader);
-	void write(util::fstream_writer& writer);
+	void write(util::fstream_writer& writer) const;
 	friend std::ostream& operator<<(std::ostream&, TEVStage const&);
 };
 
@@ -279,8 +279,8 @@ struct TEVInfo {
 } // namespace mat
 
 struct MaterialContainer {
-	std::vector<mat::Material> m_materials;
-	std::vector<mat::TEVInfo> m_tevEnvInfo;
+	std::vector<mat::Material> mMaterials;
+	std::vector<mat::TEVInfo> mTevEnvironmentInfo;
 };
 
 #endif

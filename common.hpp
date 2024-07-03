@@ -17,19 +17,19 @@
 namespace {
 inline const u32 startChunk(util::fstream_writer& writer, u32 chunk)
 {
-    writer.writeU32(chunk);
-    const u32 position = static_cast<u32>(writer.tellp());
-    writer.writeU32(0);
-    return position;
+	writer.writeU32(chunk);
+	const u32 position = static_cast<u32>(writer.tellp());
+	writer.writeU32(0);
+	return position;
 }
 
 inline void finishChunk(util::fstream_writer& writer, u32 chunkStart)
 {
-    writer.align(0x20);
-    const u32 position = static_cast<u32>(writer.tellp());
-    writer.seekp(chunkStart, std::ios_base::beg);
-    writer.writeU32(position - chunkStart - 4);
-    writer.seekp(position, std::ios_base::beg);
+	writer.align(0x20);
+	const u32 position = static_cast<u32>(writer.tellp());
+	writer.seekp(chunkStart, std::ios_base::beg);
+	writer.writeU32(position - chunkStart - 4);
+	writer.seekp(position, std::ios_base::beg);
 }
 } // namespace
 
