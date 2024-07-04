@@ -294,9 +294,9 @@ std::string GetTexMtxName(u32 texMtxValue)
 
 std::ostream& operator<<(std::ostream& os, TexGenData const& t)
 {
-	PrintIndent(os, 4, "DESTINATION_COORDS " << (u32)t.mDestinationCoords);
-	PrintIndent(os, 4, "FUNC " << (u32)t.mFunc);
-	PrintIndent(os, 4, "SOURCE_PARAM " << (u32)t.mSourceParam);
+	PrintIndent(os, 4, "DESTINATION_COORDS " << GXTexCoordIDToStringConverter(static_cast<GXTexCoordID>(t.mDestinationCoords)));
+	PrintIndent(os, 4, "FUNC " << GXTexGenTypeToStringConverter((GXTexGenType)t.mFunc));
+	PrintIndent(os, 4, "SOURCE_PARAM " << GXTexGenSrcToStringConverter((GXTexGenSrc)t.mSourceParam));
 	PrintIndent(os, 4, "TEXTURE_MTX " << GetTexMtxName(t.mTexMtx));
 	return os;
 }
@@ -343,13 +343,13 @@ void TextureData::read(util::fstream_reader& reader)
 	mAnimLength = reader.readS32();
 	mAnimSpeed  = reader.readF32();
 
-	mUv.read(reader);
+	mScale.read(reader);
 	mRotation = reader.readF32();
 	mPivot.read(reader);
 	mPosition.read(reader);
 
-	mPositionAnimData.resize(reader.readU32());
-	for (mat::TextureAnimData& posData : mPositionAnimData) {
+	mScaleAnimData.resize(reader.readU32());
+	for (mat::TextureAnimData& posData : mScaleAnimData) {
 		posData.read(reader);
 	}
 
@@ -358,8 +358,8 @@ void TextureData::read(util::fstream_reader& reader)
 		rotData.read(reader);
 	}
 
-	mScaleAnimData.resize(reader.readU32());
-	for (mat::TextureAnimData& scaleData : mScaleAnimData) {
+	mPivotAnimData.resize(reader.readU32());
+	for (mat::TextureAnimData& scaleData : mPivotAnimData) {
 		scaleData.read(reader);
 	}
 }
@@ -381,13 +381,13 @@ void TextureData::write(util::fstream_writer& writer)
 	writer.writeS32(mAnimLength);
 	writer.writeF32(mAnimSpeed);
 
-	mUv.write(writer);
+	mScale.write(writer);
 	writer.writeF32(mRotation);
 	mPivot.write(writer);
 	mPosition.write(writer);
 
-	writer.writeU32(static_cast<u32>(mPositionAnimData.size()));
-	for (TextureAnimData& posData : mPositionAnimData) {
+	writer.writeU32(static_cast<u32>(mScaleAnimData.size()));
+	for (TextureAnimData& posData : mScaleAnimData) {
 		posData.write(writer);
 	}
 
@@ -396,8 +396,8 @@ void TextureData::write(util::fstream_writer& writer)
 		rotData.write(writer);
 	}
 
-	writer.writeU32(static_cast<u32>(mScaleAnimData.size()));
-	for (TextureAnimData& scaleData : mScaleAnimData) {
+	writer.writeU32(static_cast<u32>(mPivotAnimData.size()));
+	for (TextureAnimData& scaleData : mPivotAnimData) {
 		scaleData.write(writer);
 	}
 }
@@ -411,24 +411,24 @@ std::ostream& operator<<(std::ostream& os, TextureData const& t)
 	PrintIndent(os, 5, "UNK5 " << (u32)t.mUnknown4);
 	PrintIndent(os, 5, "UNK6 " << (u32)t.mUnknown5);
 	PrintIndent(os, 5, "UNK7 " << (u32)t.mUnknown6);
-	PrintIndent(os, 5, "TEXTURE_MATRIX_ID " << (u32)t.mTextureMtxId);
+	PrintIndent(os, 5, "TEXTURE_MATRIX_ID " << GXTexMtxToStringConverter(static_cast<GXTexMtx>(t.mTextureMtxId)));
 	PrintIndent(os, 5, "ANIM_LENGTH " << (u32)t.mAnimLength);
 	PrintIndent(os, 5, "ANIM_SPEED " << t.mAnimSpeed);
-	PrintIndent(os, 5, "UV " << t.mUv);
+	PrintIndent(os, 5, "SCALE " << t.mScale);
 	PrintIndent(os, 5, "ROTATION " << t.mRotation);
 	PrintIndent(os, 5, "PIVOT " << t.mPivot);
 	PrintIndent(os, 5, "POSITION " << t.mPosition);
 
-	PrintList(os, t.mPositionAnimData, "POS_ANIM_FRAME_COUNT", "ENTRY", 6);
-	PrintList(os, t.mRotationAnimData, "ROT_ANIM_FRAME_COUNT", "ENTRY", 6);
 	PrintList(os, t.mScaleAnimData, "SCALE_ANIM_FRAME_COUNT", "ENTRY", 6);
+	PrintList(os, t.mRotationAnimData, "ROT_ANIM_FRAME_COUNT", "ENTRY", 6);
+	PrintList(os, t.mPivotAnimData, "PIVOT_ANIM_FRAME_COUNT", "ENTRY", 6);
 
 	return os;
 }
 
 void TextureInfo::read(util::fstream_reader& reader)
 {
-	mUnknown = reader.readS32();
+	mUnknown1 = reader.readS32();
 	mUnknown2.read(reader);
 
 	mTextureGenData.resize(reader.readU32());
@@ -444,7 +444,7 @@ void TextureInfo::read(util::fstream_reader& reader)
 
 void TextureInfo::write(util::fstream_writer& writer)
 {
-	writer.writeS32(mUnknown);
+	writer.writeS32(mUnknown1);
 	mUnknown2.write(writer);
 
 	writer.writeU32(static_cast<u32>(mTextureGenData.size()));
@@ -461,7 +461,7 @@ void TextureInfo::write(util::fstream_writer& writer)
 std::ostream& operator<<(std::ostream& os, TextureInfo const& ti)
 {
 	os << "\tTEXTURE_INFO" << std::endl;
-	os << "\t\tUNK1 " << ti.mUnknown << std::endl;
+	os << "\t\tUNK1 " << ti.mUnknown1 << std::endl;
 	os << "\t\tUNK2 " << ti.mUnknown2 << std::endl;
 
 	u32 idx = 0;
@@ -690,10 +690,10 @@ void PVWCombiner::write(util::fstream_writer& writer) const
 
 std::ostream& operator<<(std::ostream& os, PVWCombiner const& i)
 {
-	PrintIndent(os, 4, "INPUT_A " << (u32)i.mInputABCD[0]);
-	PrintIndent(os, 4, "INPUT_B " << (u32)i.mInputABCD[1]);
-	PrintIndent(os, 4, "INPUT_C " << (u32)i.mInputABCD[2]);
-	PrintIndent(os, 4, "INPUT_D " << (u32)i.mInputABCD[3]);
+	PrintIndent(os, 4, "INPUT_A " << GXTevColorArgToStringConverter((GXTevColorArg)i.mInputABCD[0]));
+	PrintIndent(os, 4, "INPUT_B " << GXTevColorArgToStringConverter((GXTevColorArg)i.mInputABCD[1]));
+	PrintIndent(os, 4, "INPUT_C " << GXTevColorArgToStringConverter((GXTevColorArg)i.mInputABCD[2]));
+	PrintIndent(os, 4, "INPUT_D " << GXTevColorArgToStringConverter((GXTevColorArg)i.mInputABCD[3]));
 	PrintIndent(os, 4, "OP " << (u32)i.mOp);
 	PrintIndent(os, 4, "BIAS " << (u32)i.mBias);
 	PrintIndent(os, 4, "SCALE " << (u32)i.mScale);

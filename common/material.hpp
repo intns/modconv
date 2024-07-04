@@ -158,14 +158,14 @@ struct TextureData {
 	s32 mAnimLength = 0;
 	f32 mAnimSpeed  = 0;
 
-	Vector2f mUv;
+	Vector2f mScale;
 	f32 mRotation = 0;
 	Vector2f mPivot;
 	Vector2f mPosition;
 
-	std::vector<TextureAnimData> mPositionAnimData;
-	std::vector<TextureAnimData> mRotationAnimData;
 	std::vector<TextureAnimData> mScaleAnimData;
+	std::vector<TextureAnimData> mRotationAnimData;
+	std::vector<TextureAnimData> mPivotAnimData;
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);
@@ -173,7 +173,7 @@ struct TextureData {
 };
 
 struct TextureInfo {
-	s32 mUnknown = 0;
+	s32 mUnknown1 = 0;
 	Vector3f mUnknown2;
 	std::vector<TexGenData> mTextureGenData;
 	std::vector<TextureData> mTextureData;
