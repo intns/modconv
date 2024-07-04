@@ -413,80 +413,80 @@ void exportTextures()
 
 void exportMaterials()
 {
-	if (!gModFileName.size()) {
-		std::cout << "You haven't opened a MOD file!" << std::endl;
+	if (gModFileName.empty()) {
+		std::cout << "You haven't opened a MOD file!\n";
 		return;
 	}
 
-	if (gTokeniser.isEnd()) {
-		std::cout << "Filename not provided, defaulting to material_dump.txt!" << std::endl;
+	std::string filename = "material_dump.txt";
+	if (!gTokeniser.isEnd()) {
+		filename = gTokeniser.next();
+	} else {
+		std::cout << "Filename not provided, defaulting to material_dump.txt!\n";
 	}
 
-	const std::string& filename = gTokeniser.isEnd() ? "material_dump.txt" : gTokeniser.next();
-
-	if (!gModFile.mMaterials.mMaterials.size() && !gModFile.mMaterials.mTevEnvironmentInfo.size()) {
-		std::cout << "Loaded file has no materials!" << std::endl;
+	if (gModFile.mMaterials.mMaterials.empty() && gModFile.mMaterials.mTevEnvironmentInfo.empty()) {
+		std::cout << "Loaded file has no materials!\n";
 		return;
 	}
 
-	std::ostringstream oss = {};
-	oss << std::setprecision(6) << std::fixed;
-	oss << "MATERIAL_FILE" << std::endl;
-
-	if (gModFile.mMaterials.mMaterials.size()) {
-		oss << "MAT_SECTION" << std::endl;
-	}
-
-	u32 matIdx = 0;
-	for (mat::Material& mat : gModFile.mMaterials.mMaterials) {
-		oss << "MAT " << matIdx++ << std::endl;
-		oss << mat;
-	}
-
-	if (gModFile.mMaterials.mTevEnvironmentInfo.size()) {
-		oss << "TEV_SECTION" << std::endl;
-	}
-
-	u32 tevIdx = 0;
-	for (mat::TEVInfo& mat : gModFile.mMaterials.mTevEnvironmentInfo) {
-		oss << "TEV " << tevIdx++ << std::endl;
-		oss << mat;
-	}
-
-	std::ofstream output(filename);
+	std::filesystem::path filepath { filename };
+	std::ofstream output(filepath, std::ios::out | std::ios::trunc);
 	if (!output.is_open()) {
-		std::cout << "Error can't open " << filename << std::endl;
+		std::cout << "Error can't open " << filepath << '\n';
 		return;
 	}
 
-	output.write(oss.str().c_str(), oss.str().size());
-	output.close();
+	output << std::setprecision(6) << std::fixed;
+	output << "MATERIAL_FILE\n";
 
-	std::cout << "Done!" << std::endl;
+	if (!gModFile.mMaterials.mMaterials.empty()) {
+		output << "MAT_SECTION\n";
+		u32 matIdx = 0;
+		for (const auto& mat : gModFile.mMaterials.mMaterials) {
+			output << "MAT " << matIdx++ << '\n';
+			output << mat;
+		}
+	}
+
+	if (!gModFile.mMaterials.mTevEnvironmentInfo.empty()) {
+		output << "TEV_SECTION\n";
+		u32 tevIdx = 0;
+		for (const auto& tev : gModFile.mMaterials.mTevEnvironmentInfo) {
+			output << "TEV " << tevIdx++ << '\n';
+			output << tev;
+		}
+	}
+
+	output.close();
+	std::cout << "Done!\n";
 }
 
 void exportIni()
 {
 	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << std::endl;
+		std::cout << "You haven't opened a MOD file!\n";
 		return;
 	}
 
-	if (gTokeniser.isEnd()) {
-		std::cout << "Filename not provided, defaulting to ini_dump.txt!" << std::endl;
+	std::string filename = "ini_dump.txt";
+	if (!gTokeniser.isEnd()) {
+		filename = gTokeniser.next();
+	} else {
+		std::cout << "Filename not provided, defaulting to ini_dump.txt!\n";
 	}
 
-	const std::string& filename = gTokeniser.isEnd() ? "ini_dump.txt" : gTokeniser.next();
-	std::ofstream outStream(filename);
-	if (!outStream.is_open()) {
-		std::cout << "Error can't open " << filename << std::endl;
+	std::filesystem::path filepath { filename };
+	std::ofstream outStream(filepath, std::ios::binary);
+
+	if (!outStream) {
+		std::cout << "Error can't open " << filepath << '\n';
 		return;
 	}
 
-	outStream.write(reinterpret_cast<char*>(gModFile.mEndOfFileData.data()), gModFile.mEndOfFileData.size());
-	outStream.close();
+	outStream.write(reinterpret_cast<const char*>(gModFile.mEndOfFileData.data()), gModFile.mEndOfFileData.size());
 
-	std::cout << "Done!" << std::endl;
+	std::cout << "Done!\n";
 }
 } // namespace mod
 

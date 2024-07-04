@@ -704,13 +704,12 @@ std::ostream& operator<<(std::ostream& os, PVWCombiner const& i)
 
 void TEVStage::read(util::fstream_reader& reader)
 {
-	for (u32 i = 0; i < 4; i++) {
-		mTevOrders[i] = reader.readU8();
-	}
-
-	for (u32 i = 0; i < 2; i++) {
-		mKSelections[i] = reader.readU8();
-	}
+	mUnknown     = reader.readU8();
+	mTexCoordID  = reader.readU8();
+	mTexMapID    = reader.readU8();
+	mGXChannelID = reader.readU8();
+	mKColorSel   = reader.readU8();
+	mKAlphaSel   = reader.readU8();
 
 	reader.readU16();
 	mTevColorCombiner.read(reader);
@@ -719,13 +718,12 @@ void TEVStage::read(util::fstream_reader& reader)
 
 void TEVStage::write(util::fstream_writer& writer) const
 {
-	for (u32 i = 0; i < 4; i++) {
-		writer.writeU8(mTevOrders[i]);
-	}
-
-	for (u32 i = 0; i < 2; i++) {
-		writer.writeU8(mKSelections[i]);
-	}
+	writer.writeU8(mUnknown);
+	writer.writeU8(mTexCoordID);
+	writer.writeU8(mTexMapID);
+	writer.writeU8(mGXChannelID);
+	writer.writeU8(mKColorSel);
+	writer.writeU8(mKAlphaSel);
 
 	writer.writeU16(0);
 	mTevColorCombiner.write(writer);
@@ -734,22 +732,14 @@ void TEVStage::write(util::fstream_writer& writer) const
 
 std::ostream& operator<<(std::ostream& os, TEVStage const& i)
 {
-	// TEV_ORDERS
-	os << "\t\t\tTEV_ORDER_A " << (u32)i.mTevOrders[0] << std::endl;
-	os << "\t\t\tTEV_ORDER_B " << (u32)i.mTevOrders[1] << std::endl;
-	os << "\t\t\tTEV_ORDER_C " << (u32)i.mTevOrders[2] << std::endl;
-	os << "\t\t\tTEV_ORDER_D " << (u32)i.mTevOrders[3] << std::endl;
-
-	// K_SELECTIONS
-	os << "\t\t\tK_SELECTION_A " << (u32)i.mKSelections[0] << std::endl;
-	os << "\t\t\tK_SELECTION_B " << (u32)i.mKSelections[1] << std::endl;
-
-	// TEV_COLOR_COMBINER
+	os << "\t\t\tUNKNOWN " << (u32)i.mUnknown << std::endl;
+	os << "\t\t\tTEX_COORD_ID\t" << GXTexCoordIDToStringConverter(static_cast<GXTexCoordID>(i.mTexCoordID)) << std::endl;
+	os << "\t\t\tTEX_MAP_ID\t\t" << GXTexMapIDToStringConverter(static_cast<GXTexMapID>(i.mTexMapID)) << std::endl;
+	os << "\t\t\tGX_CHANNEL_ID\t" << GXChannelIDToStringConverter(static_cast<GXChannelID>(i.mGXChannelID)) << std::endl;
+	os << "\t\t\tK_COLOR_SEL\t\t" << GXTevKColorSelToStringConverter(static_cast<GXTevKColorSel>(i.mKColorSel)) << std::endl;
+	os << "\t\t\tK_ALPHA_SEL\t\t" << GXTevKAlphaSelToStringConverter(static_cast<GXTevKAlphaSel>(i.mKAlphaSel)) << std::endl;
 	os << "\t\t\tTEV_COLOR_COMBINER " << std::endl << i.mTevColorCombiner;
-
-	// TEV_ALPHA_COMBINER
 	os << "\t\t\tTEV_ALPHA_COMBINER " << std::endl << i.mTevAlphaCombiner;
-
 	return os;
 }
 

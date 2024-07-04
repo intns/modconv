@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef MATERIAL_HPP
 #define MATERIAL_HPP
 
@@ -7,6 +9,7 @@
 #include <types.hpp>
 #include <util/fstream_reader.hpp>
 #include <util/fstream_writer.hpp>
+#include <common/gxdefines.hpp>
 
 namespace mat {
 struct KeyInfoU8 {
@@ -93,6 +96,7 @@ struct PeInfo {
 		struct {
 			unsigned int comp0 : 4;
 			unsigned int ref0 : 8;
+			unsigned int padding : 4;
 			unsigned int op : 4;
 			unsigned int comp1 : 4;
 			unsigned int ref1 : 8;
@@ -249,8 +253,12 @@ struct PVWCombiner {
 };
 
 struct TEVStage {
-	u8 mTevOrders[4];
-	u8 mKSelections[2];
+	u8 mUnknown;
+	u8 mTexCoordID;
+	u8 mTexMapID;
+	u8 mGXChannelID;
+	u8 mKColorSel;
+	u8 mKAlphaSel;
 	PVWCombiner mTevColorCombiner;
 	PVWCombiner mTevAlphaCombiner;
 
