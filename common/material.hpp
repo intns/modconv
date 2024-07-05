@@ -145,8 +145,8 @@ struct TextureAnimData {
 
 struct TextureData {
 	s32 mTextureAttributeIndex = 0;
-	s16 mUnknown               = 0;
-	s16 mUnknown2              = 0;
+	s16 mWrapModeS               = 0;
+	s16 mWrapModeT              = 0;
 
 	u8 mUnknown3 = 0;
 	u8 mUnknown4 = 0;

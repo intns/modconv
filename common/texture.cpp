@@ -34,8 +34,8 @@ void TextureAttributes::read(util::fstream_reader& reader)
 {
     mIndex = reader.readU16();
     reader.readU16();
-    mTilingModeS = reader.readU16();
-    mTilingModeT   = reader.readU16();
+    mWrapFlags = reader.readU16();
+    mUnknown   = reader.readU16();
     mWidthPercent   = reader.readF32();
 }
 
@@ -43,7 +43,7 @@ void TextureAttributes::write(util::fstream_writer& writer)
 {
     writer.writeU16(mIndex);
     writer.writeU16(0);
-    writer.writeU16(mTilingModeS);
-    writer.writeU16(mTilingModeT);
+    writer.writeU16(mWrapFlags);
+    writer.writeU16(mUnknown);
     writer.writeF32(mWidthPercent);
 }

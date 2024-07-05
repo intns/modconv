@@ -549,4 +549,28 @@ inline std::string GXTevColorArgToStringConverter(_GXTevColorArg tevColorArg)
 	}
 }
 
+typedef enum _GXTexWrapMode {
+	GX_CLAMP,
+	GX_REPEAT,
+	GX_MIRROR,
+	GX_MAX_TEXWRAPMODE
+
+} GXTexWrapMode;
+
+inline std::string GXTexWrapModeToStringConverter(_GXTexWrapMode texWrapMode)
+{
+	switch (texWrapMode) {
+	case GX_CLAMP:
+		return "GX_CLAMP";
+	case GX_REPEAT:
+		return "GX_REPEAT";
+	case GX_MIRROR:
+		return "GX_MIRROR";
+	case GX_MAX_TEXWRAPMODE:
+		return "GX_MAX_TEXWRAPMODE";
+	default:
+		return "Unknown";
+	}
+}
+
 #endif // GXDEFINES_HPP

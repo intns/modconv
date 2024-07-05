@@ -330,8 +330,8 @@ void TextureData::read(util::fstream_reader& reader)
 {
 	mTextureAttributeIndex = reader.readS32();
 
-	mUnknown  = reader.readS16();
-	mUnknown2 = reader.readS16();
+	mWrapModeS  = reader.readS16();
+	mWrapModeT = reader.readS16();
 
 	mUnknown3 = reader.readU8();
 	mUnknown4 = reader.readU8();
@@ -368,8 +368,8 @@ void TextureData::write(util::fstream_writer& writer)
 {
 	writer.writeS32(mTextureAttributeIndex);
 
-	writer.writeS16(mUnknown);
-	writer.writeS16(mUnknown2);
+	writer.writeS16(mWrapModeS);
+	writer.writeS16(mWrapModeT);
 
 	writer.writeU8(mUnknown3);
 	writer.writeU8(mUnknown4);
@@ -405,8 +405,8 @@ void TextureData::write(util::fstream_writer& writer)
 std::ostream& operator<<(std::ostream& os, TextureData const& t)
 {
 	os << "\tTEX_ATTR_IDX " << t.mTextureAttributeIndex << std::endl;
-	PrintIndent(os, 5, "UNK2 " << t.mUnknown);
-	PrintIndent(os, 5, "UNK3 " << t.mUnknown2);
+	PrintIndent(os, 5, "WRAP_MODE_S " << GXTexWrapModeToStringConverter(static_cast<GXTexWrapMode>(t.mWrapModeS)));
+	PrintIndent(os, 5, "WRAP_MODE_T " << GXTexWrapModeToStringConverter(static_cast<GXTexWrapMode>(t.mWrapModeT)));
 	PrintIndent(os, 5, "UNK4 " << (u32)t.mUnknown3);
 	PrintIndent(os, 5, "UNK5 " << (u32)t.mUnknown4);
 	PrintIndent(os, 5, "UNK6 " << (u32)t.mUnknown5);

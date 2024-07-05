@@ -34,8 +34,8 @@ enum class TextureTilingMode {
 
 struct TextureAttributes {
 	u16 mIndex        = 0;
-	u16 mTilingModeS  = 0;
-	u16 mTilingModeT  = 0;
+	u16 mWrapFlags    = 0;
+	u16 mUnknown      = 0;
 	f32 mWidthPercent = 0;
 
 	void read(util::fstream_reader&);
