@@ -369,7 +369,7 @@ FodyWeavers.xsd
 
 *.mod
 *.txe
-*.ini
-material_dump.txt
-*.bak
-*.dmd
+*.txt
+!CMakeLists.txt
+/build
+/.vscode

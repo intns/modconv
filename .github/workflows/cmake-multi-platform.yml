@@ -1,0 +1,87 @@
+name: CMake with Ninja and GitHub Release
+
+on:
+  push:
+    tags: [ "v*" ]  # Trigger only on version tag pushes (e.g., v1.0.0)
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        build_type: [Release]
+        c_compiler: [gcc, clang, cl]
+        include:
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: ubuntu-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+        exclude:
+          - os: windows-latest
+            c_compiler: gcc
+          - os: windows-latest
+            c_compiler: clang
+          - os: ubuntu-latest
+            c_compiler: cl
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Ninja (Linux only)
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+    - name: Set reusable strings
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "artifact-name=release-${{ matrix.os }}-${{ matrix.c_compiler }}" >> "$GITHUB_OUTPUT"
+
+    - name: Setup MSVC Developer Command Prompt
+      if: runner.os == 'Windows'
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Configure CMake (Ninja)
+      run: >
+        cmake -G Ninja
+        -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -S ${{ github.workspace }}
+
+
+    - name: Build
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} 
+
+    - name: Archive Build Artifacts
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path release
+        Copy-Item -Path "${{ steps.strings.outputs.build-output-dir }}\*" -Destination release -Recurse
+        Compress-Archive -Path release\* -DestinationPath "${{ steps.strings.outputs.artifact-name }}.zip"
+
+    - name: Upload Artifact to CI
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.strings.outputs.artifact-name }}
+        path: ${{ steps.strings.outputs.artifact-name }}.zip
+
+    - name: Upload to GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        files: ${{ steps.strings.outputs.artifact-name }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
