@@ -6,7 +6,7 @@
 #include <util/fstream_writer.hpp>
 
 struct Envelope {
-	std::vector<u16> mIndices;
+	std::vector<s16> mIndices;
 	std::vector<f32> mWeights;
 
 	void read(util::fstream_reader&);

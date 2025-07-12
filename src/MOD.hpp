@@ -4,15 +4,21 @@
 #include <common.hpp>
 #include <array>
 #include <optional>
+#include <type_traits>
 #include <string_view>
 #include <vector>
+#include <bitset>
+#include <unordered_set>
 
 /**
  * @brief Enumeration representing the flags for the MOD.
  */
 enum class MODFlags : u8 {
-	None   = 0x00,
-	UseNBT = 0x01,
+	None         = 0x00,
+	UseNBT       = 0x01,
+	AllowCaching = 0x02, // Allows caching of shape geometry into a display list.
+	AlwaysRedraw = 0x04, // Forces the shape to be redrawn every frame, bypassing any cached display list.
+	IsPlatform   = 0x10, // Indicates the shape is a platform or has platform collision.
 };
 
 /**
@@ -20,10 +26,10 @@ enum class MODFlags : u8 {
  */
 struct MODHeader {
 	struct {
-		u16 mYear = 2024;
-		u8 mMonth = 03;
-		u8 mDay   = 07;
-	} mDateTime;
+		u16 mYear = 2001;
+		u8 mMonth = 04;
+		u8 mDay   = 05;
+	} mDateTime {};
 
 	u32 mFlags = static_cast<u32>(MODFlags::None);
 };
@@ -67,7 +73,8 @@ struct MOD {
 		CollisionPrism = 0x100,
 		CollisionGrid  = 0x110,
 
-		EndOfFile = 0xFFFF
+		EndOfFile = 0xFFFF,
+		None      = 0x0501ACE0, // 'SOLACE'
 	};
 
 	/**
@@ -134,6 +141,11 @@ struct MOD {
 	CollTriInfo mCollisionTriangles;
 	CollGrid mCollisionGridInfo;
 	std::vector<u8> mEndOfFileData;
+
+	// When doing unit tests, empty chunks arise, we need to keep track of them
+	std::unordered_set<EChunkType> mEmptyChunks;
+
+	bool mVerbosePrint = false;
 };
 
 #endif

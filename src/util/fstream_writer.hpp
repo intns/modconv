@@ -10,18 +10,13 @@ namespace util {
 
 class fstream_writer : public std::ofstream {
 public:
-	enum class Endianness : u8 {
-		Little = 0,
-		Big,
-	};
-
-	fstream_writer(Endianness endianness);
-	~fstream_writer()                                = default;
+	fstream_writer()
+	    : std::ofstream()
+	{
+	}
+	virtual ~fstream_writer()                        = default;
 	fstream_writer(const fstream_writer&)            = delete;
 	fstream_writer& operator=(const fstream_writer&) = delete;
-
-	inline Endianness& endianness() { return m_endianness; }
-	inline const Endianness& endianness() const { return m_endianness; }
 
 	inline void align(u32 amt)
 	{
@@ -62,9 +57,6 @@ public:
 		    = ((intVal & 0xff000000) >> 24) | ((intVal & 0x00ff0000) >> 8) | ((intVal & 0x0000ff00) << 8) | ((intVal & 0x000000ff) << 24);
 		write(reinterpret_cast<char*>(&value), 4);
 	}
-
-private:
-	Endianness m_endianness;
 };
 
 } // namespace util

@@ -3,7 +3,7 @@
 void Envelope::read(util::fstream_reader& reader)
 {
 	mIndices.resize(reader.readU16());
-	mWeights.reserve(mIndices.size());
+	mWeights.resize(mIndices.size());
 
 	for (std::size_t i = 0; i < mIndices.size(); i++) {
 		mIndices[i] = reader.readU16();

@@ -17,6 +17,14 @@ inline std::string trim(const std::string& s)
 	return (start < end) ? std::string(start, end) : "";
 }
 
+template <typename T>
+std::string FltToStr(T value)
+{
+	std::ostringstream oss;
+	oss << std::setprecision(9) << std::defaultfloat << value;
+	return oss.str();
+}
+
 class MaterialWriter {
 public:
 	std::ostream& m_out;
@@ -70,7 +78,7 @@ public:
 	MaterialWriter(std::ostream& out)
 	    : m_out(out)
 	{
-		m_out << std::setprecision(6) << std::fixed;
+		m_out << std::fixed << std::setprecision(9) << std::fixed;
 	}
 
 	void beginSection(const std::string& name)
@@ -88,18 +96,17 @@ public:
 	// Write individual components
 	void writeKeyInfoU8(const std::string& label, const KeyInfoU8& key)
 	{
-		writeValue(label,
-		           "TIME[" + std::to_string((u32)key.mTime) + "] " + std::to_string(key.mValue) + " " + std::to_string(key.mTangent));
+		writeValue(label, "TIME[" + std::to_string((u32)key.mTime) + "] " + FltToStr(key.mValue) + " " + FltToStr(key.mTangent));
 	}
 
 	void writeKeyInfoF32(const std::string& label, const KeyInfoF32& key)
 	{
-		writeValue(label, std::to_string(key.mTime) + " " + std::to_string(key.mValue) + " " + std::to_string(key.mTangent));
+		writeValue(label, FltToStr(key.mTime) + " " + FltToStr(key.mValue) + " " + FltToStr(key.mTangent));
 	}
 
 	void writeKeyInfoS10(const std::string& label, const KeyInfoS10& key)
 	{
-		writeValue(label, "TIME[" + std::to_string(key.mTime) + "] " + std::to_string(key.mValue) + " " + std::to_string(key.mTangent));
+		writeValue(label, "TIME[" + std::to_string(key.mTime) + "] " + FltToStr(key.mValue) + " " + FltToStr(key.mTangent));
 	}
 
 	void writeColourAnimInfo(const ColourAnimInfo& info)
@@ -494,7 +501,7 @@ private:
 		size_t start = data.find('[');
 		size_t end   = data.find(']');
 		if (start != std::string::npos && end != std::string::npos) {
-			key.mTime = std::stoi(data.substr(start + 1, end - start - 1));
+			key.mTime = static_cast<u8>(std::stoi(data.substr(start + 1, end - start - 1)));
 			std::istringstream iss(data.substr(end + 2));
 			iss >> key.mValue >> key.mTangent;
 		}
@@ -514,7 +521,7 @@ private:
 		size_t start = data.find('[');
 		size_t end   = data.find(']');
 		if (start != std::string::npos && end != std::string::npos) {
-			key.mTime = std::stoi(data.substr(start + 1, end - start - 1));
+			key.mTime = static_cast<s16>(std::stoi(data.substr(start + 1, end - start - 1)));
 			std::istringstream iss(data.substr(end + 2));
 			iss >> key.mValue >> key.mTangent;
 		}
@@ -645,9 +652,10 @@ private:
 			return 9;
 		if (str == "GX_IDENTITY")
 			return 0xFF;
+
 		// If it's a number string, parse it
 		try {
-			return std::stoi(str);
+			return static_cast<u8>(std::stoi(str));
 		} catch (...) {
 			return 0xFF;
 		}
@@ -666,7 +674,7 @@ private:
 		return 0;
 	}
 
-	u8 parseGXTexMapID(const std::string& str)
+	u16 parseGXTexMapID(const std::string& str)
 	{
 		if (str == "GX_TEXMAP0")
 			return 0;
@@ -903,10 +911,10 @@ public:
 				if (!readMaterialSection(materials))
 					return false;
 			} else if (line == "TEV_SECTION" || line.find("TEV ") == 0) {
-				std::cout << "Found TEV section!" << std::endl;
 				if (line.find("TEV ") == 0) {
 					m_in.seekg(pos);
 				}
+
 				if (!readTEVSection(tevInfos))
 					return false;
 			}
@@ -920,8 +928,9 @@ private:
 	{
 		while (true) {
 			auto pos = m_in.tellg();
-			if (!readLine())
-				return false;
+			if (!readLine()) {
+				break;
+			}
 
 			std::string line = trimLine();
 			if (line.empty())
@@ -939,6 +948,7 @@ private:
 				break;
 			}
 		}
+
 		return true;
 	}
 
@@ -984,7 +994,7 @@ private:
 			if (key == "FLAGS") {
 				mat.mFlags = parseMaterialFlags(value);
 			} else if (key == "TEXTURE_INDEX") {
-				mat.mTextureIndex = std::stoul(value);
+				mat.mTextureIndex = std::stol(value);
 			} else if (key == "COLOUR") {
 				parseColour(value, mat.mColourInfo.mDiffuseColour);
 			} else if (key == "TEV_GROUP_ID") {
@@ -1377,8 +1387,8 @@ private:
 				continue;
 
 			if (m_currentIndent <= 2
-			    && (line == "TEXDATA_ENTRY" || line.find("TEXDATA_ENTRY ") == 0 || line == "MAT" || line.find("MAT ") == 0 || line == "TEV"
-			        || line.find("TEV ") == 0)) {
+			    && (line == "TEXDATA_ENTRY" || line.find("TEXDATA_ENTRY ") == 0 || line == "MAT" || line.find("MAT ") == 0
+			        || line.find("TEV_SECTION") == 0 || line.find("TEV ") == 0)) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1393,13 +1403,13 @@ private:
 			} else if (key == "WRAP_MODE_T") {
 				data.mWrapModeT = parseGXTexWrapMode(value);
 			} else if (key == "UNK4") {
-				data.mUnknown3 = std::stoi(value);
+				data.mUnknown3 = static_cast<u8>(std::stoi(value));
 			} else if (key == "UNK5") {
-				data.mUnknown4 = std::stoi(value);
+				data.mUnknown4 = static_cast<u8>(std::stoi(value));
 			} else if (key == "UNK6") {
-				data.mUnknown5 = std::stoi(value);
+				data.mUnknown5 = static_cast<u8>(std::stoi(value));
 			} else if (key == "UNK7") {
-				data.mUnknown6 = std::stoi(value);
+				data.mUnknown6 = static_cast<u8>(std::stoi(value));
 			} else if (key == "ANIMATION_FACTOR") {
 				data.mAnimationFactor = std::stoi(value);
 			} else if (key == "ANIM_LENGTH") {
@@ -1457,7 +1467,10 @@ private:
 			if (line.empty())
 				continue;
 
-			if (m_currentIndent <= 4 && (line == "ENTRY" || line.find("ENTRY ") == 0 || line.find("FRAME_COUNT") != std::string::npos)) {
+			if (m_currentIndent <= 4
+			        && (line == "ENTRY" || line.find("ENTRY ") == 0 || line.find("TEXDATA_ENTRY") == 0
+			            || line.find("FRAME_COUNT") != std::string::npos || line.find("MAT ") == 0)
+			    || line.find("TEV_SECTION") == 0) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1539,8 +1552,7 @@ private:
 			if (line.empty())
 				continue;
 
-			if (m_currentIndent <= 1
-			    && (line == "TEVCOLREG_B" || line == "TEVCOLREG_C" || line.find("KONST_COL_") == 0 || line == "TEVSTAGE_COUNT")) {
+			if (m_currentIndent <= 1 && (line.find("TEVCOLREG_") == 0 || line.find("KONST_COL_") == 0 || line == "TEVSTAGE_COUNT")) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1590,7 +1602,7 @@ private:
 
 			if (m_currentIndent <= 3
 			    && (line.find("ANIM_ENTRY") != std::string::npos || line.find("ANIM_COUNT") != std::string::npos
-			        || line == "TEVCOLREG_B")) {
+			        || line == "TEVCOLREG_B") || line.find("KONST_COL") == 0) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1662,11 +1674,11 @@ private:
 			auto [key, value] = parseKeyValue();
 
 			if (key == "UNKNOWN") {
-				stage.mUnknown = std::stoi(value);
+				stage.mUnknown = static_cast<u8>(std::stoi(value));
 			} else if (key == "TEX_COORD_ID") {
 				stage.mTexCoordID = parseGXTexCoordID(value);
 			} else if (key == "TEX_MAP_ID") {
-				stage.mTexMapID = parseGXTexMapID(value);
+				stage.mTexMapID = static_cast<u8>(parseGXTexMapID(value));
 			} else if (key == "GX_CHANNEL_ID") {
 				stage.mGXChannelID = parseGXChannelID(value);
 			} else if (key == "K_COLOR_SEL") {
@@ -1695,7 +1707,8 @@ private:
 			if (line.empty())
 				continue;
 
-			if (m_currentIndent <= 3 && (line == "TEV_ALPHA_COMBINER" || line == "TEVSTAGE_ENTRY" || line.find("TEVSTAGE_ENTRY ") == 0)) {
+			if (m_currentIndent <= 3 && (line == "TEV_ALPHA_COMBINER" || line == "TEVSTAGE_ENTRY" || line.find("TEVSTAGE_ENTRY ") == 0)
+			    || line.find("TEV ") == 0) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1712,21 +1725,21 @@ private:
 			} else if (key == "INPUT_D") {
 				combiner.mInputABCD[3] = parseGXTevColorArg(value);
 			} else if (key == "OP") {
-				combiner.mOp = std::stoi(value);
+				combiner.mOp = static_cast<u8>(std::stoi(value));
 			} else if (key == "BIAS") {
-				combiner.mBias = std::stoi(value);
+				combiner.mBias = static_cast<u8>(std::stoi(value));
 			} else if (key == "SCALE") {
-				combiner.mScale = std::stoi(value);
+				combiner.mScale = static_cast<u8>(std::stoi(value));
 			} else if (key == "CLAMP") {
-				combiner.mClamp = std::stoi(value);
+				combiner.mClamp = static_cast<u8>(std::stoi(value));
 			} else if (key == "OUT_REG") {
-				combiner.mOutReg = std::stoi(value);
+				combiner.mOutReg = static_cast<u8>(std::stoi(value));
 			} else if (key == "UNKNOWN_A") {
-				combiner._unused[0] = std::stoi(value);
+				combiner._unused[0] = static_cast<u8>(std::stoi(value));
 			} else if (key == "UNKNOWN_B") {
-				combiner._unused[1] = std::stoi(value);
+				combiner._unused[1] = static_cast<u8>(std::stoi(value));
 			} else if (key == "UNKNOWN_C") {
-				combiner._unused[2] = std::stoi(value);
+				combiner._unused[2] = static_cast<u8>(std::stoi(value));
 			}
 		}
 		return true;

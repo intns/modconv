@@ -36,7 +36,9 @@ void loadFile()
 	gModFile.read(reader);
 	reader.close();
 
-	std::cout << "Done!" << std::endl;
+	if (gModFile.mVerbosePrint) {
+		std::cout << "Done!" << std::endl;
+	}
 }
 
 void writeFile()
@@ -47,7 +49,7 @@ void writeFile()
 	}
 
 	const std::string& filename = gTokeniser.next();
-	util::fstream_writer writer(util::fstream_writer::Endianness::Big);
+	util::fstream_writer writer;
 	writer.open(filename, std::ios_base::binary);
 	if (!writer.is_open()) {
 		std::cout << "Unable to open " << filename << std::endl;
@@ -57,12 +59,12 @@ void writeFile()
 	gModFile.write(writer);
 	writer.close();
 
-	std::cout << "SANITY CHECK" << std::endl;
-
-	std::cout << "Done!" << std::endl;
+	if (gModFile.mVerbosePrint) {
+		std::cout << "Done!" << std::endl;
+	}
 }
 
-void closeFile()
+void resetActiveModel()
 {
 	if (!isModFileOpen()) {
 		std::cout << "You haven't opened a MOD file!" << std::endl;
@@ -72,7 +74,9 @@ void closeFile()
 	gModFile.reset();
 	gModFileName = "";
 
-	std::cout << "Done!" << std::endl;
+	if (gModFile.mVerbosePrint) {
+		std::cout << "Done!" << std::endl;
+	}
 }
 
 void importTexture()
@@ -510,7 +514,7 @@ void exportTextures()
 
 	u32 i = 0;
 	for (Texture& tex : gModFile.mTextures) {
-		util::fstream_writer writer(util::fstream_writer::Endianness::Big);
+		util::fstream_writer writer;
 		const std::string& filename = pathStr + "tex" + std::to_string(i++) + ".txe";
 		std::cout << "Writing " << filename << std::endl;
 		writer.open(filename);
@@ -583,7 +587,9 @@ void exportMaterials()
 	}
 
 	output.close();
-	std::cout << "Materials exported to " << filename << "\n";
+	if (gModFile.mVerbosePrint) {
+		std::cout << "Materials exported to " << filename << "\n";
+	}
 }
 
 void importMaterials()
@@ -604,10 +610,12 @@ void importMaterials()
 		// Update the global mod file with imported materials
 		gModFile.mMaterials.mMaterials          = std::move(materials);
 		gModFile.mMaterials.mTevEnvironmentInfo = std::move(tevInfos);
-		std::cout << "Successfully imported materials from " << filename << "\n";
-		std::cout << "Loaded " << gModFile.mMaterials.mMaterials.size() << " materials and "
-		          << gModFile.mMaterials.mTevEnvironmentInfo.size() << " TEV configurations\n";
-	} else {
+		if (gModFile.mVerbosePrint) {
+			std::cout << "Successfully imported materials from " << filename << "\n";
+			std::cout << "Loaded " << gModFile.mMaterials.mMaterials.size() << " materials and "
+			          << gModFile.mMaterials.mTevEnvironmentInfo.size() << " TEV configurations\n";
+		}
+	} else if (gModFile.mVerbosePrint) {
 		std::cout << "Failed to import materials from " << filename << "\n";
 	}
 
@@ -706,7 +714,9 @@ void deleteChunk()
 		u32 idx = chunkId - static_cast<u32>(MOD::EChunkType::TexCoord0);
 		if (idx < gModFile.mTextureCoords.size()) {
 			gModFile.mTextureCoords[idx].clear();
-			std::cout << "Deleted TexCoord" << idx << " chunk." << std::endl;
+			if (gModFile.mVerbosePrint) {
+				std::cout << "Deleted TexCoord" << idx << " chunk." << std::endl;
+			}
 		} else {
 			std::cout << "TexCoord index out of range!" << std::endl;
 			failure = true;
@@ -750,10 +760,126 @@ void deleteChunk()
 		break;
 	}
 
-	if (!failure) {
+	if (!failure && gModFile.mVerbosePrint) {
 		std::cout << "Successfully deleted (" << chunkName.value() << ")" << std::endl;
 	}
 }
+
+void editHeader()
+{
+	if (!isModFileOpen()) {
+		std::cout << "You haven't opened a MOD file!" << std::endl;
+		return;
+	}
+
+	std::cout << std::endl;
+
+	std::cout << "What would you like to edit?" << std::endl;
+	std::cout << "\t(1) date of creation" << std::endl;
+	std::cout << "\t(2) flags" << std::endl;
+
+	std::string input = "";
+	std::getline(std::cin, input);
+
+	std::cout << std::endl;
+
+	try {
+		int choice = std::stoi(input);
+
+		switch (choice) {
+		case 1: {
+			// Edit date
+			std::cout << "Current date: " << gModFile.mHeader.mDateTime.mYear << "/" << (u32)gModFile.mHeader.mDateTime.mMonth << "/"
+			          << (u32)gModFile.mHeader.mDateTime.mDay << std::endl;
+
+			std::cout << "Enter new year (e.g., 2025): ";
+			std::getline(std::cin, input);
+			u16 year = static_cast<u16>(std::stoi(input));
+
+			std::cout << "Enter new month (1-12): ";
+			std::getline(std::cin, input);
+			u8 month = static_cast<u8>(std::stoi(input));
+
+			std::cout << "Enter new day (1-31): ";
+			std::getline(std::cin, input);
+			u8 day = static_cast<u8>(std::stoi(input));
+
+			// Validate input
+			if (month < 1 || month > 12) {
+				std::cout << "Invalid month! Must be between 1-12." << std::endl;
+				return;
+			}
+			if (day < 1 || day > 31) {
+				std::cout << "Invalid day! Must be between 1-31." << std::endl;
+				return;
+			}
+
+			gModFile.mHeader.mDateTime.mYear  = year;
+			gModFile.mHeader.mDateTime.mMonth = month;
+			gModFile.mHeader.mDateTime.mDay   = day;
+
+			std::cout << "Date updated to: " << gModFile.mHeader.mDateTime.mYear << "/" << (u32)gModFile.mHeader.mDateTime.mMonth << "/"
+			          << (u32)gModFile.mHeader.mDateTime.mDay << std::endl;
+			break;
+		}
+		case 2: {
+			// Edit flags
+			std::cout << "Current flags: 0x" << std::hex << gModFile.mHeader.mFlags << std::dec << std::endl;
+			std::cout << "\t0x00 - None" << std::endl;
+			std::cout << "\t0x01 - UseNBT (Use Normal/Binormal/Tangent)" << std::endl;
+			std::cout << "\t0x02 - AllowCaching (Allow display list caching)" << std::endl;
+			std::cout << "\t0x04 - AlwaysRedraw (Force redraw every frame)" << std::endl;
+			std::cout << "\t0x10 - IsPlatform (Has platform collision)" << std::endl;
+			std::cout << "Enter new flags (hex format, e.g., 0x01 or decimal): ";
+
+			std::getline(std::cin, input);
+			u32 flags = 0;
+
+			if (input.starts_with("0x") || input.starts_with("0X")) {
+				flags = std::stoul(input, nullptr, 16);
+			} else {
+				flags = std::stoul(input);
+			}
+
+			if (!(flags & static_cast<u32>(MODFlags::UseNBT)) && !(flags & static_cast<u32>(MODFlags::AllowCaching))
+			    && !(flags & static_cast<u32>(MODFlags::AlwaysRedraw)) && !(flags & static_cast<u32>(MODFlags::IsPlatform))) {
+				std::cout << "Unable to change flags, you haven't provided any valid option!" << std::endl;
+				return;
+			}
+
+			gModFile.mHeader.mFlags = flags;
+
+			std::cout << "Flags updated to: 0x" << std::hex << gModFile.mHeader.mFlags << std::dec << std::endl;
+
+			// Show which flags are set
+			if (flags & static_cast<u32>(MODFlags::UseNBT)) {
+				std::cout << "\t- UseNBT enabled" << std::endl;
+			}
+			if (flags & static_cast<u32>(MODFlags::AllowCaching)) {
+				std::cout << "\t- AllowCaching enabled" << std::endl;
+			}
+			if (flags & static_cast<u32>(MODFlags::AlwaysRedraw)) {
+				std::cout << "\t- AlwaysRedraw enabled" << std::endl;
+			}
+			if (flags & static_cast<u32>(MODFlags::IsPlatform)) {
+				std::cout << "\t- IsPlatform enabled" << std::endl;
+			}
+			break;
+		}
+		default:
+			std::cout << "Invalid choice! Please enter 1 or 2." << std::endl;
+			return;
+		}
+
+		if (gModFile.mVerbosePrint) {
+			std::cout << "Header editing complete!" << std::endl;
+		}
+
+	} catch (const std::exception& e) {
+		std::cout << "Error: " << e.what() << std::endl;
+	}
+}
+
 } // namespace mod
 
 void objToDmd()

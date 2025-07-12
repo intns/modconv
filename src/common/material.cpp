@@ -677,7 +677,7 @@ std::ostream& operator<<(std::ostream& os, TEVInfo const& i)
 void Material::read(util::fstream_reader& reader)
 {
 	mFlags        = reader.readU32();
-	mTextureIndex = reader.readU32();
+	mTextureIndex = reader.readS32();
 	mColourInfo.mDiffuseColour.read(reader);
 
 	if (mFlags & static_cast<u32>(MaterialFlags::IsEnabled)) {
@@ -692,7 +692,7 @@ void Material::read(util::fstream_reader& reader)
 void Material::write(util::fstream_writer& writer)
 {
 	writer.writeU32(mFlags);
-	writer.writeU32(mTextureIndex);
+	writer.writeS32(mTextureIndex);
 	mColourInfo.mDiffuseColour.write(writer);
 
 	if (mFlags & static_cast<u32>(MaterialFlags::IsEnabled)) {

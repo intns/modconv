@@ -1,3 +1,8 @@
+#ifndef _COMMANDS_HPP
+#define _COMMANDS_HPP
+
+#pragma once
+
 #include <util/tokeniser.hpp>
 #include <functional>
 #include <iostream>
@@ -12,7 +17,7 @@ extern util::tokeniser gTokeniser;
 namespace mod {
 void loadFile();
 void writeFile();
-void closeFile();
+void resetActiveModel();
 
 void importMaterials();
 void importTexture();
@@ -25,6 +30,7 @@ void exportDmd();
 void exportIni();
 
 void deleteChunk();
+void editHeader();
 } // namespace mod
 
 void showCommands();
@@ -39,7 +45,12 @@ struct Command {
 static std::vector<Command> gCommands
     = { { "load", { "input filename" }, "loads a MOD file", cmd::mod::loadFile },
 	    { "write", { "output filename" }, "writes the MOD file", cmd::mod::writeFile },
-	    { "close", {}, "closes the MOD file", cmd::mod::closeFile },
+	    { "close", {}, "closes the MOD file", cmd::mod::resetActiveModel },
+
+	    { "NEW_LINE" },
+
+	    { "delete_chunk", { "target chunk (0x10, 0x12, 0x30, etc.)" }, "deletes a chunk type [dangerous]", cmd::mod::deleteChunk },
+	    { "edit_header", {}, "edits header information (date of creation / flags)", cmd::mod::editHeader },
 
 	    { "NEW_LINE" },
 
@@ -54,7 +65,6 @@ static std::vector<Command> gCommands
 	    { "export_ini", { "output filename" }, "exports the ini to a file", cmd::mod::exportIni },
 	    { "export_obj", { "output filename" }, "exports the model to an obj file [WIP]", cmd::mod::exportObj },
 	    { "export_dmd", { "output filename" }, "exports the model to a dmd file [WIP]", cmd::mod::exportDmd },
-
 	    { "NEW_LINE" },
 
 	    { "delete_chunk", { "target chunk (0x10, 0x12, 0x30, etc.)" }, "deletes a chunk type [dangerous]", cmd::mod::deleteChunk },
@@ -84,3 +94,5 @@ inline void showCommands()
 }
 
 } // namespace cmd
+
+#endif

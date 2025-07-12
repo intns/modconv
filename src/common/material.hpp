@@ -266,7 +266,7 @@ enum class MaterialFlags : u32 {
 };
 struct Material {
 	u32 mFlags        = 0;
-	u32 mTextureIndex = 0;
+	s32 mTextureIndex = 0;
 	u32 mTevGroupId   = 0;
 	PolygonColourInfo mColourInfo;
 	LightingInfo mLightingInfo;

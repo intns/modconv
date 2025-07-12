@@ -20,7 +20,7 @@ struct Texture {
 	u16 mWidth            = 0;
 	u16 mHeight           = 0;
 	TextureFormat mFormat = TextureFormat::RGB565;
-	s32 mDataPtrOffset;
+	s32 mDataPtrOffset = 0;
 	std::vector<u8> mImageData;
 
 	void read(util::fstream_reader&);
