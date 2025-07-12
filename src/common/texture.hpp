@@ -1,9 +1,9 @@
 #ifndef TEXTURE_HPP
 #define TEXTURE_HPP
 
-#include <types.hpp>
-#include <util/fstream_reader.hpp>
-#include <util/fstream_writer.hpp>
+#include "../types.hpp"
+#include "../util/fstream_reader.hpp"
+#include "../util/fstream_writer.hpp"
 
 enum class TextureFormat {
 	RGB565 = 0,
@@ -20,7 +20,7 @@ struct Texture {
 	u16 mWidth            = 0;
 	u16 mHeight           = 0;
 	TextureFormat mFormat = TextureFormat::RGB565;
-	s32 mDataPtrOffset = 0;
+	s32 mDataPtrOffset    = 0;
 	std::vector<u8> mImageData;
 
 	void read(util::fstream_reader&);
@@ -39,7 +39,7 @@ struct TextureAttributes {
 	f32 mLODBias          = 0;
 
 	void read(util::fstream_reader&);
-	void write(util::fstream_writer&);
+	void write(util::fstream_writer&) const;
 };
 
 #endif

@@ -1,14 +1,15 @@
-#ifndef _MISC_HPP
-#define _MISC_HPP
+#ifndef __MISC_HPP
+#define __MISC_HPP
 
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <optional>
+#include <array>
 #include <sstream>
 #include <string>
-#include <types.hpp>
+#include "../types.hpp"
 #include <vector>
 
 namespace util {
@@ -32,7 +33,8 @@ inline bool AreFilesIdentical(const fs::path& path1, const fs::path& path2)
 	}
 
 	constexpr std::size_t bufferSize = 0x1000;
-	std::array<char, bufferSize> buffer1 {}, buffer2 {};
+	std::array<char, bufferSize> buffer1 {};
+	std::array<char, bufferSize> buffer2 {};
 
 	while (file1 && file2) {
 		file1.read(buffer1.data(), bufferSize);
@@ -53,7 +55,7 @@ inline bool AreFilesIdentical(const fs::path& path1, const fs::path& path2)
 	return file1.eof() && file2.eof();
 }
 
-inline const u32 CalculateTxeSize(u32 format, u32 x, u32 y)
+inline u32 CalculateTxeSize(u32 format, u32 x, u32 y)
 {
 	switch (format) {
 	case 0:

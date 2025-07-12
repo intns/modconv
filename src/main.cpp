@@ -1,15 +1,12 @@
-#include <commands.hpp>
+#include "commands.hpp"
 #include <functional>
 #include <iostream>
-#include <util/misc.hpp>
+#include "util/misc.hpp"
 #include <string_view>
 #include <sstream>
 #include <iomanip>
 
-#include <unit_tests.hpp>
-
-// Note: Unit tests run in silent mode by default to reduce output noise.
-// Use --test-verbose to see detailed test output.
+#include "unit_tests.hpp"
 
 void printUsage(const char* programName)
 {
@@ -206,7 +203,7 @@ int main(int argc, char** argv)
 
 	// Interactive mode
 	std::cout << "Type 'help' for available commands." << std::endl;
-	std::cout << "Remember to write the file after editing it!" << std::endl;
+	std::cout << "Remember to write the file after editing it!" << std::endl << std::endl;
 
 	// cmd::showCommands();
 

@@ -1,4 +1,4 @@
-#include <common/texture.hpp>
+#include "texture.hpp"
 
 void Texture::read(util::fstream_reader& reader)
 {
@@ -39,7 +39,7 @@ void TextureAttributes::read(util::fstream_reader& reader)
 	mLODBias          = reader.readF32();
 }
 
-void TextureAttributes::write(util::fstream_writer& writer)
+void TextureAttributes::write(util::fstream_writer& writer) const
 {
 	writer.writeS16(mIndex);
 	writer.writeU16(0);

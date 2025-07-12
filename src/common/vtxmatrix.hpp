@@ -1,9 +1,9 @@
 #ifndef VTXMATRIX_HPP
 #define VTXMATRIX_HPP
 
-#include <types.hpp>
-#include <util/fstream_reader.hpp>
-#include <util/fstream_writer.hpp>
+#include "../types.hpp"
+#include "../util/fstream_reader.hpp"
+#include "../util/fstream_writer.hpp"
 
 struct VtxMatrix {
 	u32 mIndex              = 0;

@@ -1,4 +1,4 @@
-#include <common/vector3.hpp>
+#include "vector3.hpp"
 
 void Vector3f::read(util::fstream_reader& reader)
 {

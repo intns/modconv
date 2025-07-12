@@ -55,6 +55,8 @@ Execute the compiled binary to start the interactive shell:
 
 The tool uses an interactive command-line interface. Once started, it displays available commands.
 
+### Interactive Mode
+
 **Basic workflow:**
 
 1. Load a `.mod` file
@@ -73,6 +75,37 @@ write my_model_new.mod
 close
 ```
 
+### Command-Line
+
+### 1. Convert MOD to OBJ
+
+```bash
+# Windows
+modconv.exe load model.mod export_obj model.obj
+
+# Linux/Mac
+./modconv load model.mod export_obj model.obj
+```
+
+### 2. Extract all textures from a MOD file
+
+```bash
+modconv load model.mod export_textures ./textures/
+```
+
+### 3. Export and reimport materials
+
+```bash
+modconv load model.mod export_materials materials.txt close load model2.mod import_material materials.txt write model2_updated.mod
+```
+
+### 4. Modify and save a MOD file
+
+```bash
+# Delete collision data and save
+modconv load model.mod delete_chunk 0x100 delete_chunk 0x110 write model_no_collision.mod
+```
+
 ## System Design
 
 - **`MOD` Class**: Central class representing a loaded `.mod` file, containing vectors and objects for all data chunks (vertices, materials, meshes)
@@ -83,7 +116,7 @@ close
   - **`util::fstream_reader` & `util::fstream_writer`**: Custom stream classes for binary file I/O with big-endian byte swapping
   - **`MaterialReader` & `MaterialWriter`**: Classes for serializing material data to/from human-readable text format
 
-- **Data Structures**: Collection of C++ structs that directly map to binary structures in the `.mod` file format (`Material`, `TEVInfo`, `Mesh`, `Joint`, `CollTriInfo`)
+- **Data Structures**: There are a variety of `struct`s that directly map to binary structures in the `.mod` file format (`Material`, `TEVInfo`, `Mesh`, `Joint`, `CollTriInfo`, etc.)
 
 ## Future Enhancements
 

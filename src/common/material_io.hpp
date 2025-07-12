@@ -3,8 +3,10 @@
 
 #pragma once
 
-#include <common.hpp>
+#include "common.hpp"
+#include <algorithm>
 #include <iomanip>
+#include <ranges>
 #include <sstream>
 #include <iostream>
 #include <string>
@@ -12,8 +14,8 @@
 using namespace mat;
 inline std::string trim(const std::string& s)
 {
-	auto start = std::find_if_not(s.begin(), s.end(), [](unsigned char c) { return std::isspace(c); });
-	auto end   = std::find_if_not(s.rbegin(), s.rend(), [](unsigned char c) { return std::isspace(c); }).base();
+	auto start = std::ranges::find_if_not(s, [](unsigned char c) { return std::isspace(c); });
+	auto end   = std::ranges::find_if_not(std::ranges::reverse_view(s), [](unsigned char c) { return std::isspace(c); }).base();
 	return (start < end) ? std::string(start, end) : "";
 }
 
@@ -74,7 +76,6 @@ public:
 		m_out << label << " " << vec << '\n';
 	}
 
-public:
 	MaterialWriter(std::ostream& out)
 	    : m_out(out)
 	{
@@ -89,8 +90,9 @@ public:
 
 	void endSection()
 	{
-		if (m_indentLevel > 0)
+		if (m_indentLevel > 0) {
 			m_indentLevel--;
+		}
 	}
 
 	// Write individual components
@@ -366,40 +368,43 @@ private:
 
 	bool readLine()
 	{
-		if (!std::getline(m_in, m_currentLine))
+		if (!std::getline(m_in, m_currentLine)) {
 			return false;
+		}
 
 		// Calculate indent level
 		m_currentIndent = 0;
 		for (char c : m_currentLine) {
-			if (c == '\t')
+			if (c == '\t') {
 				m_currentIndent++;
-			else
+			} else {
 				break;
+			}
 		}
 		return true;
 	}
 
-	std::string trimLine() const { return trim(m_currentLine); }
+	[[nodiscard]] std::string trimLine() const { return trim(m_currentLine); }
 
 	std::pair<std::string, std::string> parseKeyValue()
 	{
 		std::string line = trimLine();
 		size_t pos       = line.find(' ');
-		if (pos == std::string::npos)
+		if (pos == std::string::npos) {
 			return { line, "" };
+		}
 		return { line.substr(0, pos), line.substr(pos + 1) };
 	}
 
-	std::vector<std::string> split(const std::string& str, char delimiter)
+	static std::vector<std::string> split(const std::string& str, char delimiter)
 	{
 		std::vector<std::string> tokens;
 		std::stringstream ss(str);
 		std::string token;
 		while (std::getline(ss, token, delimiter)) {
 			// Trim whitespace from token
-			size_t start = token.find_first_not_of(" ");
-			size_t end   = token.find_last_not_of(" ");
+			size_t start = token.find_first_not_of(' ');
+			size_t end   = token.find_last_not_of(' ');
 			if (start != std::string::npos) {
 				tokens.push_back(token.substr(start, end - start + 1));
 			}
@@ -407,10 +412,13 @@ private:
 		return tokens;
 	}
 
-	void parseColour(const std::string& str, ColourU8& colour)
+	static void parseColour(const std::string& str, ColourU8& colour)
 	{
 		std::istringstream iss(str);
-		u32 r, g, b, a;
+		u32 r;
+		u32 g;
+		u32 b;
+		u32 a;
 		iss >> r >> g >> b >> a;
 		colour.r = static_cast<u8>(r);
 		colour.g = static_cast<u8>(g);
@@ -418,10 +426,13 @@ private:
 		colour.a = static_cast<u8>(a);
 	}
 
-	void parseColour(const std::string& str, ColourU16& colour)
+	static void parseColour(const std::string& str, ColourU16& colour)
 	{
 		std::istringstream iss(str);
-		u32 r, g, b, a;
+		u32 r;
+		u32 g;
+		u32 b;
+		u32 a;
 		iss >> r >> g >> b >> a;
 		colour.r = static_cast<u16>(r);
 		colour.g = static_cast<u16>(g);
@@ -429,13 +440,13 @@ private:
 		colour.a = static_cast<u16>(a);
 	}
 
-	void parseVec(const std::string& str, Vector3f& vec)
+	static void parseVec(const std::string& str, Vector3f& vec)
 	{
 		std::istringstream iss(str);
 		iss >> vec.x >> vec.y >> vec.z;
 	}
 
-	void parseVec(const std::string& str, Vector2f& vec)
+	static void parseVec(const std::string& str, Vector2f& vec)
 	{
 		std::istringstream iss(str);
 		iss >> vec.x >> vec.y;
@@ -446,18 +457,19 @@ private:
 		u32 flags      = 0;
 		auto flagNames = split(flagStr, ',');
 		for (const auto& name : flagNames) {
-			if (name == "IsEnabled")
+			if (name == "IsEnabled") {
 				flags |= static_cast<u32>(MaterialFlags::IsEnabled);
-			else if (name == "Opaque")
+			} else if (name == "Opaque") {
 				flags |= static_cast<u32>(MaterialFlags::Opaque);
-			else if (name == "AlphaClip")
+			} else if (name == "AlphaClip") {
 				flags |= static_cast<u32>(MaterialFlags::AlphaClip);
-			else if (name == "TransparentBlend")
+			} else if (name == "TransparentBlend") {
 				flags |= static_cast<u32>(MaterialFlags::TransparentBlend);
-			else if (name == "InvertSpecialBlend")
+			} else if (name == "InvertSpecialBlend") {
 				flags |= static_cast<u32>(MaterialFlags::InvertSpecialBlend);
-			else if (name == "Hidden")
+			} else if (name == "Hidden") {
 				flags |= static_cast<u32>(MaterialFlags::Hidden);
+			}
 		}
 		return flags;
 	}
@@ -495,7 +507,7 @@ private:
 		return flags;
 	}
 
-	bool parseKeyInfoU8(const std::string& data, KeyInfoU8& key)
+	static bool parseKeyInfoU8(const std::string& data, KeyInfoU8& key)
 	{
 		// Parse "TIME[123] value tangent"
 		size_t start = data.find('[');
@@ -508,14 +520,14 @@ private:
 		return true;
 	}
 
-	bool parseKeyInfoF32(const std::string& data, KeyInfoF32& key)
+	static bool parseKeyInfoF32(const std::string& data, KeyInfoF32& key)
 	{
 		std::istringstream iss(data);
 		iss >> key.mTime >> key.mValue >> key.mTangent;
 		return true;
 	}
 
-	bool parseKeyInfoS10(const std::string& data, KeyInfoS10& key)
+	static bool parseKeyInfoS10(const std::string& data, KeyInfoS10& key)
 	{
 		// Parse "TIME[123] value tangent"
 		size_t start = data.find('[');
@@ -529,129 +541,182 @@ private:
 	}
 
 	// GX enum reverse mappings - based on gxdefines.hpp
-	u8 parseGXTexCoordID(const std::string& str)
+	static u8 parseGXTexCoordID(const std::string& str)
 	{
-		if (str == "GX_TEXCOORD0")
+		if (str == "GX_TEXCOORD0") {
 			return 0x0;
-		if (str == "GX_TEXCOORD1")
+		}
+		if (str == "GX_TEXCOORD1") {
 			return 0x1;
-		if (str == "GX_TEXCOORD2")
+		}
+		if (str == "GX_TEXCOORD2") {
 			return 0x2;
-		if (str == "GX_TEXCOORD3")
+		}
+		if (str == "GX_TEXCOORD3") {
 			return 0x3;
-		if (str == "GX_TEXCOORD4")
+		}
+		if (str == "GX_TEXCOORD4") {
 			return 0x4;
-		if (str == "GX_TEXCOORD5")
+		}
+		if (str == "GX_TEXCOORD5") {
 			return 0x5;
-		if (str == "GX_TEXCOORD6")
+		}
+		if (str == "GX_TEXCOORD6") {
 			return 0x6;
-		if (str == "GX_TEXCOORD7")
+		}
+		if (str == "GX_TEXCOORD7") {
 			return 0x7;
-		if (str == "GX_MAX_TEXCOORD")
+		}
+		if (str == "GX_MAX_TEXCOORD") {
 			return 8;
-		if (str == "GX_TEXCOORD_NULL")
+		}
+		if (str == "GX_TEXCOORD_NULL") {
 			return 0xff;
+		}
 		return 0xff;
 	}
 
-	u8 parseGXTexGenType(const std::string& str)
+	static u8 parseGXTexGenType(const std::string& str)
 	{
-		if (str == "GX_TG_MTX3x4")
+		if (str == "GX_TG_MTX3x4") {
 			return 0;
-		if (str == "GX_TG_MTX2x4")
+		}
+		if (str == "GX_TG_MTX2x4") {
 			return 1;
-		if (str == "GX_TG_BUMP0")
+		}
+		if (str == "GX_TG_BUMP0") {
 			return 2;
-		if (str == "GX_TG_BUMP1")
+		}
+		if (str == "GX_TG_BUMP1") {
 			return 3;
-		if (str == "GX_TG_BUMP2")
+		}
+		if (str == "GX_TG_BUMP2") {
 			return 4;
-		if (str == "GX_TG_BUMP3")
+		}
+		if (str == "GX_TG_BUMP3") {
 			return 5;
-		if (str == "GX_TG_BUMP4")
+		}
+		if (str == "GX_TG_BUMP4") {
 			return 6;
-		if (str == "GX_TG_BUMP5")
+		}
+		if (str == "GX_TG_BUMP5") {
 			return 7;
-		if (str == "GX_TG_BUMP6")
+		}
+		if (str == "GX_TG_BUMP6") {
 			return 8;
-		if (str == "GX_TG_BUMP7")
+		}
+		if (str == "GX_TG_BUMP7") {
 			return 9;
-		if (str == "GX_TG_SRTG")
+		}
+		if (str == "GX_TG_SRTG") {
 			return 10;
+		}
 		return 0;
 	}
 
-	u8 parseGXTexGenSrc(const std::string& str)
+	static u8 parseGXTexGenSrc(const std::string& str)
 	{
-		if (str == "GX_TG_POS")
+		if (str == "GX_TG_POS") {
 			return 0;
-		if (str == "GX_TG_NRM")
+		}
+		if (str == "GX_TG_NRM") {
 			return 1;
-		if (str == "GX_TG_BINRM")
+		}
+		if (str == "GX_TG_BINRM") {
 			return 2;
-		if (str == "GX_TG_TANGENT")
+		}
+		if (str == "GX_TG_TANGENT") {
 			return 3;
-		if (str == "GX_TG_TEX0")
+		}
+		if (str == "GX_TG_TEX0") {
 			return 4;
-		if (str == "GX_TG_TEX1")
+		}
+		if (str == "GX_TG_TEX1") {
 			return 5;
-		if (str == "GX_TG_TEX2")
+		}
+		if (str == "GX_TG_TEX2") {
 			return 6;
-		if (str == "GX_TG_TEX3")
+		}
+		if (str == "GX_TG_TEX3") {
 			return 7;
-		if (str == "GX_TG_TEX4")
+		}
+		if (str == "GX_TG_TEX4") {
 			return 8;
-		if (str == "GX_TG_TEX5")
+		}
+		if (str == "GX_TG_TEX5") {
 			return 9;
-		if (str == "GX_TG_TEX6")
+		}
+		if (str == "GX_TG_TEX6") {
 			return 10;
-		if (str == "GX_TG_TEX7")
+		}
+		if (str == "GX_TG_TEX7") {
 			return 11;
-		if (str == "GX_TG_TEXCOORD0")
+		}
+		if (str == "GX_TG_TEXCOORD0") {
 			return 12;
-		if (str == "GX_TG_TEXCOORD1")
+		}
+		if (str == "GX_TG_TEXCOORD1") {
 			return 13;
-		if (str == "GX_TG_TEXCOORD2")
+		}
+		if (str == "GX_TG_TEXCOORD2") {
 			return 14;
-		if (str == "GX_TG_TEXCOORD3")
+		}
+		if (str == "GX_TG_TEXCOORD3") {
 			return 15;
-		if (str == "GX_TG_TEXCOORD4")
+		}
+		if (str == "GX_TG_TEXCOORD4") {
 			return 16;
-		if (str == "GX_TG_TEXCOORD5")
+		}
+		if (str == "GX_TG_TEXCOORD5") {
 			return 17;
-		if (str == "GX_TG_TEXCOORD6")
+		}
+		if (str == "GX_TG_TEXCOORD6") {
 			return 18;
-		if (str == "GX_TG_COLOR0")
+		}
+		if (str == "GX_TG_COLOR0") {
 			return 19;
-		if (str == "GX_TG_COLOR1")
+		}
+		if (str == "GX_TG_COLOR1") {
 			return 20;
+		}
 		return 0;
 	}
 
-	u8 parseGXTexMtx(const std::string& str)
+	static u8 parseGXTexMtx(const std::string& str)
 	{
-		if (str == "GX_TEXMTX0")
+		if (str == "GX_TEXMTX0") {
 			return 0;
-		if (str == "GX_TEXMTX1")
+		}
+		if (str == "GX_TEXMTX1") {
 			return 1;
-		if (str == "GX_TEXMTX2")
+		}
+		if (str == "GX_TEXMTX2") {
 			return 2;
-		if (str == "GX_TEXMTX3")
+		}
+		if (str == "GX_TEXMTX3") {
 			return 3;
-		if (str == "GX_TEXMTX4")
+		}
+		if (str == "GX_TEXMTX4") {
 			return 4;
-		if (str == "GX_TEXMTX5")
+		}
+		if (str == "GX_TEXMTX5") {
 			return 5;
-		if (str == "GX_TEXMTX6")
+		}
+		if (str == "GX_TEXMTX6") {
 			return 6;
-		if (str == "GX_TEXMTX7")
+		}
+		if (str == "GX_TEXMTX7") {
 			return 7;
-		if (str == "GX_TEXMTX8")
+		}
+		if (str == "GX_TEXMTX8") {
 			return 8;
-		if (str == "GX_TEXMTX9")
+		}
+		if (str == "GX_TEXMTX9") {
 			return 9;
-		if (str == "GX_IDENTITY")
+		}
+		if (str == "GX_IDENTITY") {
 			return 0xFF;
+		}
 
 		// If it's a number string, parse it
 		try {
@@ -661,225 +726,321 @@ private:
 		}
 	}
 
-	s16 parseGXTexWrapMode(const std::string& str)
+	static s16 parseGXTexWrapMode(const std::string& str)
 	{
-		if (str == "GX_CLAMP")
+		if (str == "GX_CLAMP") {
 			return 0;
-		if (str == "GX_REPEAT")
+		}
+		if (str == "GX_REPEAT") {
 			return 1;
-		if (str == "GX_MIRROR")
+		}
+		if (str == "GX_MIRROR") {
 			return 2;
-		if (str == "GX_MAX_TEXWRAPMODE")
+		}
+		if (str == "GX_MAX_TEXWRAPMODE") {
 			return 3;
+		}
 		return 0;
 	}
 
-	u16 parseGXTexMapID(const std::string& str)
+	static u16 parseGXTexMapID(const std::string& str)
 	{
-		if (str == "GX_TEXMAP0")
+		if (str == "GX_TEXMAP0") {
 			return 0;
-		if (str == "GX_TEXMAP1")
+		}
+		if (str == "GX_TEXMAP1") {
 			return 1;
-		if (str == "GX_TEXMAP2")
+		}
+		if (str == "GX_TEXMAP2") {
 			return 2;
-		if (str == "GX_TEXMAP3")
+		}
+		if (str == "GX_TEXMAP3") {
 			return 3;
-		if (str == "GX_TEXMAP4")
+		}
+		if (str == "GX_TEXMAP4") {
 			return 4;
-		if (str == "GX_TEXMAP5")
+		}
+		if (str == "GX_TEXMAP5") {
 			return 5;
-		if (str == "GX_TEXMAP6")
+		}
+		if (str == "GX_TEXMAP6") {
 			return 6;
-		if (str == "GX_TEXMAP7")
+		}
+		if (str == "GX_TEXMAP7") {
 			return 7;
-		if (str == "GX_MAX_TEXMAP")
+		}
+		if (str == "GX_MAX_TEXMAP") {
 			return 8;
-		if (str == "GX_TEXMAP_NULL")
+		}
+		if (str == "GX_TEXMAP_NULL") {
 			return 0xff;
-		if (str == "GX_TEX_DISABLE")
+		}
+		if (str == "GX_TEX_DISABLE") {
 			return 0x100;
+		}
 		return 0xff;
 	}
 
-	u8 parseGXChannelID(const std::string& str)
+	static u8 parseGXChannelID(const std::string& str)
 	{
-		if (str == "GX_COLOR0")
+		if (str == "GX_COLOR0") {
 			return 0;
-		if (str == "GX_COLOR1")
+		}
+		if (str == "GX_COLOR1") {
 			return 1;
-		if (str == "GX_ALPHA0")
+		}
+		if (str == "GX_ALPHA0") {
 			return 2;
-		if (str == "GX_ALPHA1")
+		}
+		if (str == "GX_ALPHA1") {
 			return 3;
-		if (str == "GX_COLOR0A0")
+		}
+		if (str == "GX_COLOR0A0") {
 			return 4;
-		if (str == "GX_COLOR1A1")
+		}
+		if (str == "GX_COLOR1A1") {
 			return 5;
-		if (str == "GX_COLOR_ZERO")
+		}
+		if (str == "GX_COLOR_ZERO") {
 			return 6;
-		if (str == "GX_ALPHA_BUMP")
+		}
+		if (str == "GX_ALPHA_BUMP") {
 			return 7;
-		if (str == "GX_ALPHA_BUMPN")
+		}
+		if (str == "GX_ALPHA_BUMPN") {
 			return 8;
-		if (str == "GX_COLOR_NULL")
+		}
+		if (str == "GX_COLOR_NULL") {
 			return 0xff;
+		}
 		return 0xff;
 	}
 
-	u8 parseGXTevKColorSel(const std::string& str)
+	static u8 parseGXTevKColorSel(const std::string& str)
 	{
-		if (str == "GX_TEV_KCSEL_1")
+		if (str == "GX_TEV_KCSEL_1") {
 			return 0x00;
-		if (str == "GX_TEV_KCSEL_7_8")
+		}
+		if (str == "GX_TEV_KCSEL_7_8") {
 			return 0x01;
-		if (str == "GX_TEV_KCSEL_3_4")
+		}
+		if (str == "GX_TEV_KCSEL_3_4") {
 			return 0x02;
-		if (str == "GX_TEV_KCSEL_5_8")
+		}
+		if (str == "GX_TEV_KCSEL_5_8") {
 			return 0x03;
-		if (str == "GX_TEV_KCSEL_1_2")
+		}
+		if (str == "GX_TEV_KCSEL_1_2") {
 			return 0x04;
-		if (str == "GX_TEV_KCSEL_3_8")
+		}
+		if (str == "GX_TEV_KCSEL_3_8") {
 			return 0x05;
-		if (str == "GX_TEV_KCSEL_1_4")
+		}
+		if (str == "GX_TEV_KCSEL_1_4") {
 			return 0x06;
-		if (str == "GX_TEV_KCSEL_1_8")
+		}
+		if (str == "GX_TEV_KCSEL_1_8") {
 			return 0x07;
-		if (str == "GX_TEV_KCSEL_K0")
+		}
+		if (str == "GX_TEV_KCSEL_K0") {
 			return 0x0C;
-		if (str == "GX_TEV_KCSEL_K1")
+		}
+		if (str == "GX_TEV_KCSEL_K1") {
 			return 0x0D;
-		if (str == "GX_TEV_KCSEL_K2")
+		}
+		if (str == "GX_TEV_KCSEL_K2") {
 			return 0x0E;
-		if (str == "GX_TEV_KCSEL_K3")
+		}
+		if (str == "GX_TEV_KCSEL_K3") {
 			return 0x0F;
-		if (str == "GX_TEV_KCSEL_K0_R")
+		}
+		if (str == "GX_TEV_KCSEL_K0_R") {
 			return 0x10;
-		if (str == "GX_TEV_KCSEL_K1_R")
+		}
+		if (str == "GX_TEV_KCSEL_K1_R") {
 			return 0x11;
-		if (str == "GX_TEV_KCSEL_K2_R")
+		}
+		if (str == "GX_TEV_KCSEL_K2_R") {
 			return 0x12;
-		if (str == "GX_TEV_KCSEL_K3_R")
+		}
+		if (str == "GX_TEV_KCSEL_K3_R") {
 			return 0x13;
-		if (str == "GX_TEV_KCSEL_K0_G")
+		}
+		if (str == "GX_TEV_KCSEL_K0_G") {
 			return 0x14;
-		if (str == "GX_TEV_KCSEL_K1_G")
+		}
+		if (str == "GX_TEV_KCSEL_K1_G") {
 			return 0x15;
-		if (str == "GX_TEV_KCSEL_K2_G")
+		}
+		if (str == "GX_TEV_KCSEL_K2_G") {
 			return 0x16;
-		if (str == "GX_TEV_KCSEL_K3_G")
+		}
+		if (str == "GX_TEV_KCSEL_K3_G") {
 			return 0x17;
-		if (str == "GX_TEV_KCSEL_K0_B")
+		}
+		if (str == "GX_TEV_KCSEL_K0_B") {
 			return 0x18;
-		if (str == "GX_TEV_KCSEL_K1_B")
+		}
+		if (str == "GX_TEV_KCSEL_K1_B") {
 			return 0x19;
-		if (str == "GX_TEV_KCSEL_K2_B")
+		}
+		if (str == "GX_TEV_KCSEL_K2_B") {
 			return 0x1A;
-		if (str == "GX_TEV_KCSEL_K3_B")
+		}
+		if (str == "GX_TEV_KCSEL_K3_B") {
 			return 0x1B;
-		if (str == "GX_TEV_KCSEL_K0_A")
+		}
+		if (str == "GX_TEV_KCSEL_K0_A") {
 			return 0x1C;
-		if (str == "GX_TEV_KCSEL_K1_A")
+		}
+		if (str == "GX_TEV_KCSEL_K1_A") {
 			return 0x1D;
-		if (str == "GX_TEV_KCSEL_K2_A")
+		}
+		if (str == "GX_TEV_KCSEL_K2_A") {
 			return 0x1E;
-		if (str == "GX_TEV_KCSEL_K3_A")
+		}
+		if (str == "GX_TEV_KCSEL_K3_A") {
 			return 0x1F;
+		}
 		return 0x1F;
 	}
 
-	u8 parseGXTevKAlphaSel(const std::string& str)
+	static u8 parseGXTevKAlphaSel(const std::string& str)
 	{
-		if (str == "GX_TEV_KASEL_1")
+		if (str == "GX_TEV_KASEL_1") {
 			return 0x00;
-		if (str == "GX_TEV_KASEL_7_8")
+		}
+		if (str == "GX_TEV_KASEL_7_8") {
 			return 0x01;
-		if (str == "GX_TEV_KASEL_3_4")
+		}
+		if (str == "GX_TEV_KASEL_3_4") {
 			return 0x02;
-		if (str == "GX_TEV_KASEL_5_8")
+		}
+		if (str == "GX_TEV_KASEL_5_8") {
 			return 0x03;
-		if (str == "GX_TEV_KASEL_1_2")
+		}
+		if (str == "GX_TEV_KASEL_1_2") {
 			return 0x04;
-		if (str == "GX_TEV_KASEL_3_8")
+		}
+		if (str == "GX_TEV_KASEL_3_8") {
 			return 0x05;
-		if (str == "GX_TEV_KASEL_1_4")
+		}
+		if (str == "GX_TEV_KASEL_1_4") {
 			return 0x06;
-		if (str == "GX_TEV_KASEL_1_8")
+		}
+		if (str == "GX_TEV_KASEL_1_8") {
 			return 0x07;
-		if (str == "GX_TEV_KASEL_K0_R")
+		}
+		if (str == "GX_TEV_KASEL_K0_R") {
 			return 0x10;
-		if (str == "GX_TEV_KASEL_K1_R")
+		}
+		if (str == "GX_TEV_KASEL_K1_R") {
 			return 0x11;
-		if (str == "GX_TEV_KASEL_K2_R")
+		}
+		if (str == "GX_TEV_KASEL_K2_R") {
 			return 0x12;
-		if (str == "GX_TEV_KASEL_K3_R")
+		}
+		if (str == "GX_TEV_KASEL_K3_R") {
 			return 0x13;
-		if (str == "GX_TEV_KASEL_K0_G")
+		}
+		if (str == "GX_TEV_KASEL_K0_G") {
 			return 0x14;
-		if (str == "GX_TEV_KASEL_K1_G")
+		}
+		if (str == "GX_TEV_KASEL_K1_G") {
 			return 0x15;
-		if (str == "GX_TEV_KASEL_K2_G")
+		}
+		if (str == "GX_TEV_KASEL_K2_G") {
 			return 0x16;
-		if (str == "GX_TEV_KASEL_K3_G")
+		}
+		if (str == "GX_TEV_KASEL_K3_G") {
 			return 0x17;
-		if (str == "GX_TEV_KASEL_K0_B")
+		}
+		if (str == "GX_TEV_KASEL_K0_B") {
 			return 0x18;
-		if (str == "GX_TEV_KASEL_K1_B")
+		}
+		if (str == "GX_TEV_KASEL_K1_B") {
 			return 0x19;
-		if (str == "GX_TEV_KASEL_K2_B")
+		}
+		if (str == "GX_TEV_KASEL_K2_B") {
 			return 0x1A;
-		if (str == "GX_TEV_KASEL_K3_B")
+		}
+		if (str == "GX_TEV_KASEL_K3_B") {
 			return 0x1B;
-		if (str == "GX_TEV_KASEL_K0_A")
+		}
+		if (str == "GX_TEV_KASEL_K0_A") {
 			return 0x1C;
-		if (str == "GX_TEV_KASEL_K1_A")
+		}
+		if (str == "GX_TEV_KASEL_K1_A") {
 			return 0x1D;
-		if (str == "GX_TEV_KASEL_K2_A")
+		}
+		if (str == "GX_TEV_KASEL_K2_A") {
 			return 0x1E;
-		if (str == "GX_TEV_KASEL_K3_A")
+		}
+		if (str == "GX_TEV_KASEL_K3_A") {
 			return 0x1F;
+		}
 		return 0x1F;
 	}
 
-	u8 parseGXTevColorArg(const std::string& str)
+	static u8 parseGXTevColorArg(const std::string& str)
 	{
-		if (str == "GX_CC_CPREV")
+		if (str == "GX_CC_CPREV") {
 			return 0;
-		if (str == "GX_CC_APREV")
+		}
+		if (str == "GX_CC_APREV") {
 			return 1;
-		if (str == "GX_CC_C0")
+		}
+		if (str == "GX_CC_C0") {
 			return 2;
-		if (str == "GX_CC_A0")
+		}
+		if (str == "GX_CC_A0") {
 			return 3;
-		if (str == "GX_CC_C1")
+		}
+		if (str == "GX_CC_C1") {
 			return 4;
-		if (str == "GX_CC_A1")
+		}
+		if (str == "GX_CC_A1") {
 			return 5;
-		if (str == "GX_CC_C2")
+		}
+		if (str == "GX_CC_C2") {
 			return 6;
-		if (str == "GX_CC_A2")
+		}
+		if (str == "GX_CC_A2") {
 			return 7;
-		if (str == "GX_CC_TEXC")
+		}
+		if (str == "GX_CC_TEXC") {
 			return 8;
-		if (str == "GX_CC_TEXA")
+		}
+		if (str == "GX_CC_TEXA") {
 			return 9;
-		if (str == "GX_CC_RASC")
+		}
+		if (str == "GX_CC_RASC") {
 			return 10;
-		if (str == "GX_CC_RASA")
+		}
+		if (str == "GX_CC_RASA") {
 			return 11;
-		if (str == "GX_CC_ONE")
+		}
+		if (str == "GX_CC_ONE") {
 			return 12;
-		if (str == "GX_CC_HALF")
+		}
+		if (str == "GX_CC_HALF") {
 			return 13;
-		if (str == "GX_CC_QUARTER")
+		}
+		if (str == "GX_CC_QUARTER") {
 			return 14;
-		if (str == "GX_CC_ZERO")
+		}
+		if (str == "GX_CC_ZERO") {
 			return 15;
-		if (str == "GX_CC_TEXRRR")
+		}
+		if (str == "GX_CC_TEXRRR") {
 			return 16;
-		if (str == "GX_CC_TEXGGG")
+		}
+		if (str == "GX_CC_TEXGGG") {
 			return 17;
-		if (str == "GX_CC_TEXBBB")
+		}
+		if (str == "GX_CC_TEXBBB") {
 			return 18;
+		}
 		return 15;
 	}
 
@@ -904,19 +1065,22 @@ public:
 			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
 			if (line == "MAT_SECTION") {
-				if (!readMaterialSection(materials))
+				if (!readMaterialSection(materials)) {
 					return false;
-			} else if (line == "TEV_SECTION" || line.find("TEV ") == 0) {
-				if (line.find("TEV ") == 0) {
+				}
+			} else if (line == "TEV_SECTION" || line.starts_with("TEV ")) {
+				if (line.starts_with("TEV ")) {
 					m_in.seekg(pos);
 				}
 
-				if (!readTEVSection(tevInfos))
+				if (!readTEVSection(tevInfos)) {
 					return false;
+				}
 			}
 		}
 
@@ -933,16 +1097,18 @@ private:
 			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
 			auto [key, value] = parseKeyValue();
 			if (key == "MAT") {
 				Material mat;
-				if (!readMaterial(mat))
+				if (!readMaterial(mat)) {
 					return false;
+				}
 				materials.push_back(mat);
-			} else if (key == "TEV_SECTION" || line.find("TEV ") == 0) {
+			} else if (key == "TEV_SECTION" || line.starts_with("TEV ")) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -956,14 +1122,16 @@ private:
 	{
 		while (readLine()) {
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
 			auto [key, value] = parseKeyValue();
 			if (key == "TEV") {
 				TEVInfo tev;
-				if (!readTEVInfo(tev))
+				if (!readTEVInfo(tev)) {
 					return false;
+				}
 				tevInfos.push_back(tev);
 			}
 		}
@@ -974,16 +1142,18 @@ private:
 	{
 		while (true) {
 			std::streampos pos = m_in.tellg();
-			if (!readLine())
+			if (!readLine()) {
 				break;
+			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
 			// Check if we've hit the next material or section
 			if (m_currentIndent == 0
-			    && (line == "MAT" || line.find("MAT ") == 0 || line == "TEV_SECTION" || line == "TEV" || line.find("TEV ") == 0)) {
+			    && (line == "MAT" || line.starts_with("MAT ") || line == "TEV_SECTION" || line == "TEV" || line.starts_with("TEV "))) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1000,17 +1170,21 @@ private:
 			} else if (key == "TEV_GROUP_ID") {
 				mat.mTevGroupId = std::stoi(value);
 			} else if (key == "POLYGON_COLOUR_INFO") {
-				if (!readPolygonColourInfo(mat.mColourInfo))
+				if (!readPolygonColourInfo(mat.mColourInfo)) {
 					return false;
+				}
 			} else if (key == "LIGHTING_INFO") {
-				if (!readLightingInfo(mat.mLightingInfo))
+				if (!readLightingInfo(mat.mLightingInfo)) {
 					return false;
+				}
 			} else if (key == "PE_INFO") {
-				if (!readPeInfo(mat.mPeInfo))
+				if (!readPeInfo(mat.mPeInfo)) {
 					return false;
+				}
 			} else if (key == "TEXTURE_INFO") {
-				if (!readTextureInfo(mat.mTexInfo))
+				if (!readTextureInfo(mat.mTexInfo)) {
 					return false;
+				}
 			}
 		}
 		return true;
@@ -1020,16 +1194,18 @@ private:
 	{
 		while (true) {
 			std::streampos pos = m_in.tellg();
-			if (!readLine())
+			if (!readLine()) {
 				break;
+			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
 			if (m_currentIndent <= 1
-			    && (line == "LIGHTING_INFO" || line == "PE_INFO" || line == "TEXTURE_INFO" || line == "MAT" || line.find("MAT ") == 0
-			        || line == "TEV" || line.find("TEV ") == 0)) {
+			    && (line == "LIGHTING_INFO" || line == "PE_INFO" || line == "TEXTURE_INFO" || line == "MAT" || line.starts_with("MAT ")
+			        || line == "TEV" || line.starts_with("TEV "))) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1049,8 +1225,9 @@ private:
 				info.mColourAnimInfo.reserve(count);
 			} else if (key == "COLOUR_ANIM_INDEX") {
 				ColourAnimInfo colAnim;
-				if (!readColourAnimInfo(colAnim))
+				if (!readColourAnimInfo(colAnim)) {
 					return false;
+				}
 				info.mColourAnimInfo.push_back(colAnim);
 			} else if (key == "ALPHA_ANIM_COUNT") {
 				unsigned int count = std::stoul(value);
@@ -1058,8 +1235,9 @@ private:
 				info.mAlphaAnimInfo.reserve(count);
 			} else if (key == "ALPHA_ANIM_INDEX") {
 				AlphaAnimInfo alphaAnim;
-				if (!readAlphaAnimInfo(alphaAnim))
+				if (!readAlphaAnimInfo(alphaAnim)) {
 					return false;
+				}
 				info.mAlphaAnimInfo.push_back(alphaAnim);
 			}
 		}
@@ -1152,7 +1330,7 @@ private:
 				continue;
 			}
 
-			if (m_currentIndent <= 1 && (line == "PE_INFO" || line == "TEXTURE_INFO" || line == "MAT" || line.find("MAT ") == 0)) {
+			if (m_currentIndent <= 1 && (line == "PE_INFO" || line == "TEXTURE_INFO" || line == "MAT" || line.starts_with("MAT "))) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1183,7 +1361,7 @@ private:
 				continue;
 			}
 
-			if (m_currentIndent <= 1 && (line == "TEXTURE_INFO" || line == "MAT" || line.find("MAT ") == 0)) {
+			if (m_currentIndent <= 1 && (line == "TEXTURE_INFO" || line == "MAT" || line.starts_with("MAT "))) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1194,13 +1372,15 @@ private:
 			if (key == "FLAGS") {
 				info.mFlags = std::stoi(value);
 			} else if (key == "ALPHA_COMPARE_FUNCTION") {
-				if (!readAlphaCompareFunction(info.mAlphaCompareFunction))
+				if (!readAlphaCompareFunction(info.mAlphaCompareFunction)) {
 					return false;
+				}
 			} else if (key == "Z_MODE_FUNCTION") {
 				info.mZModeFunction = std::stoi(value);
 			} else if (key == "BLEND_MODE") {
-				if (!readBlendMode(info.mBlendMode))
+				if (!readBlendMode(info.mBlendMode)) {
 					return false;
+				}
 			}
 		}
 		return true;
@@ -1228,16 +1408,17 @@ private:
 
 			auto [key, value] = parseKeyValue();
 
-			if (key == "COMP0")
+			if (key == "COMP0") {
 				func.bits.comp0 = std::stoi(value);
-			else if (key == "REF0")
+			} else if (key == "REF0") {
 				func.bits.ref0 = std::stoi(value);
-			else if (key == "OP")
+			} else if (key == "OP") {
 				func.bits.op = std::stoi(value);
-			else if (key == "COMP1")
+			} else if (key == "COMP1") {
 				func.bits.comp1 = std::stoi(value);
-			else if (key == "REF1")
+			} else if (key == "REF1") {
 				func.bits.ref1 = std::stoi(value);
+			}
 		}
 		return true;
 	}
@@ -1264,14 +1445,15 @@ private:
 
 			auto [key, value] = parseKeyValue();
 
-			if (key == "TYPE")
+			if (key == "TYPE") {
 				mode.bits.mType = std::stoi(value);
-			else if (key == "SRC_FACTOR")
+			} else if (key == "SRC_FACTOR") {
 				mode.bits.mSrcFactor = std::stoi(value);
-			else if (key == "DST_FACTOR")
+			} else if (key == "DST_FACTOR") {
 				mode.bits.mDstFactor = std::stoi(value);
-			else if (key == "LOGIC_OP")
+			} else if (key == "LOGIC_OP") {
 				mode.bits.mLogicOp = std::stoi(value);
+			}
 		}
 		return true;
 	}
@@ -1290,7 +1472,7 @@ private:
 				continue;
 			}
 
-			if (m_currentIndent == 0 && (line == "MAT" || line.find("MAT ") == 0 || line == "TEV" || line.find("TEV ") == 0)) {
+			if (m_currentIndent == 0 && (line == "MAT" || line.starts_with("MAT ") || line == "TEV" || line.starts_with("TEV "))) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1321,8 +1503,9 @@ private:
 
 					if (nextKey == "DESTINATION_COORDS") {
 						TexGenData genData;
-						if (!readTexGenData(genData))
+						if (!readTexGenData(genData)) {
 							return false;
+						}
 						info.mTextureGenData.push_back(genData);
 					}
 				}
@@ -1332,8 +1515,9 @@ private:
 				info.mTextureData.reserve(count);
 			} else if (key == "TEXDATA_ENTRY") {
 				TextureData texData;
-				if (!readTextureData(texData))
+				if (!readTextureData(texData)) {
 					return false;
+				}
 				info.mTextureData.push_back(texData);
 			}
 		}
@@ -1355,7 +1539,8 @@ private:
 			}
 
 			if (m_currentIndent <= 3
-			    && (line == "ENTRY" || line.find("ENTRY ") == 0 || line.find("TEXDATA_COUNT ") == 0 || line.find("TEXDATA_ENTRY ") == 0)) {
+			    && (line == "ENTRY" || line.starts_with("ENTRY ") || line.starts_with("TEXDATA_COUNT ")
+			        || line.starts_with("TEXDATA_ENTRY "))) {
 				m_in.seekg(pos);
 				break;
 			}
@@ -1379,16 +1564,18 @@ private:
 	{
 		while (true) {
 			std::streampos pos = m_in.tellg();
-			if (!readLine())
+			if (!readLine()) {
 				break;
+			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
 			if (m_currentIndent <= 2
-			    && (line == "TEXDATA_ENTRY" || line.find("TEXDATA_ENTRY ") == 0 || line == "MAT" || line.find("MAT ") == 0
-			        || line.find("TEV_SECTION") == 0 || line.find("TEV ") == 0)) {
+			    && (line == "TEXDATA_ENTRY" || line.starts_with("TEXDATA_ENTRY ") || line == "MAT" || line.starts_with("MAT ")
+			        || line.starts_with("TEV_SECTION") || line.starts_with("TEV "))) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1439,16 +1626,19 @@ private:
 			} else if (key == "ENTRY") {
 				TextureAnimData animData;
 				if (data.mScaleInfo.size() < data.mScaleInfo.capacity()) {
-					if (!readTextureAnimData(animData))
+					if (!readTextureAnimData(animData)) {
 						return false;
+					}
 					data.mScaleInfo.push_back(animData);
 				} else if (data.mRotationInfo.size() < data.mRotationInfo.capacity()) {
-					if (!readTextureAnimData(animData))
+					if (!readTextureAnimData(animData)) {
 						return false;
+					}
 					data.mRotationInfo.push_back(animData);
 				} else if (data.mTranslationInfo.size() < data.mTranslationInfo.capacity()) {
-					if (!readTextureAnimData(animData))
+					if (!readTextureAnimData(animData)) {
 						return false;
+					}
 					data.mTranslationInfo.push_back(animData);
 				}
 			}
@@ -1460,17 +1650,18 @@ private:
 	{
 		while (true) {
 			std::streampos pos = m_in.tellg();
-			if (!readLine())
+			if (!readLine()) {
 				break;
+			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
 			if (m_currentIndent <= 4
-			        && (line == "ENTRY" || line.find("ENTRY ") == 0 || line.find("TEXDATA_ENTRY") == 0
-			            || line.find("FRAME_COUNT") != std::string::npos || line.find("MAT ") == 0)
-			    || line.find("TEV_SECTION") == 0) {
+			    && (line == "ENTRY" || line.starts_with("ENTRY ") || line.starts_with("TEXDATA_ENTRY")
+			        || line.find("FRAME_COUNT") != std::string::npos || line.starts_with("MAT ") || line.starts_with("TEV_SECTION"))) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1495,14 +1686,16 @@ private:
 	{
 		while (true) {
 			std::streampos pos = m_in.tellg();
-			if (!readLine())
+			if (!readLine()) {
 				break;
+			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
-			if (m_currentIndent == 0 && (line == "TEV" || line.find("TEV ") == 0)) {
+			if (m_currentIndent == 0 && (line == "TEV" || line.starts_with("TEV "))) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1511,14 +1704,17 @@ private:
 			auto [key, value] = parseKeyValue();
 
 			if (key == "TEVCOLREG_A") {
-				if (!readTEVColReg(info.mTevColourRegA))
+				if (!readTEVColReg(info.mTevColourRegA)) {
 					return false;
+				}
 			} else if (key == "TEVCOLREG_B") {
-				if (!readTEVColReg(info.mTevColourRegB))
+				if (!readTEVColReg(info.mTevColourRegB)) {
 					return false;
+				}
 			} else if (key == "TEVCOLREG_C") {
-				if (!readTEVColReg(info.mTevColourRegC))
+				if (!readTEVColReg(info.mTevColourRegC)) {
 					return false;
+				}
 			} else if (key == "KONST_COL_A") {
 				parseColour(value, info.mKonstColourA);
 			} else if (key == "KONST_COL_B") {
@@ -1533,8 +1729,9 @@ private:
 				info.mTevStages.reserve(count);
 			} else if (key == "TEVSTAGE_ENTRY") {
 				TEVStage stage;
-				if (!readTEVStage(stage))
+				if (!readTEVStage(stage)) {
 					return false;
+				}
 				info.mTevStages.push_back(stage);
 			}
 		}
@@ -1545,14 +1742,16 @@ private:
 	{
 		while (true) {
 			std::streampos pos = m_in.tellg();
-			if (!readLine())
+			if (!readLine()) {
 				break;
+			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
-			if (m_currentIndent <= 1 && (line.find("TEVCOLREG_") == 0 || line.find("KONST_COL_") == 0 || line == "TEVSTAGE_COUNT")) {
+			if (m_currentIndent <= 1 && (line.starts_with("TEVCOLREG_") || line.starts_with("KONST_COL_") || line == "TEVSTAGE_COUNT")) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1572,8 +1771,9 @@ private:
 				reg.mColorAnimInfo.reserve(count);
 			} else if (key == "COLOR_ANIM_ENTRY") {
 				PVWAnimInfo_3_S10 animInfo;
-				if (!readPVWAnimInfo_3_S10(animInfo))
+				if (!readPVWAnimInfo_3_S10(animInfo)) {
 					return false;
+				}
 				reg.mColorAnimInfo.push_back(animInfo);
 			} else if (key == "ALPHA_ANIM_COUNT") {
 				u32 count = std::stoul(value);
@@ -1581,8 +1781,9 @@ private:
 				reg.mAlphaAnimInfo.reserve(count);
 			} else if (key == "ALPHA_ANIM_ENTRY") {
 				PVWAnimInfo_1_S10 animInfo;
-				if (!readPVWAnimInfo_1_S10(animInfo))
+				if (!readPVWAnimInfo_1_S10(animInfo)) {
 					return false;
+				}
 				reg.mAlphaAnimInfo.push_back(animInfo);
 			}
 		}
@@ -1593,16 +1794,18 @@ private:
 	{
 		while (true) {
 			std::streampos pos = m_in.tellg();
-			if (!readLine())
+			if (!readLine()) {
 				break;
+			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
 			if (m_currentIndent <= 3
-			    && (line.find("ANIM_ENTRY") != std::string::npos || line.find("ANIM_COUNT") != std::string::npos
-			        || line == "TEVCOLREG_B") || line.find("KONST_COL") == 0) {
+			    && (line.find("ANIM_ENTRY") != std::string::npos || line.find("ANIM_COUNT") != std::string::npos || line == "TEVCOLREG_B"
+			        || line.starts_with("KONST_COL"))) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1623,12 +1826,14 @@ private:
 	{
 		while (true) {
 			std::streampos pos = m_in.tellg();
-			if (!readLine())
+			if (!readLine()) {
 				break;
+			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
 			if (m_currentIndent <= 3
 			    && (line.find("ANIM_ENTRY") != std::string::npos || line.find("ANIM_COUNT") != std::string::npos
@@ -1657,15 +1862,17 @@ private:
 	{
 		while (true) {
 			std::streampos pos = m_in.tellg();
-			if (!readLine())
+			if (!readLine()) {
 				break;
+			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
 			if (m_currentIndent <= 2
-			    && (line == "TEVSTAGE_ENTRY" || line.find("TEVSTAGE_ENTRY ") == 0 || line == "TEV" || line.find("TEV ") == 0)) {
+			    && (line == "TEVSTAGE_ENTRY" || line.starts_with("TEVSTAGE_ENTRY ") || line == "TEV" || line.starts_with("TEV "))) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;
@@ -1686,11 +1893,13 @@ private:
 			} else if (key == "K_ALPHA_SEL") {
 				stage.mKAlphaSel = parseGXTevKAlphaSel(value);
 			} else if (key == "TEV_COLOR_COMBINER") {
-				if (!readPVWCombiner(stage.mTevColorCombiner))
+				if (!readPVWCombiner(stage.mTevColorCombiner)) {
 					return false;
+				}
 			} else if (key == "TEV_ALPHA_COMBINER") {
-				if (!readPVWCombiner(stage.mTevAlphaCombiner))
+				if (!readPVWCombiner(stage.mTevAlphaCombiner)) {
 					return false;
+				}
 			}
 		}
 		return true;
@@ -1700,15 +1909,18 @@ private:
 	{
 		while (true) {
 			std::streampos pos = m_in.tellg();
-			if (!readLine())
+			if (!readLine()) {
 				break;
+			}
 
 			std::string line = trimLine();
-			if (line.empty())
+			if (line.empty()) {
 				continue;
+			}
 
-			if (m_currentIndent <= 3 && (line == "TEV_ALPHA_COMBINER" || line == "TEVSTAGE_ENTRY" || line.find("TEVSTAGE_ENTRY ") == 0)
-			    || line.find("TEV ") == 0) {
+			if (m_currentIndent <= 3
+			    && (line == "TEV_ALPHA_COMBINER" || line == "TEVSTAGE_ENTRY" || line.starts_with("TEVSTAGE_ENTRY ")
+			        || line.starts_with("TEV "))) {
 				m_in.clear();
 				m_in.seekg(pos);
 				break;

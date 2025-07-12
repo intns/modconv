@@ -1,12 +1,12 @@
-#ifndef _COMMANDS_HPP
-#define _COMMANDS_HPP
+#ifndef __COMMANDS_HPP
+#define __COMMANDS_HPP
 
 #pragma once
 
-#include <util/tokeniser.hpp>
+#include "util/tokeniser.hpp"
 #include <functional>
 #include <iostream>
-#include <MOD.hpp>
+#include "MOD.hpp"
 #include <string>
 
 namespace cmd {
@@ -36,61 +36,95 @@ void editHeader();
 void showCommands();
 
 struct Command {
-	std::string_view mCommand = "";
+	std::string_view mCommand;
 	std::vector<std::string_view> mParameters;
-	std::string_view mDescription = "";
+	std::string_view mDescription;
 	std::function<void()> mFunction;
 };
 
-static std::vector<Command> gCommands
-    = { { "load", { "input filename" }, "loads a MOD file", cmd::mod::loadFile },
-	    { "write", { "output filename" }, "writes the MOD file", cmd::mod::writeFile },
-	    { "close", {}, "closes the MOD file", cmd::mod::resetActiveModel },
+static std::vector<Command> gCommands = {
+	{ .mCommand = "load", .mParameters = { "input filename" }, .mDescription = "loads a MOD file", .mFunction = cmd::mod::loadFile },
+	{ .mCommand = "write", .mParameters = { "output filename" }, .mDescription = "writes the MOD file", .mFunction = cmd::mod::writeFile },
+	{ .mCommand = "close", .mParameters = {}, .mDescription = "closes the MOD file", .mFunction = cmd::mod::resetActiveModel },
 
-	    { "NEW_LINE" },
+	{ .mCommand = "NEW_LINE" },
 
-	    { "delete_chunk", { "target chunk (0x10, 0x12, 0x30, etc.)" }, "deletes a chunk type [dangerous]", cmd::mod::deleteChunk },
-	    { "edit_header", {}, "edits header information (date of creation / flags)", cmd::mod::editHeader },
+	{ .mCommand     = "delete_chunk",
+	  .mParameters  = { "target chunk (0x10, 0x12, 0x30, etc.)" },
+	  .mDescription = "deletes a chunk type [dangerous]",
+	  .mFunction    = cmd::mod::deleteChunk },
+	{ .mCommand     = "edit_header",
+	  .mParameters  = {},
+	  .mDescription = "edits header information (date of creation / flags)",
+	  .mFunction    = cmd::mod::editHeader },
 
-	    { "NEW_LINE" },
+	{ .mCommand = "NEW_LINE" },
 
-	    { "import_texture", { /*handles input internally*/ }, "swaps a texture with an external TXE file", cmd::mod::importTexture },
-	    { "import_ini", { "input filename" }, "imports an external ini", cmd::mod::importIni },
-	    { "import_material", { "input filename" }, "imports materials from an external file", cmd::mod::importMaterials },
+	{ .mCommand     = "import_texture",
+	  .mParameters  = { /*handles input internally*/ },
+	  .mDescription = "swaps a texture with an external TXE file",
+	  .mFunction    = cmd::mod::importTexture },
+	{ .mCommand     = "import_ini",
+	  .mParameters  = { "input filename" },
+	  .mDescription = "imports an external ini",
+	  .mFunction    = cmd::mod::importIni },
+	{ .mCommand     = "import_material",
+	  .mParameters  = { "input filename" },
+	  .mDescription = "imports materials from an external file",
+	  .mFunction    = cmd::mod::importMaterials },
 
-	    { "NEW_LINE" },
+	{ .mCommand = "NEW_LINE" },
 
-	    { "export_materials", { "output filename" }, " exports all materials to a file ", cmd::mod::exportMaterials },
-	    { "export_textures", { "output directory" }, "exports all textures to a directory", cmd::mod::exportTextures },
-	    { "export_ini", { "output filename" }, "exports the ini to a file", cmd::mod::exportIni },
-	    { "export_obj", { "output filename" }, "exports the model to an obj file [WIP]", cmd::mod::exportObj },
-	    { "export_dmd", { "output filename" }, "exports the model to a dmd file [WIP]", cmd::mod::exportDmd },
-	    { "NEW_LINE" },
+	{ .mCommand     = "export_materials",
+	  .mParameters  = { "output filename" },
+	  .mDescription = " exports all materials to a file ",
+	  .mFunction    = cmd::mod::exportMaterials },
+	{ .mCommand     = "export_textures",
+	  .mParameters  = { "output directory" },
+	  .mDescription = "exports all textures to a directory",
+	  .mFunction    = cmd::mod::exportTextures },
+	{ .mCommand     = "export_ini",
+	  .mParameters  = { "output filename" },
+	  .mDescription = "exports the ini to a file",
+	  .mFunction    = cmd::mod::exportIni },
+	{ .mCommand     = "export_obj",
+	  .mParameters  = { "output filename" },
+	  .mDescription = "exports the model to an obj file [WIP]",
+	  .mFunction    = cmd::mod::exportObj },
+	{ .mCommand     = "export_dmd",
+	  .mParameters  = { "output filename" },
+	  .mDescription = "exports the model to a dmd file [WIP]",
+	  .mFunction    = cmd::mod::exportDmd },
+	{ .mCommand = "NEW_LINE" },
 
-	    { "delete_chunk", { "target chunk (0x10, 0x12, 0x30, etc.)" }, "deletes a chunk type [dangerous]", cmd::mod::deleteChunk },
+	{ .mCommand     = "delete_chunk",
+	  .mParameters  = { "target chunk (0x10, 0x12, 0x30, etc.)" },
+	  .mDescription = "deletes a chunk type [dangerous]",
+	  .mFunction    = cmd::mod::deleteChunk },
 
-	    { "NEW_LINE" },
+	{ .mCommand = "NEW_LINE" },
 
-	    { "help", {}, "re-generate this command list", showCommands } };
+	{ .mCommand = "help", .mParameters = {}, .mDescription = "re-generate this command list", .mFunction = showCommands }
+};
 
 inline void showCommands()
 {
-	std::cout << std::endl << "Commands:" << std::endl;
+	std::cout << '\n' << "Commands:" << '\n';
 	for (const Command& cmd : gCommands) {
 		if (cmd.mCommand == "NEW_LINE") {
-			std::cout << std::endl;
+			std::cout << '\n';
 			continue;
 		}
 
 		std::cout << " " << cmd.mCommand << " ";
 
-		for (std::size_t i = 0; i < cmd.mParameters.size(); i++) {
-			std::cout << "[" << cmd.mParameters[i] << "] ";
+		for (auto mParameter : cmd.mParameters) {
+			std::cout << "[" << mParameter << "] ";
 		}
 
-		std::cout << "- " << cmd.mDescription << std::endl;
+		std::cout << "- " << cmd.mDescription << '\n';
 	}
-	std::cout << std::endl;
+	std::cout << '\n';
 }
 
 } // namespace cmd

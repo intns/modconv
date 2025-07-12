@@ -1,9 +1,9 @@
 #ifndef MESH_HPP
 #define MESH_HPP
 
-#include <types.hpp>
-#include <util/fstream_reader.hpp>
-#include <util/fstream_writer.hpp>
+#include "../types.hpp"
+#include "../util/fstream_reader.hpp"
+#include "../util/fstream_writer.hpp"
 
 enum class DLCullMode { Front = 0, Back = 1, Both = 2, None = 3 };
 
@@ -17,7 +17,7 @@ struct DisplayList {
 		} byteView;
 
 		int intView;
-	} mFlags = { 0 };
+	} mFlags = {};
 
 	u32 mCommandCount = 0;
 	std::vector<u8> mData;

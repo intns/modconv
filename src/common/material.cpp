@@ -1,16 +1,16 @@
-#include <common/material.hpp>
+#include "material.hpp"
 #include <iostream>
 #include <string>
 
 //================================================================================
-// TILITY HELPERS
+// UTILITY HELPERS
 //================================================================================
 
-#define PrintIndent(os, tabCnt, item)                            \
-	for (std::size_t idntIdx = 0; idntIdx < tabCnt; idntIdx++) { \
-		os << '\t';                                              \
-	}                                                            \
-	os << item << std::endl;
+#define PrintIndent(os, tabCnt, item)                              \
+	for (std::size_t idntIdx = 0; idntIdx < (tabCnt); idntIdx++) { \
+		(os) << '\t';                                              \
+	}                                                              \
+	(os) << item << std::endl;
 
 template <typename T>
 static inline void PrintList(std::ostream& os, const T& vector, const std::string& size_msg, const std::string& itemIdx_msg,
@@ -492,31 +492,31 @@ std::ostream& operator<<(std::ostream& os, TextureInfo const& ti)
 
 void PVWCombiner::read(util::fstream_reader& reader)
 {
-	for (int i = 0; i < 4; ++i) {
-		mInputABCD[i] = reader.readU8();
+	for (unsigned char& i : mInputABCD) {
+		i = reader.readU8();
 	}
 	mOp     = reader.readU8();
 	mBias   = reader.readU8();
 	mScale  = reader.readU8();
 	mClamp  = reader.readU8();
 	mOutReg = reader.readU8();
-	for (int i = 0; i < 3; ++i) {
-		_unused[i] = reader.readU8();
+	for (unsigned char& i : _unused) {
+		i = reader.readU8();
 	}
 }
 
 void PVWCombiner::write(util::fstream_writer& writer) const
 {
-	for (int i = 0; i < 4; ++i) {
-		writer.writeU8(mInputABCD[i]);
+	for (unsigned char i : mInputABCD) {
+		writer.writeU8(i);
 	}
 	writer.writeU8(mOp);
 	writer.writeU8(mBias);
 	writer.writeU8(mScale);
 	writer.writeU8(mClamp);
 	writer.writeU8(mOutReg);
-	for (int i = 0; i < 3; ++i) {
-		writer.writeU8(_unused[i]);
+	for (unsigned char i : _unused) {
+		writer.writeU8(i);
 	}
 }
 
@@ -706,18 +706,18 @@ void Material::write(util::fstream_writer& writer)
 
 std::ostream& operator<<(std::ostream& os, Material const& m)
 {
-	os << "\tFLAGS " << MaterialFlagsToString(m.mFlags) << std::endl;
-	os << "\tTEXTURE_INDEX " << m.mTextureIndex << std::endl;
-	os << "\tCOLOUR " << m.mColourInfo.mDiffuseColour << std::endl;
+	os << "\tFLAGS " << MaterialFlagsToString(m.mFlags) << '\n';
+	os << "\tTEXTURE_INDEX " << m.mTextureIndex << '\n';
+	os << "\tCOLOUR " << m.mColourInfo.mDiffuseColour << '\n';
 
 	if (m.mFlags & static_cast<u32>(mat::MaterialFlags::IsEnabled)) {
-		os << "\tTEV_GROUP_ID " << m.mTevGroupId << std::endl;
+		os << "\tTEV_GROUP_ID " << m.mTevGroupId << '\n';
 		os << m.mColourInfo;
 		os << m.mLightingInfo;
 		os << m.mPeInfo;
 		os << m.mTexInfo;
 	}
-	os << std::endl;
+	os << '\n';
 
 	return os;
 }

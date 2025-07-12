@@ -1,10 +1,10 @@
 #ifndef JOINT_HPP
 #define JOINT_HPP
 
-#include <common/vector3.hpp>
-#include <types.hpp>
-#include <util/fstream_reader.hpp>
-#include <util/fstream_writer.hpp>
+#include "vector3.hpp"
+#include "../types.hpp"
+#include "../util/fstream_reader.hpp"
+#include "../util/fstream_writer.hpp"
 
 struct JointMatPoly {
 	s16 mMaterialIndex = 0;

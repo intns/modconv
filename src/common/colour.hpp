@@ -1,9 +1,9 @@
 #ifndef COLOUR_HPP
 #define COLOUR_HPP
 
-#include <types.hpp>
-#include <util/fstream_reader.hpp>
-#include <util/fstream_writer.hpp>
+#include "../types.hpp"
+#include "../util/fstream_reader.hpp"
+#include "../util/fstream_writer.hpp"
 
 template <typename T>
 struct ColourBase {
@@ -23,14 +23,14 @@ struct ColourBase {
 };
 
 struct ColourU8 : public ColourBase<u8> {
-	virtual ~ColourU8() = default;
+	~ColourU8() override = default;
 
 	void read(util::fstream_reader&) override;
 	void write(util::fstream_writer&) override;
 };
 
 struct ColourU16 : public ColourBase<u16> {
-	virtual ~ColourU16() = default;
+	~ColourU16() override = default;
 
 	void read(util::fstream_reader&) override;
 	void write(util::fstream_writer&) override;

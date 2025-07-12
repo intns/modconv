@@ -1,4 +1,4 @@
-#include <common/vector2.hpp>
+#include "vector2.hpp"
 
 void Vector2f::read(util::fstream_reader& reader)
 {

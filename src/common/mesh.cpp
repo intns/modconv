@@ -1,4 +1,4 @@
-#include <common/mesh.hpp>
+#include "mesh.hpp"
 
 void DisplayList::read(util::fstream_reader& reader)
 {

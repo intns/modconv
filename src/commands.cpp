@@ -15,19 +15,19 @@ std::string gModFileName;
 util::tokeniser gTokeniser;
 
 namespace mod {
-static inline const bool isModFileOpen() { return static_cast<bool>(gModFileName.size() != 0); }
+inline bool isModFileOpen() { return static_cast<bool>(!gModFileName.empty()); }
 
 void loadFile()
 {
 	const std::string& filename = gTokeniser.next();
-	if (!filename.size()) {
-		std::cout << "Filename not provided!" << std::endl;
+	if (filename.empty()) {
+		std::cout << "Filename not provided!" << '\n';
 	}
 
 	util::fstream_reader reader;
 	reader.open(filename, std::ios_base::binary);
 	if (!reader.is_open()) {
-		std::cout << "Unable to open " << filename << std::endl;
+		std::cout << "Unable to open " << filename << '\n';
 		return;
 	}
 	gModFileName = filename;
@@ -37,14 +37,14 @@ void loadFile()
 	reader.close();
 
 	if (gModFile.mVerbosePrint) {
-		std::cout << "Done!" << std::endl;
+		std::cout << "Done!" << '\n';
 	}
 }
 
 void writeFile()
 {
 	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << std::endl;
+		std::cout << "You haven't opened a MOD file!" << '\n';
 		return;
 	}
 
@@ -52,7 +52,7 @@ void writeFile()
 	util::fstream_writer writer;
 	writer.open(filename, std::ios_base::binary);
 	if (!writer.is_open()) {
-		std::cout << "Unable to open " << filename << std::endl;
+		std::cout << "Unable to open " << filename << '\n';
 		return;
 	}
 
@@ -60,14 +60,14 @@ void writeFile()
 	writer.close();
 
 	if (gModFile.mVerbosePrint) {
-		std::cout << "Done!" << std::endl;
+		std::cout << "Done!" << '\n';
 	}
 }
 
 void resetActiveModel()
 {
 	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << std::endl;
+		std::cout << "You haven't opened a MOD file!" << '\n';
 		return;
 	}
 
@@ -75,53 +75,53 @@ void resetActiveModel()
 	gModFileName = "";
 
 	if (gModFile.mVerbosePrint) {
-		std::cout << "Done!" << std::endl;
+		std::cout << "Done!" << '\n';
 	}
 }
 
 void importTexture()
 {
 	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << std::endl;
+		std::cout << "You haven't opened a MOD file!" << '\n';
 		return;
 	}
 
-	if (!gModFile.mTextures.size()) {
-		std::cout << "Loaded MOD file has no textures" << std::endl;
+	if (gModFile.mTextures.empty()) {
+		std::cout << "Loaded MOD file has no textures" << '\n';
 		return;
 	}
 
 	for (u32 i = 0; i < gModFile.mTextures.size(); i++) {
-		std::cout << "Texture [" << i << "]" << std::endl;
+		std::cout << "Texture [" << i << "]" << '\n';
 	}
 	std::cout << "Which one do you want to swap? (number): ";
 
-	std::string input = "";
+	std::string input;
 	std::getline(std::cin, input);
 
 	try {
 		const u32 toSwap = std::stoi(input);
 		if (toSwap >= gModFile.mTextures.size()) {
-			std::cout << "Error given index is incorrect!" << std::endl;
+			std::cout << "Error given index is incorrect!" << '\n';
 			return;
 		}
 
 		std::cout << "Path of the TXE file you want to replace Texture " << toSwap << " with: ";
 		std::getline(std::cin, input);
 		if (!std::filesystem::exists(input)) {
-			std::cout << "Error invalid path given!" << std::endl;
+			std::cout << "Error invalid path given!" << '\n';
 			return;
 		}
 
 		if (std::filesystem::path(input).extension() != ".txe") {
-			std::cout << "Error path is not a TXE file!" << std::endl;
+			std::cout << "Error path is not a TXE file!" << '\n';
 			return;
 		}
 
 		util::fstream_reader txeReader;
 		txeReader.open(input, std::ios_base::binary);
 		if (!txeReader.is_open()) {
-			std::cout << "Error couldn't open file!" << std::endl;
+			std::cout << "Error couldn't open file!" << '\n';
 			return;
 		}
 
@@ -139,23 +139,23 @@ void importTexture()
 		txeReader.close();
 		gModFile.mTextures[toSwap] = texture;
 	} catch (...) {
-		std::cout << "Error while trying to swap textures!" << std::endl;
+		std::cout << "Error while trying to swap textures!" << '\n';
 	}
 
-	std::cout << "Done!" << std::endl;
+	std::cout << "Done!" << '\n';
 }
 
 void importIni()
 {
 	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << std::endl;
+		std::cout << "You haven't opened a MOD file!" << '\n';
 		return;
 	}
 
 	const std::string& filename = gTokeniser.next();
 	std::ifstream inStream(filename);
 	if (!inStream.is_open()) {
-		std::cout << "Error can't open " << filename << std::endl;
+		std::cout << "Error can't open " << filename << '\n';
 		return;
 	}
 
@@ -165,25 +165,25 @@ void importIni()
 		gModFile.mEndOfFileData.push_back(c);
 	}
 
-	std::cout << "Done!" << std::endl;
+	std::cout << "Done!" << '\n';
 }
 
 void exportObj()
 {
 	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << std::endl;
+		std::cout << "You haven't opened a MOD file!" << '\n';
 		return;
 	}
 
 	if (gModFile.mVertices.empty()) {
-		std::cout << "Loaded file has no vertex data to export!" << std::endl;
+		std::cout << "Loaded file has no vertex data to export!" << '\n';
 		return;
 	}
 
 	const std::string& filename = gTokeniser.isEnd() ? gModFileName + ".obj" : gTokeniser.next();
 	std::ofstream os(filename);
 	if (!os.is_open()) {
-		std::cout << "Error can't open " << filename << std::endl;
+		std::cout << "Error can't open " << filename << '\n';
 		return;
 	}
 
@@ -209,11 +209,12 @@ void exportObj()
 
 	// Export texture coordinates
 	for (u32 i = 0; i < gModFile.mTextureCoords.size(); ++i) {
-		if (gModFile.mTextureCoords[i].empty())
+		if (gModFile.mTextureCoords[i].empty()) {
 			continue;
+		}
 		os << "# Texture coordinates " << i << " (" << gModFile.mTextureCoords[i].size() << ")\n";
 		for (const auto& vt : gModFile.mTextureCoords[i]) {
-			os << "vt " << vt.x << " " << (1.0f - vt.y) << "\n"; // Flip Y for OBJ format
+			os << "vt " << vt.x << " " << (1.0F - vt.y) << "\n"; // Flip Y for OBJ format
 		}
 		os << "\n";
 	}
@@ -251,8 +252,9 @@ void exportObj()
 						u16 vertexCount = reader.readU16();
 
 						// For triangle strips, we need at least 3 vertices
-						if (vertexCount < 3)
+						if (vertexCount < 3) {
 							continue;
+						}
 
 						std::vector<u16> posIndices;
 						std::vector<u16> nrmIndices;
@@ -297,48 +299,54 @@ void exportObj()
 									os << "f";
 									// Vertex 1
 									os << " " << (posIndices[i] + 1);
-									if (!nrmIndices.empty())
+									if (!nrmIndices.empty()) {
 										os << "//" << (nrmIndices[i] + 1);
-									else if (hasTexCoord[0])
+									} else if (hasTexCoord[0]) {
 										os << "/" << (texIndices[0][i] + 1);
+									}
 
 									// Vertex 2
 									os << " " << (posIndices[i + 1] + 1);
-									if (!nrmIndices.empty())
+									if (!nrmIndices.empty()) {
 										os << "//" << (nrmIndices[i + 1] + 1);
-									else if (hasTexCoord[0])
+									} else if (hasTexCoord[0]) {
 										os << "/" << (texIndices[0][i + 1] + 1);
+									}
 
 									// Vertex 3
 									os << " " << (posIndices[i + 2] + 1);
-									if (!nrmIndices.empty())
+									if (!nrmIndices.empty()) {
 										os << "//" << (nrmIndices[i + 2] + 1);
-									else if (hasTexCoord[0])
+									} else if (hasTexCoord[0]) {
 										os << "/" << (texIndices[0][i + 2] + 1);
+									}
 
 									os << "\n";
 								} else {
 									os << "f";
 									// Vertex 1 (reversed order for alternating triangles)
 									os << " " << (posIndices[i + 2] + 1);
-									if (!nrmIndices.empty())
+									if (!nrmIndices.empty()) {
 										os << "//" << (nrmIndices[i + 2] + 1);
-									else if (hasTexCoord[0])
+									} else if (hasTexCoord[0]) {
 										os << "/" << (texIndices[0][i + 2] + 1);
+									}
 
 									// Vertex 2
 									os << " " << (posIndices[i + 1] + 1);
-									if (!nrmIndices.empty())
+									if (!nrmIndices.empty()) {
 										os << "//" << (nrmIndices[i + 1] + 1);
-									else if (hasTexCoord[0])
+									} else if (hasTexCoord[0]) {
 										os << "/" << (texIndices[0][i + 1] + 1);
+									}
 
 									// Vertex 3
 									os << " " << (posIndices[i] + 1);
-									if (!nrmIndices.empty())
+									if (!nrmIndices.empty()) {
 										os << "//" << (nrmIndices[i] + 1);
-									else if (hasTexCoord[0])
+									} else if (hasTexCoord[0]) {
 										os << "/" << (texIndices[0][i] + 1);
+									}
 
 									os << "\n";
 								}
@@ -349,24 +357,27 @@ void exportObj()
 								os << "f";
 								// Center vertex
 								os << " " << (posIndices[0] + 1);
-								if (!nrmIndices.empty())
+								if (!nrmIndices.empty()) {
 									os << "//" << (nrmIndices[0] + 1);
-								else if (hasTexCoord[0])
+								} else if (hasTexCoord[0]) {
 									os << "/" << (texIndices[0][0] + 1);
+								}
 
 								// Current vertex
 								os << " " << (posIndices[i] + 1);
-								if (!nrmIndices.empty())
+								if (!nrmIndices.empty()) {
 									os << "//" << (nrmIndices[i] + 1);
-								else if (hasTexCoord[0])
+								} else if (hasTexCoord[0]) {
 									os << "/" << (texIndices[0][i] + 1);
+								}
 
 								// Next vertex
 								os << " " << (posIndices[i + 1] + 1);
-								if (!nrmIndices.empty())
+								if (!nrmIndices.empty()) {
 									os << "//" << (nrmIndices[i + 1] + 1);
-								else if (hasTexCoord[0])
+								} else if (hasTexCoord[0]) {
 									os << "/" << (texIndices[0][i + 1] + 1);
+								}
 
 								os << "\n";
 								totalFaces++;
@@ -391,31 +402,31 @@ void exportObj()
 	}
 
 	os.close();
-	std::cout << "Done! Exported " << totalFaces << " faces to " << filename << std::endl;
+	std::cout << "Done! Exported " << totalFaces << " faces to " << filename << '\n';
 }
 
 void exportDmd()
 {
 	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << std::endl;
+		std::cout << "You haven't opened a MOD file!" << '\n';
 		return;
 	}
 
 	const std::string& filename = gTokeniser.isEnd() ? gModFileName + ".dmd" : gTokeniser.next();
 	std::ofstream os(filename);
 	if (!os.is_open()) {
-		std::cout << "Error can't open " << filename << std::endl;
+		std::cout << "Error can't open " << filename << '\n';
 		return;
 	}
 
-	os << "<INFORMATION>\n{" << std::endl;
-	os << "\tnumjoints\t" << gModFile.mJoints.size() << std::endl;
-	os << "\tprimitive\tTriangleStrip" << std::endl;
-	os << "\tembossbump\t" << (gModFile.mVertexNbt.size() ? "on" : "off") << std::endl;
-	os << "\tscalingrule\tsoftimage" << std::endl;
-	os << "}" << std::endl << std::endl;
+	os << "<INFORMATION>\n{" << '\n';
+	os << "\tnumjoints\t" << gModFile.mJoints.size() << '\n';
+	os << "\tprimitive\tTriangleStrip" << '\n';
+	os << "\tembossbump\t" << (!gModFile.mVertexNbt.empty() ? "on" : "off") << '\n';
+	os << "\tscalingrule\tsoftimage" << '\n';
+	os << "}" << '\n' << '\n';
 
-	if (gModFile.mVertices.size()) {
+	if (!gModFile.mVertices.empty()) {
 		Vector3f minbounds = gModFile.mVertices[0];
 		Vector3f maxbounds = gModFile.mVertices[0];
 		for (const Vector3f& vertex : gModFile.mVertices) {
@@ -428,33 +439,33 @@ void exportDmd()
 			minbounds.z = std::min(minbounds.z, vertex.z);
 		}
 
-		os << "<ENVELOPE_XYZ>\n{" << std::endl;
-		os << "\tsize\t" << gModFile.mVertices.size() << std::endl;
-		os << "\tmin\t" << minbounds << std::endl;
-		os << "\tmax\t" << maxbounds << std::endl << std::endl;
+		os << "<ENVELOPE_XYZ>\n{" << '\n';
+		os << "\tsize\t" << gModFile.mVertices.size() << '\n';
+		os << "\tmin\t" << minbounds << '\n';
+		os << "\tmax\t" << maxbounds << '\n' << '\n';
 		for (const Vector3f& c : gModFile.mVertices) {
-			os << "\tfloat\t" << c << std::endl;
+			os << "\tfloat\t" << c << '\n';
 		}
-		os << "}" << std::endl << std::endl;
+		os << "}" << '\n' << '\n';
 	}
 
-	if (gModFile.mVertexNormals.size()) {
-		os << "<ENVELOPE_NRM>\n{" << std::endl;
-		os << "\tsize\t" << gModFile.mVertexNormals.size() << std::endl << std::endl;
+	if (!gModFile.mVertexNormals.empty()) {
+		os << "<ENVELOPE_NRM>\n{" << '\n';
+		os << "\tsize\t" << gModFile.mVertexNormals.size() << '\n' << '\n';
 		for (const Vector3f& c : gModFile.mVertexNormals) {
-			os << "\tfloat\t" << c << std::endl;
+			os << "\tfloat\t" << c << '\n';
 		}
-		os << "}" << std::endl << std::endl;
+		os << "}" << '\n' << '\n';
 	}
 
 	for (u32 i = 0; i < gModFile.mTextureCoords.size(); i++) {
 		std::vector<Vector2f>& texcoords = gModFile.mTextureCoords[i];
-		if (!texcoords.size()) {
+		if (texcoords.empty()) {
 			continue;
 		}
 
-		os << "<TEXCOORD" << i << ">\n{" << std::endl;
-		os << "\tsize\t" << texcoords.size() << std::endl;
+		os << "<TEXCOORD" << i << ">\n{" << '\n';
+		os << "\tsize\t" << texcoords.size() << '\n';
 
 		Vector2f minbounds = texcoords[0];
 		Vector2f maxbounds = texcoords[0];
@@ -466,40 +477,40 @@ void exportDmd()
 			minbounds.y = std::min(minbounds.y, coord.y);
 		}
 
-		os << "\tmin\t" << minbounds.x << " " << minbounds.y << std::endl;
-		os << "\tmax\t" << maxbounds.x << " " << maxbounds.y << std::endl << std::endl;
+		os << "\tmin\t" << minbounds.x << " " << minbounds.y << '\n';
+		os << "\tmax\t" << maxbounds.x << " " << maxbounds.y << '\n' << '\n';
 
 		os << std::fixed << std::setprecision(6);
 		for (const Vector2f& coord : texcoords) {
-			os << "\tfloat\t" << coord.x << " " << coord.y << std::endl;
+			os << "\tfloat\t" << coord.x << " " << coord.y << '\n';
 		}
-		os << "}" << std::endl << std::endl;
+		os << "}" << '\n' << '\n';
 	}
 
-	if (gModFile.mVertexColours.size()) {
-		os << "<COLOR0>\n{" << std::endl;
-		os << "\tsize\t" << gModFile.mVertexColours.size() << std::endl << std::endl;
+	if (!gModFile.mVertexColours.empty()) {
+		os << "<COLOR0>\n{" << '\n';
+		os << "\tsize\t" << gModFile.mVertexColours.size() << '\n' << '\n';
 		for (const ColourU8& c : gModFile.mVertexColours) {
-			os << "\tbyte\t" << c << std::endl;
+			os << "\tbyte\t" << c << '\n';
 		}
-		os << "}" << std::endl << std::endl;
+		os << "}" << '\n' << '\n';
 	}
 
 	os.flush();
 	os.close();
 
-	std::cout << "Done!" << std::endl;
+	std::cout << "Done!" << '\n';
 }
 
 void exportTextures()
 {
 	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << std::endl;
+		std::cout << "You haven't opened a MOD file!" << '\n';
 		return;
 	}
 
-	if (!gModFile.mTextures.size()) {
-		std::cout << "Loaded MOD file has no textures" << std::endl;
+	if (gModFile.mTextures.empty()) {
+		std::cout << "Loaded MOD file has no textures" << '\n';
 		return;
 	}
 
@@ -516,10 +527,10 @@ void exportTextures()
 	for (Texture& tex : gModFile.mTextures) {
 		util::fstream_writer writer;
 		const std::string& filename = pathStr + "tex" + std::to_string(i++) + ".txe";
-		std::cout << "Writing " << filename << std::endl;
+		std::cout << "Writing " << filename << '\n';
 		writer.open(filename);
 		if (!writer.is_open()) {
-			std::cout << "Error unable to open " << filename << std::endl;
+			std::cout << "Error unable to open " << filename << '\n';
 			return;
 		}
 
@@ -536,7 +547,7 @@ void exportTextures()
 		writer.close();
 	}
 
-	std::cout << "Done!" << std::endl;
+	std::cout << "Done!" << '\n';
 }
 
 void exportMaterials()
@@ -652,12 +663,12 @@ void exportIni()
 void deleteChunk()
 {
 	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << std::endl;
+		std::cout << "You haven't opened a MOD file!" << '\n';
 		return;
 	}
 
 	if (gTokeniser.isEnd()) {
-		std::cout << "Chunk not provided!" << std::endl;
+		std::cout << "Chunk not provided!" << '\n';
 		return;
 	}
 
@@ -672,14 +683,14 @@ void deleteChunk()
 			chunkId = std::stoul(input);
 		}
 	} catch (...) {
-		std::cout << "Invalid chunk ID format!" << std::endl;
+		std::cout << "Invalid chunk ID format!" << '\n';
 		return;
 	}
 
 	// Is the chunk value a valid MOD chunk type?
 	auto chunkName = MOD::getChunkName(chunkId);
 	if (!chunkName.has_value()) {
-		std::cout << "Chunk doesn't exist!" << std::endl;
+		std::cout << "Chunk doesn't exist!" << '\n';
 		return;
 	}
 
@@ -688,7 +699,7 @@ void deleteChunk()
 	const auto chunkType = static_cast<MOD::EChunkType>(chunkId);
 	switch (chunkType) {
 	case MOD::EChunkType::Header:
-		std::cout << "Cannot delete Header chunk!" << std::endl;
+		std::cout << "Cannot delete Header chunk!" << '\n';
 		failure = true;
 		break;
 	case MOD::EChunkType::Vertex:
@@ -715,10 +726,10 @@ void deleteChunk()
 		if (idx < gModFile.mTextureCoords.size()) {
 			gModFile.mTextureCoords[idx].clear();
 			if (gModFile.mVerbosePrint) {
-				std::cout << "Deleted TexCoord" << idx << " chunk." << std::endl;
+				std::cout << "Deleted TexCoord" << idx << " chunk." << '\n';
 			}
 		} else {
-			std::cout << "TexCoord index out of range!" << std::endl;
+			std::cout << "TexCoord index out of range!" << '\n';
 			failure = true;
 		}
 		break;
@@ -761,27 +772,27 @@ void deleteChunk()
 	}
 
 	if (!failure && gModFile.mVerbosePrint) {
-		std::cout << "Successfully deleted (" << chunkName.value() << ")" << std::endl;
+		std::cout << "Successfully deleted (" << chunkName.value() << ")" << '\n';
 	}
 }
 
 void editHeader()
 {
 	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << std::endl;
+		std::cout << "You haven't opened a MOD file!" << '\n';
 		return;
 	}
 
-	std::cout << std::endl;
+	std::cout << '\n';
 
-	std::cout << "What would you like to edit?" << std::endl;
-	std::cout << "\t(1) date of creation" << std::endl;
-	std::cout << "\t(2) flags" << std::endl;
+	std::cout << "What would you like to edit?" << '\n';
+	std::cout << "\t(1) date of creation" << '\n';
+	std::cout << "\t(2) flags" << '\n';
 
-	std::string input = "";
+	std::string input;
 	std::getline(std::cin, input);
 
-	std::cout << std::endl;
+	std::cout << '\n';
 
 	try {
 		int choice = std::stoi(input);
@@ -790,7 +801,7 @@ void editHeader()
 		case 1: {
 			// Edit date
 			std::cout << "Current date: " << gModFile.mHeader.mDateTime.mYear << "/" << (u32)gModFile.mHeader.mDateTime.mMonth << "/"
-			          << (u32)gModFile.mHeader.mDateTime.mDay << std::endl;
+			          << (u32)gModFile.mHeader.mDateTime.mDay << '\n';
 
 			std::cout << "Enter new year (e.g., 2025): ";
 			std::getline(std::cin, input);
@@ -806,11 +817,11 @@ void editHeader()
 
 			// Validate input
 			if (month < 1 || month > 12) {
-				std::cout << "Invalid month! Must be between 1-12." << std::endl;
+				std::cout << "Invalid month! Must be between 1-12." << '\n';
 				return;
 			}
 			if (day < 1 || day > 31) {
-				std::cout << "Invalid day! Must be between 1-31." << std::endl;
+				std::cout << "Invalid day! Must be between 1-31." << '\n';
 				return;
 			}
 
@@ -819,17 +830,17 @@ void editHeader()
 			gModFile.mHeader.mDateTime.mDay   = day;
 
 			std::cout << "Date updated to: " << gModFile.mHeader.mDateTime.mYear << "/" << (u32)gModFile.mHeader.mDateTime.mMonth << "/"
-			          << (u32)gModFile.mHeader.mDateTime.mDay << std::endl;
+			          << (u32)gModFile.mHeader.mDateTime.mDay << '\n';
 			break;
 		}
 		case 2: {
 			// Edit flags
-			std::cout << "Current flags: 0x" << std::hex << gModFile.mHeader.mFlags << std::dec << std::endl;
-			std::cout << "\t0x00 - None" << std::endl;
-			std::cout << "\t0x01 - UseNBT (Use Normal/Binormal/Tangent)" << std::endl;
-			std::cout << "\t0x02 - AllowCaching (Allow display list caching)" << std::endl;
-			std::cout << "\t0x04 - AlwaysRedraw (Force redraw every frame)" << std::endl;
-			std::cout << "\t0x10 - IsPlatform (Has platform collision)" << std::endl;
+			std::cout << "Current flags: 0x" << std::hex << gModFile.mHeader.mFlags << std::dec << '\n';
+			std::cout << "\t0x00 - None" << '\n';
+			std::cout << "\t0x01 - UseNBT (Use Normal/Binormal/Tangent)" << '\n';
+			std::cout << "\t0x02 - AllowCaching (Allow display list caching)" << '\n';
+			std::cout << "\t0x04 - AlwaysRedraw (Force redraw every frame)" << '\n';
+			std::cout << "\t0x10 - IsPlatform (Has platform collision)" << '\n';
 			std::cout << "Enter new flags (hex format, e.g., 0x01 or decimal): ";
 
 			std::getline(std::cin, input);
@@ -843,40 +854,40 @@ void editHeader()
 
 			if (!(flags & static_cast<u32>(MODFlags::UseNBT)) && !(flags & static_cast<u32>(MODFlags::AllowCaching))
 			    && !(flags & static_cast<u32>(MODFlags::AlwaysRedraw)) && !(flags & static_cast<u32>(MODFlags::IsPlatform))) {
-				std::cout << "Unable to change flags, you haven't provided any valid option!" << std::endl;
+				std::cout << "Unable to change flags, you haven't provided any valid option!" << '\n';
 				return;
 			}
 
 			gModFile.mHeader.mFlags = flags;
 
-			std::cout << "Flags updated to: 0x" << std::hex << gModFile.mHeader.mFlags << std::dec << std::endl;
+			std::cout << "Flags updated to: 0x" << std::hex << gModFile.mHeader.mFlags << std::dec << '\n';
 
 			// Show which flags are set
 			if (flags & static_cast<u32>(MODFlags::UseNBT)) {
-				std::cout << "\t- UseNBT enabled" << std::endl;
+				std::cout << "\t- UseNBT enabled" << '\n';
 			}
 			if (flags & static_cast<u32>(MODFlags::AllowCaching)) {
-				std::cout << "\t- AllowCaching enabled" << std::endl;
+				std::cout << "\t- AllowCaching enabled" << '\n';
 			}
 			if (flags & static_cast<u32>(MODFlags::AlwaysRedraw)) {
-				std::cout << "\t- AlwaysRedraw enabled" << std::endl;
+				std::cout << "\t- AlwaysRedraw enabled" << '\n';
 			}
 			if (flags & static_cast<u32>(MODFlags::IsPlatform)) {
-				std::cout << "\t- IsPlatform enabled" << std::endl;
+				std::cout << "\t- IsPlatform enabled" << '\n';
 			}
 			break;
 		}
 		default:
-			std::cout << "Invalid choice! Please enter 1 or 2." << std::endl;
+			std::cout << "Invalid choice! Please enter 1 or 2." << '\n';
 			return;
 		}
 
 		if (gModFile.mVerbosePrint) {
-			std::cout << "Header editing complete!" << std::endl;
+			std::cout << "Header editing complete!" << '\n';
 		}
 
 	} catch (const std::exception& e) {
-		std::cout << "Error: " << e.what() << std::endl;
+		std::cout << "Error: " << e.what() << '\n';
 	}
 }
 
@@ -885,21 +896,21 @@ void editHeader()
 void objToDmd()
 {
 	if (gTokeniser.isEnd()) {
-		std::cout << "Input filename not provided!" << std::endl;
+		std::cout << "Input filename not provided!" << '\n';
 		return;
 	}
 
 	std::string input = gTokeniser.next();
 
 	if (gTokeniser.isEnd()) {
-		std::cout << "Output filename not provided, defaulting to out.dmd!" << std::endl;
+		std::cout << "Output filename not provided, defaulting to out.dmd!" << '\n';
 	}
 
 	std::string output = gTokeniser.isEnd() ? "out.dmd" : gTokeniser.next();
 
 	std::ifstream inputFile(input);
 	if (!inputFile.is_open()) {
-		std::cout << "Error can't open " << input << std::endl;
+		std::cout << "Error can't open " << input << '\n';
 		return;
 	}
 
@@ -921,20 +932,20 @@ void objToDmd()
 		}
 
 		if (first == "vt") {
-			texcoords.push_back({ std::stof(tokeniser.next()), std::stof(tokeniser.next()) });
+			texcoords.emplace_back(std::stof(tokeniser.next()), std::stof(tokeniser.next()));
 		} else if (first == "vn") {
-			vnormals.push_back({ std::stof(tokeniser.next()), std::stof(tokeniser.next()), std::stof(tokeniser.next()) });
+			vnormals.emplace_back(std::stof(tokeniser.next()), std::stof(tokeniser.next()), std::stof(tokeniser.next()));
 		} else if (first == "v") {
-			vertices.push_back({ std::stof(tokeniser.next()), std::stof(tokeniser.next()), std::stof(tokeniser.next()) });
+			vertices.emplace_back(std::stof(tokeniser.next()), std::stof(tokeniser.next()), std::stof(tokeniser.next()));
 		} else if (first == "f") {
-			faces.push_back({ static_cast<u32>(std::stoul(tokeniser.next())), static_cast<u32>(std::stoul(tokeniser.next())),
-			                  static_cast<u32>(std::stoul(tokeniser.next())) });
+			faces.emplace_back(static_cast<u32>(std::stoul(tokeniser.next())), static_cast<u32>(std::stoul(tokeniser.next())),
+			                   static_cast<u32>(std::stoul(tokeniser.next())));
 		}
 	}
 
 	std::ofstream os(output);
 	if (!os.is_open()) {
-		std::cout << "Error can't open " << input << std::endl;
+		std::cout << "Error can't open " << input << '\n';
 		return;
 	}
 
@@ -945,6 +956,6 @@ void objToDmd()
 	os << "\tprimitive\tTriangleStrip\n";
 	os << "\tembossbump\toff\n}\n";
 
-	if (vertices.size()) { }
+	if (!vertices.empty()) { }
 }
 } // namespace cmd

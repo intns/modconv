@@ -1,4 +1,4 @@
-#include <common/envelope.hpp>
+#include "envelope.hpp"
 
 void Envelope::read(util::fstream_reader& reader)
 {

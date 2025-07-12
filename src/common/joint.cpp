@@ -1,4 +1,4 @@
-#include <common/joint.hpp>
+#include "joint.hpp"
 
 void JointMatPoly::read(util::fstream_reader& reader)
 {

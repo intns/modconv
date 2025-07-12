@@ -1,5 +1,5 @@
-#include <common.hpp>
-#include <common/collision.hpp>
+#include "common.hpp"
+#include "collision.hpp"
 
 void BaseRoomInfo::read(util::fstream_reader& reader) { mIndex = reader.readU32(); }
 void BaseRoomInfo::write(util::fstream_writer& writer) const { writer.writeU32(mIndex); }
@@ -59,7 +59,7 @@ void CollTriInfo::write(util::fstream_writer& writer)
 	writer.writeU32(static_cast<u32>(mCollInfo.size()));
 	writer.writeU32(static_cast<u32>(mRoomInfo.size()));
 	writer.align(0x20);
-	for (BaseRoomInfo& info : mRoomInfo) {
+	for (BaseRoomInfo const& info : mRoomInfo) {
 		info.write(writer);
 	}
 	writer.align(0x20);
@@ -87,11 +87,11 @@ void CollGroup::write(util::fstream_writer& writer)
 {
 	writer.writeU16(static_cast<u16>(mUnknown1.size()));
 	writer.writeU16(static_cast<u16>(mUnknown2.size()));
-	for (u32& i : mUnknown2) {
+	for (u32 const& i : mUnknown2) {
 		writer.writeU32(i);
 	}
 
-	for (u8& i : mUnknown1) {
+	for (u8 const& i : mUnknown1) {
 		writer.writeU8(i);
 	}
 }
@@ -132,7 +132,7 @@ void CollGrid::write(util::fstream_writer& writer)
 		group.write(writer);
 	}
 
-	for (s32& i : m_unknown2) {
+	for (s32 const& i : m_unknown2) {
 		writer.writeS32(i);
 	}
 

@@ -3,13 +3,13 @@
 #ifndef MATERIAL_HPP
 #define MATERIAL_HPP
 
-#include <common/colour.hpp>
-#include <common/vector3.hpp>
-#include <common/vector2.hpp>
-#include <types.hpp>
-#include <util/fstream_reader.hpp>
-#include <util/fstream_writer.hpp>
-#include <common/gxdefines.hpp>
+#include "colour.hpp"
+#include "vector3.hpp"
+#include "vector2.hpp"
+#include "../types.hpp"
+#include "../util/fstream_reader.hpp"
+#include "../util/fstream_writer.hpp"
+#include "gxdefines.hpp"
 #include <iostream>
 
 namespace mat {
@@ -336,18 +336,19 @@ struct TEVColReg {
 
 struct PVWCombiner {
 	u8 mInputABCD[4] = { 0 };
-	u8 mOp;
-	u8 mBias;
-	u8 mScale;
-	u8 mClamp;
-	u8 mOutReg;
+	u8 mOp {};
+	u8 mBias {};
+	u8 mScale {};
+	u8 mClamp {};
+	u8 mOutReg {};
 	u8 _unused[3] = { 0 };
 
 	bool operator==(const PVWCombiner& other) const
 	{
 		for (int i = 0; i < 4; ++i) {
-			if (mInputABCD[i] != other.mInputABCD[i])
+			if (mInputABCD[i] != other.mInputABCD[i]) {
 				return false;
+			}
 		}
 		return mOp == other.mOp && mBias == other.mBias && mScale == other.mScale && mClamp == other.mClamp && mOutReg == other.mOutReg;
 	}
@@ -358,12 +359,12 @@ struct PVWCombiner {
 };
 
 struct TEVStage {
-	u8 mUnknown;
-	u8 mTexCoordID;
-	u8 mTexMapID;
-	u8 mGXChannelID;
-	u8 mKColorSel;
-	u8 mKAlphaSel;
+	u8 mUnknown {};
+	u8 mTexCoordID {};
+	u8 mTexMapID {};
+	u8 mGXChannelID {};
+	u8 mKColorSel {};
+	u8 mKAlphaSel {};
 	PVWCombiner mTevColorCombiner;
 	PVWCombiner mTevAlphaCombiner;
 
@@ -427,8 +428,9 @@ inline std::string MaterialFlagsToString(u32 flags)
 
 	for (const auto& [flag, name] : flagMap) {
 		if ((flags & flag) != 0) {
-			if (!first)
+			if (!first) {
 				result += ", ";
+			}
 			result += name;
 			first = false;
 		}
@@ -462,8 +464,9 @@ inline std::string LightingInfoFlagsToString(u32 flags)
 
 	for (const auto& [flag, name] : flagMap) {
 		if ((flags & flag) != 0) {
-			if (!first)
+			if (!first) {
 				result += ", ";
+			}
 			result += name;
 			first = false;
 		}

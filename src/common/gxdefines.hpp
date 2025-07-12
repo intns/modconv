@@ -3,21 +3,21 @@
 
 #include <string>
 
-typedef enum _GXTexCoordID {
-	GX_TEXCOORD0 = 0x0, // generated texture coordinate 0
-	GX_TEXCOORD1,       // generated texture coordinate 1
-	GX_TEXCOORD2,       // generated texture coordinate 2
-	GX_TEXCOORD3,       // generated texture coordinate 3
-	GX_TEXCOORD4,       // generated texture coordinate 4
-	GX_TEXCOORD5,       // generated texture coordinate 5
-	GX_TEXCOORD6,       // generated texture coordinate 6
-	GX_TEXCOORD7,       // generated texture coordinate 7
+using GXTexCoordID = enum GXTexCoordID {
+	GX_TEXCOORD0     = 0x0, // generated texture coordinate 0
+	GX_TEXCOORD1     = 1,   // generated texture coordinate 1
+	GX_TEXCOORD2     = 2,   // generated texture coordinate 2
+	GX_TEXCOORD3     = 3,   // generated texture coordinate 3
+	GX_TEXCOORD4     = 4,   // generated texture coordinate 4
+	GX_TEXCOORD5     = 5,   // generated texture coordinate 5
+	GX_TEXCOORD6     = 6,   // generated texture coordinate 6
+	GX_TEXCOORD7     = 7,   // generated texture coordinate 7
 	GX_MAX_TEXCOORD  = 8,
 	GX_TEXCOORD_NULL = 0xff
 
-} GXTexCoordID;
+};
 
-inline std::string GXTexCoordIDToStringConverter(_GXTexCoordID texCoordID)
+inline std::string GXTexCoordIDToStringConverter(GXTexCoordID texCoordID)
 {
 	switch (texCoordID) {
 	case GX_TEXCOORD0:
@@ -45,23 +45,23 @@ inline std::string GXTexCoordIDToStringConverter(_GXTexCoordID texCoordID)
 	}
 }
 
-typedef enum _GXTexMapID {
-	GX_TEXMAP0,
-	GX_TEXMAP1,
-	GX_TEXMAP2,
-	GX_TEXMAP3,
-	GX_TEXMAP4,
-	GX_TEXMAP5,
-	GX_TEXMAP6,
-	GX_TEXMAP7,
-	GX_MAX_TEXMAP,
+using GXTexMapID = enum GXTexMapID {
+	GX_TEXMAP0    = 0,
+	GX_TEXMAP1    = 1,
+	GX_TEXMAP2    = 2,
+	GX_TEXMAP3    = 3,
+	GX_TEXMAP4    = 4,
+	GX_TEXMAP5    = 5,
+	GX_TEXMAP6    = 6,
+	GX_TEXMAP7    = 7,
+	GX_MAX_TEXMAP = 8,
 
 	GX_TEXMAP_NULL = 0xff,
 	GX_TEX_DISABLE = 0x100 // mask: disables texture look up
 
-} GXTexMapID;
+};
 
-inline std::string GXTexMapIDToStringConverter(_GXTexMapID texMapID)
+inline std::string GXTexMapIDToStringConverter(GXTexMapID texMapID)
 {
 	switch (texMapID) {
 	case GX_TEXMAP0:
@@ -91,21 +91,21 @@ inline std::string GXTexMapIDToStringConverter(_GXTexMapID texMapID)
 	}
 }
 
-typedef enum _GXChannelID {
-	GX_COLOR0,
-	GX_COLOR1,
-	GX_ALPHA0,
-	GX_ALPHA1,
-	GX_COLOR0A0,    // Color 0 + Alpha 0
-	GX_COLOR1A1,    // Color 1 + Alpha 1
-	GX_COLOR_ZERO,  // RGBA = 0
-	GX_ALPHA_BUMP,  // bump alpha 0-248, RGB=0
-	GX_ALPHA_BUMPN, // normalized bump alpha, 0-255, RGB=0
-	GX_COLOR_NULL = 0xff
+using GXChannelID = enum GXChannelID {
+	GX_COLOR0      = 0,
+	GX_COLOR1      = 1,
+	GX_ALPHA0      = 2,
+	GX_ALPHA1      = 3,
+	GX_COLOR0A0    = 4, // Color 0 + Alpha 0
+	GX_COLOR1A1    = 5, // Color 1 + Alpha 1
+	GX_COLOR_ZERO  = 6, // RGBA = 0
+	GX_ALPHA_BUMP  = 7, // bump alpha 0-248, RGB=0
+	GX_ALPHA_BUMPN = 8, // normalized bump alpha, 0-255, RGB=0
+	GX_COLOR_NULL  = 0xff
 
-} GXChannelID;
+};
 
-inline std::string GXChannelIDToStringConverter(_GXChannelID channelID)
+inline std::string GXChannelIDToStringConverter(GXChannelID channelID)
 {
 	switch (channelID) {
 	case GX_COLOR0:
@@ -133,7 +133,7 @@ inline std::string GXChannelIDToStringConverter(_GXChannelID channelID)
 	}
 }
 
-typedef enum _GXTevKColorSel {
+using GXTevKColorSel = enum GXTevKColorSel {
 	GX_TEV_KCSEL_1   = 0x00,
 	GX_TEV_KCSEL_7_8 = 0x01,
 	GX_TEV_KCSEL_3_4 = 0x02,
@@ -164,9 +164,9 @@ typedef enum _GXTevKColorSel {
 	GX_TEV_KCSEL_K2_A = 0x1E,
 	GX_TEV_KCSEL_K3_A = 0x1F
 
-} GXTevKColorSel;
+};
 
-inline std::string GXTevKColorSelToStringConverter(_GXTevKColorSel kColorSel)
+inline std::string GXTevKColorSelToStringConverter(GXTevKColorSel kColorSel)
 {
 	switch (kColorSel) {
 	case GX_TEV_KCSEL_1:
@@ -230,7 +230,7 @@ inline std::string GXTevKColorSelToStringConverter(_GXTevKColorSel kColorSel)
 	}
 }
 
-typedef enum _GXTevKAlphaSel {
+using GXTevKAlphaSel = enum GXTevKAlphaSel {
 	GX_TEV_KASEL_1   = 0x00,
 	GX_TEV_KASEL_7_8 = 0x01,
 	GX_TEV_KASEL_3_4 = 0x02,
@@ -257,9 +257,9 @@ typedef enum _GXTevKAlphaSel {
 	GX_TEV_KASEL_K2_A = 0x1E,
 	GX_TEV_KASEL_K3_A = 0x1F
 
-} GXTevKAlphaSel;
+};
 
-inline std::string GXTevKAlphaSelToStringConverter(_GXTevKAlphaSel kAlphaSel)
+inline std::string GXTevKAlphaSelToStringConverter(GXTevKAlphaSel kAlphaSel)
 {
 	switch (kAlphaSel) {
 	case GX_TEV_KASEL_1:
@@ -315,7 +315,7 @@ inline std::string GXTevKAlphaSelToStringConverter(_GXTevKAlphaSel kAlphaSel)
 	}
 }
 
-typedef enum _GXTexMtx {
+using GXTexMtx = enum GXTexMtx {
 	GX_TEXMTX0  = 0,
 	GX_TEXMTX1  = 1,
 	GX_TEXMTX2  = 2,
@@ -328,9 +328,9 @@ typedef enum _GXTexMtx {
 	GX_TEXMTX9  = 9,
 	GX_IDENTITY = 0xFF,
 
-} GXTexMtx;
+};
 
-inline std::string GXTexMtxToStringConverter(_GXTexMtx texMtx)
+inline std::string GXTexMtxToStringConverter(GXTexMtx texMtx)
 {
 	switch (texMtx) {
 	case GX_TEXMTX0:
@@ -360,7 +360,7 @@ inline std::string GXTexMtxToStringConverter(_GXTexMtx texMtx)
 	}
 }
 
-typedef enum _GXTexGenSrc {
+using GXTexGenSrc = enum GXTexGenSrc {
 	GX_TG_POS = 0,
 	GX_TG_NRM,
 	GX_TG_BINRM,
@@ -383,9 +383,9 @@ typedef enum _GXTexGenSrc {
 	GX_TG_COLOR0,
 	GX_TG_COLOR1
 
-} GXTexGenSrc;
+};
 
-inline std::string GXTexGenSrcToStringConverter(_GXTexGenSrc texGenSrc)
+inline std::string GXTexGenSrcToStringConverter(GXTexGenSrc texGenSrc)
 {
 	switch (texGenSrc) {
 	case GX_TG_POS:
@@ -435,7 +435,7 @@ inline std::string GXTexGenSrcToStringConverter(_GXTexGenSrc texGenSrc)
 	}
 }
 
-typedef enum _GXTexGenType {
+using GXTexGenType = enum GXTexGenType {
 	GX_TG_MTX3x4 = 0,
 	GX_TG_MTX2x4,
 	GX_TG_BUMP0,
@@ -448,9 +448,9 @@ typedef enum _GXTexGenType {
 	GX_TG_BUMP7,
 	GX_TG_SRTG
 
-} GXTexGenType;
+};
 
-inline std::string GXTexGenTypeToStringConverter(_GXTexGenType texGenType)
+inline std::string GXTexGenTypeToStringConverter(GXTexGenType texGenType)
 {
 	switch (texGenType) {
 	case GX_TG_MTX3x4:
@@ -480,7 +480,7 @@ inline std::string GXTexGenTypeToStringConverter(_GXTexGenType texGenType)
 	}
 }
 
-typedef enum _GXTevColorArg {
+using GXTevColorArg = enum GXTevColorArg {
 	GX_CC_CPREV,
 	GX_CC_APREV,
 	GX_CC_C0,
@@ -501,9 +501,9 @@ typedef enum _GXTevColorArg {
 	GX_CC_TEXRRR,
 	GX_CC_TEXGGG,
 	GX_CC_TEXBBB
-} GXTevColorArg;
+};
 
-inline std::string GXTevColorArgToStringConverter(_GXTevColorArg tevColorArg)
+inline std::string GXTevColorArgToStringConverter(GXTevColorArg tevColorArg)
 {
 	switch (tevColorArg) {
 	case GX_CC_CPREV:
@@ -549,15 +549,15 @@ inline std::string GXTevColorArgToStringConverter(_GXTevColorArg tevColorArg)
 	}
 }
 
-typedef enum _GXTexWrapMode {
+using GXTexWrapMode = enum GXTexWrapMode {
 	GX_CLAMP,
 	GX_REPEAT,
 	GX_MIRROR,
 	GX_MAX_TEXWRAPMODE
 
-} GXTexWrapMode;
+};
 
-inline std::string GXTexWrapModeToStringConverter(_GXTexWrapMode texWrapMode)
+inline std::string GXTexWrapModeToStringConverter(GXTexWrapMode texWrapMode)
 {
 	switch (texWrapMode) {
 	case GX_CLAMP:

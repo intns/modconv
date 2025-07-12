@@ -5,8 +5,8 @@
 
 #include <filesystem>
 #include <iostream>
-#include <commands.hpp>
-#include <util/misc.hpp>
+#include "commands.hpp"
+#include "util/misc.hpp"
 
 namespace test {
 namespace fs = std::filesystem;
@@ -24,8 +24,14 @@ inline std::vector<fs::path> BuildUnitPathList(const std::string& path = "unit")
 	std::vector<fs::path> pathList;
 
 	using rdi = fs::recursive_directory_iterator;
-	for (const fs::directory_entry& dentry : rdi(workingPath)) {
-		pathList.push_back(dentry.path());
+	for (const auto& dentry : rdi(workingPath)) {
+		if (!dentry.is_regular_file())
+			continue;
+
+		const auto& ext = dentry.path().extension();
+		if (ext == ".mod") {
+			pathList.push_back(dentry.path());
+		}
 	}
 
 	return pathList;

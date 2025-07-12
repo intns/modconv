@@ -6,28 +6,28 @@
 #include <limits>
 #include <type_traits>
 
-typedef int8_t s8;
-typedef int16_t s16;
-typedef int32_t s32;
-typedef int64_t s64;
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
+using s8  = int8_t;
+using s16 = int16_t;
+using s32 = int32_t;
+using s64 = int64_t;
+using u8  = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
 
-typedef volatile u8 vu8;
-typedef volatile u16 vu16;
-typedef volatile u32 vu32;
-typedef volatile u64 vu64;
-typedef volatile s8 vs8;
-typedef volatile s16 vs16;
-typedef volatile s32 vs32;
-typedef volatile s64 vs64;
+using vu8  = volatile u8;
+using vu16 = volatile u16;
+using vu32 = volatile u32;
+using vu64 = volatile u64;
+using vs8  = volatile s8;
+using vs16 = volatile s16;
+using vs32 = volatile s32;
+using vs64 = volatile s64;
 
-typedef float f32;
-typedef double f64;
-typedef volatile f32 vf32;
-typedef volatile f64 vf64;
+using f32  = float;
+using f64  = double;
+using vf32 = volatile f32;
+using vf64 = volatile f64;
 
 /**
  * @brief Compares two floating-point numbers for near equality.

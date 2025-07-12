@@ -1,4 +1,4 @@
-#include <common/vtxmatrix.hpp>
+#include "vtxmatrix.hpp"
 
 void VtxMatrix::read(util::fstream_reader& reader)
 {

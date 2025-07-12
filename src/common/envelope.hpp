@@ -1,9 +1,9 @@
 #ifndef ENVELOPE_HPP
 #define ENVELOPE_HPP
 
-#include <types.hpp>
-#include <util/fstream_reader.hpp>
-#include <util/fstream_writer.hpp>
+#include "../types.hpp"
+#include "../util/fstream_reader.hpp"
+#include "../util/fstream_writer.hpp"
 
 struct Envelope {
 	std::vector<s16> mIndices;

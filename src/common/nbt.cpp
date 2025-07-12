@@ -1,4 +1,4 @@
-#include <common/nbt.hpp>
+#include "nbt.hpp"
 
 void NBT::read(util::fstream_reader& reader)
 {

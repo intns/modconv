@@ -1,10 +1,10 @@
 #ifndef NBT_HPP
 #define NBT_HPP
 
-#include <common/vector3.hpp>
-#include <types.hpp>
-#include <util/fstream_reader.hpp>
-#include <util/fstream_writer.hpp>
+#include "vector3.hpp"
+#include "../types.hpp"
+#include "../util/fstream_reader.hpp"
+#include "../util/fstream_writer.hpp"
 
 struct NBT {
 	Vector3f mNormal;

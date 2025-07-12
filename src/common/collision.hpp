@@ -1,11 +1,11 @@
 #ifndef COLLISION_HPP
 #define COLLISION_HPP
 
-#include <types.hpp>
-#include <common/vector3.hpp>
-#include <common/plane.hpp>
-#include <util/fstream_reader.hpp>
-#include <util/fstream_writer.hpp>
+#include "../types.hpp"
+#include "../common/vector3.hpp"
+#include "../common/plane.hpp"
+#include "../util/fstream_reader.hpp"
+#include "../util/fstream_writer.hpp"
 
 struct BaseRoomInfo {
 	u32 mIndex = 0;

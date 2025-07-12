@@ -1,9 +1,11 @@
-#ifndef _FSTREAM_READER_HPP
-#define _FSTREAM_READER_HPP
+#ifndef UTIL_FSTREAM_READER_HPP
+#define UTIL_FSTREAM_READER_HPP
+
+#include <math.h>
 
 #include <fstream>
 #include <type_traits>
-#include <types.hpp>
+#include "../types.hpp"
 #include <vector>
 #include <cstring>
 
@@ -11,14 +13,14 @@ namespace util {
 
 class fstream_reader : public std::ifstream {
 public:
-	fstream_reader()          = default;
-	virtual ~fstream_reader() = default;
+	fstream_reader()           = default;
+	~fstream_reader() override = default;
 
 	fstream_reader(const fstream_reader&)            = delete;
 	fstream_reader& operator=(const fstream_reader&) = delete;
 
 	std::streampos getRemaining() { return m_filesize - tellg(); }
-	std::streampos getFilesize() const { return m_filesize; }
+	[[nodiscard]] std::streampos getFilesize() const { return m_filesize; }
 
 	void align(std::streamoff amt)
 	{
@@ -26,7 +28,7 @@ public:
 			return;
 		}
 
-		std::streampos offs = amt - (tellg() % amt);
+		std::streampos const offs = amt - (tellg() % amt);
 		if (offs != amt) {
 			seekg(offs, std::ios_base::cur);
 		}
@@ -89,7 +91,7 @@ public:
 	f32 readF32()
 	{
 		u32 i = readU32();
-		f32 f;
+		f32 f = NAN;
 		std::memcpy(&f, &i, sizeof(f32));
 		return f;
 	}

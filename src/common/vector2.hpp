@@ -1,23 +1,34 @@
 #ifndef VECTOR2_HPP
 #define VECTOR2_HPP
 
-#include <types.hpp>
-#include <util/fstream_reader.hpp>
-#include <util/fstream_writer.hpp>
+#include <cmath>
+#include <limits>
+#include <ostream>
+#include <type_traits>
+#include "../types.hpp"
+#include "../util/fstream_reader.hpp"
+#include "../util/fstream_writer.hpp"
 
 template <typename T>
-struct Vector2Base {
-	T x = 0, y = 0;
+struct Vector2 {
+	T x {};
+	T y {};
 
-	Vector2Base()  = default;
-	virtual ~Vector2Base() = default;
-	Vector2Base(T aX, T aY)
-	    : x(aX)
-	    , y(aY)
+	Vector2()          = default;
+	virtual ~Vector2() = default;
+
+	constexpr Vector2(T x_, T y_) noexcept
+	    : x(x_)
+	    , y(y_)
 	{
 	}
 
-	bool operator==(const Vector2Base& other) const
+	Vector2(const Vector2&)            = default;
+	Vector2(Vector2&&)                 = default;
+	Vector2& operator=(const Vector2&) = default;
+	Vector2& operator=(Vector2&&)      = default;
+
+	[[nodiscard]] bool operator==(const Vector2& other) const noexcept
 	{
 		if constexpr (std::is_floating_point_v<T>) {
 			return (std::abs(x - other.x) < std::numeric_limits<T>::epsilon())
@@ -27,42 +38,54 @@ struct Vector2Base {
 		}
 	}
 
+	[[nodiscard]] bool operator!=(const Vector2& other) const noexcept { return !(*this == other); }
+
 	virtual void read(util::fstream_reader&)  = 0;
 	virtual void write(util::fstream_writer&) = 0;
 };
 
-struct Vector2f : public Vector2Base<f32> {
-	Vector2f()  = default;
-	virtual ~Vector2f() = default;
-	Vector2f(f32 aX, f32 aY)
-	    : Vector2Base(aX, aY)
+struct Vector2f final : public Vector2<f32> {
+	using Base = Vector2<f32>;
+
+	Vector2f()           = default;
+	~Vector2f() override = default;
+
+	constexpr Vector2f(f32 x_, f32 y_) noexcept
+	    : Base(x_, y_)
 	{
 	}
 
-	void read(util::fstream_reader&) override;
-	void write(util::fstream_writer&) override;
-	friend std::ostream& operator<<(std::ostream& os, Vector2f v)
-	{
-		os << v.x << " " << v.y;
-		return os;
-	}
+	Vector2f(const Vector2f&)            = default;
+	Vector2f(Vector2f&&)                 = default;
+	Vector2f& operator=(const Vector2f&) = default;
+	Vector2f& operator=(Vector2f&&)      = default;
+
+	void read(util::fstream_reader& reader) override;
+	void write(util::fstream_writer& writer) override;
+
+	friend std::ostream& operator<<(std::ostream& os, const Vector2f& v) { return os << v.x << ' ' << v.y; }
 };
 
-struct Vector2i : public Vector2Base<u32> {
-	Vector2i()  = default;
-	~Vector2i() = default;
-	Vector2i(u32 aX, u32 aY)
-	    : Vector2Base(aX, aY)
+struct Vector2i final : public Vector2<u32> {
+	using Base = Vector2<u32>;
+
+	Vector2i()           = default;
+	~Vector2i() override = default;
+
+	constexpr Vector2i(u32 x_, u32 y_) noexcept
+	    : Base(x_, y_)
 	{
 	}
 
-	void read(util::fstream_reader&) override;
-	void write(util::fstream_writer&) override;
-	friend std::ostream& operator<<(std::ostream& os, Vector2i v)
-	{
-		os << v.x << " " << v.y;
-		return os;
-	}
+	Vector2i(const Vector2i&)            = default;
+	Vector2i(Vector2i&&)                 = default;
+	Vector2i& operator=(const Vector2i&) = default;
+	Vector2i& operator=(Vector2i&&)      = default;
+
+	void read(util::fstream_reader& reader) override;
+	void write(util::fstream_writer& writer) override;
+
+	friend std::ostream& operator<<(std::ostream& os, const Vector2i& v) { return os << v.x << ' ' << v.y; }
 };
 
 #endif

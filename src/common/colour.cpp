@@ -1,4 +1,4 @@
-#include <common/colour.hpp>
+#include "colour.hpp"
 
 void ColourU8::read(util::fstream_reader& reader)
 {

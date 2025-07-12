@@ -1,7 +1,7 @@
 #ifndef MOD_HPP
 #define MOD_HPP
 
-#include <common.hpp>
+#include "common.hpp"
 #include <array>
 #include <optional>
 #include <type_traits>
@@ -74,7 +74,6 @@ struct MOD {
 		CollisionGrid  = 0x110,
 
 		EndOfFile = 0xFFFF,
-		None      = 0x0501ACE0, // 'SOLACE'
 	};
 
 	/**
@@ -115,14 +114,14 @@ struct MOD {
 	 * @param opcode The opcode of the chunk.
 	 * @return The name of the chunk as an optional string_view.
 	 */
-	static const std::optional<std::string_view> getChunkName(u32 opcode);
+	static std::optional<std::string_view> getChunkName(u32 opcode);
 
 	/**
 	 * @brief Gets the name of the chunk with the given chunk type.
 	 * @param chunkType The chunk type.
 	 * @return The name of the chunk as an optional string_view.
 	 */
-	static const std::optional<std::string_view> getChunkName(EChunkType chunkType);
+	static std::optional<std::string_view> getChunkName(EChunkType chunkType);
 
 	MODHeader mHeader;
 	std::vector<Vector3f> mVertices;
