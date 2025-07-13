@@ -8,6 +8,7 @@
 #include <common/material_io.hpp>
 #include <map>
 #include <functional>
+#include <set>
 
 namespace cmd {
 MOD gModFile;
@@ -171,19 +172,19 @@ void importIni()
 void exportObj()
 {
 	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << '\n';
+		std::cout << "You haven't opened a MOD file!" << std::endl;
 		return;
 	}
 
 	if (gModFile.mVertices.empty()) {
-		std::cout << "Loaded file has no vertex data to export!" << '\n';
+		std::cout << "Loaded file has no vertex data to export!" << std::endl;
 		return;
 	}
 
 	const std::string& filename = gTokeniser.isEnd() ? gModFileName + ".obj" : gTokeniser.next();
 	std::ofstream os(filename);
 	if (!os.is_open()) {
-		std::cout << "Error can't open " << filename << '\n';
+		std::cout << "Error can't open " << filename << std::endl;
 		return;
 	}
 
@@ -207,16 +208,86 @@ void exportObj()
 		os << "\n";
 	}
 
-	// Export texture coordinates
-	for (u32 i = 0; i < gModFile.mTextureCoords.size(); ++i) {
-		if (gModFile.mTextureCoords[i].empty()) {
-			continue;
+	// Export texcoords
+	std::vector<u32> texCoordOffsets(8);
+	{
+		u32 totalTexCoords        = 0;
+		bool anyTexCoordsExported = false;
+
+		os << "# Texture coordinates (all sets merged)\n";
+		for (int i = 0; i < 8; ++i) {
+			texCoordOffsets[i]    = totalTexCoords; // Store the starting offset for this set
+			const auto& texCoords = gModFile.mTextureCoords[i];
+
+			if (!texCoords.empty()) {
+				anyTexCoordsExported = true;
+				for (const auto& vt : texCoords) {
+					os << "vt " << vt.x << " " << (1.0f - vt.y) << "\n"; // Flip Y for OBJ format
+				}
+
+				totalTexCoords += static_cast<u32>(texCoords.size());
+			}
 		}
-		os << "# Texture coordinates " << i << " (" << gModFile.mTextureCoords[i].size() << ")\n";
-		for (const auto& vt : gModFile.mTextureCoords[i]) {
-			os << "vt " << vt.x << " " << (1.0F - vt.y) << "\n"; // Flip Y for OBJ format
+
+		if (anyTexCoordsExported) {
+			os << "\n";
 		}
-		os << "\n";
+	}
+
+	// Create material library reference if we have materials
+	if (!gModFile.mMaterials.mMaterials.empty()) {
+		std::string mtlFilename = std::filesystem::path(filename).stem().string() + ".mtl";
+		os << "mtllib " << mtlFilename << "\n\n";
+
+		// Export material file
+		std::ofstream mtlFile(std::filesystem::path(filename).parent_path() / mtlFilename);
+		if (mtlFile.is_open()) {
+			for (size_t i = 0; i < gModFile.mMaterials.mMaterials.size(); ++i) {
+				const auto& mat = gModFile.mMaterials.mMaterials[i];
+				mtlFile << "newmtl material_" << i << "\n";
+
+				// Convert color from 0-255 to 0-1 range
+				float r = mat.mColourInfo.mDiffuseColour.r / 255.0f;
+				float g = mat.mColourInfo.mDiffuseColour.g / 255.0f;
+				float b = mat.mColourInfo.mDiffuseColour.b / 255.0f;
+				float a = mat.mColourInfo.mDiffuseColour.a / 255.0f;
+
+				mtlFile << "Kd " << r << " " << g << " " << b << "\n";
+				mtlFile << "d " << a << "\n"; // Transparency
+
+				// Add ambient and specular based on lighting info
+				if (mat.mFlags & static_cast<u32>(mat::MaterialFlags::IsEnabled)) {
+					// Check lighting flags
+					if (mat.mLightingInfo.mFlags & static_cast<u32>(mat::LightingInfoFlags::EnableColor0)) {
+						mtlFile << "Ka 0.2 0.2 0.2\n"; // Default ambient
+					}
+					if (mat.mLightingInfo.mFlags & static_cast<u32>(mat::LightingInfoFlags::EnableSpecular)) {
+						mtlFile << "Ks 0.5 0.5 0.5\n"; // Default specular
+						mtlFile << "Ns 32.0\n";        // Specular exponent
+					}
+				}
+
+				// Check material flags for transparency/blending
+				if (mat.mFlags & static_cast<u32>(mat::MaterialFlags::TransparentBlend)) {
+					mtlFile << "illum 4\n"; // Transparent material
+				} else if (mat.mFlags & static_cast<u32>(mat::MaterialFlags::AlphaClip)) {
+					mtlFile << "illum 3\n"; // Alpha test material
+				} else {
+					mtlFile << "illum 2\n"; // Basic lighting with specular
+				}
+
+				// Reference texture if available
+				if (mat.mTextureIndex >= 0 && mat.mTextureIndex < gModFile.mTextures.size()) {
+					mtlFile << "# Texture index: " << mat.mTextureIndex << "\n";
+
+					// TODO: export texture and reference it here
+					// mtlFile << "map_Kd texture_" << mat.mTextureIndex << ".png\n";
+				}
+
+				mtlFile << "\n";
+			}
+			mtlFile.close();
+		}
 	}
 
 	// Parse and export mesh data
@@ -224,177 +295,183 @@ void exportObj()
 	u32 meshIndex  = 0;
 	u32 totalFaces = 0;
 
+	// Track which materials are actually used by meshes
+	std::set<s16> usedMaterials;
+
 	for (const auto& mesh : gModFile.mMeshes) {
-		os << "o mesh_" << meshIndex++ << "\n";
+		os << "g mesh_" << meshIndex << "\n";
+		os << "# Bone index: " << mesh.mBoneIndex << "\n";
 		os << "# Vertex descriptor: 0x" << std::hex << mesh.mVtxDescriptor << std::dec << "\n";
 
-		// Parse vertex descriptor to understand attribute layout
+		// Parse vertex descriptor
 		const bool hasPNMTXIDX  = (mesh.mVtxDescriptor & 0x1) != 0;
 		const bool hasTEXMTXIDX = (mesh.mVtxDescriptor & 0x2) != 0;
 		const bool hasColor     = (mesh.mVtxDescriptor & 0x4) != 0;
+		const bool hasNormal    = (!gModFile.mVertexNormals.empty() || !gModFile.mVertexNbt.empty());
+
 		std::vector<bool> hasTexCoord(8);
 		for (int i = 0; i < 8; i++) {
 			hasTexCoord[i] = (mesh.mVtxDescriptor & (1 << (i + 3))) != 0;
 		}
 
-		// Process each packet in the mesh
-		for (const auto& packet : mesh.mPackets) {
-			// Process display lists in the packet
+		// Process each packet
+		for (size_t packetIdx = 0; packetIdx < mesh.mPackets.size(); ++packetIdx) {
+			const auto& packet = mesh.mPackets[packetIdx];
+
+			// The packet indices often contain material indices
+			// Check if first index is a valid material index
+			s16 currentMaterialIndex = -1;
+			if (!packet.mIndices.empty()) {
+				s16 potentialMatIdx = packet.mIndices[0];
+				if (potentialMatIdx >= 0 && potentialMatIdx < gModFile.mMaterials.mMaterials.size()) {
+					currentMaterialIndex = potentialMatIdx;
+					usedMaterials.insert(currentMaterialIndex);
+					os << "usemtl material_" << currentMaterialIndex << "\n";
+				}
+			}
+
+			// Look for material index in joint-material-polygon associations
+			if (currentMaterialIndex == -1 && mesh.mBoneIndex < gModFile.mJoints.size()) {
+				const Joint& joint = gModFile.mJoints[mesh.mBoneIndex];
+				for (const auto& matPoly : joint.mLinkedPolygons) {
+					if (static_cast<u32>(matPoly.mMeshIndex) != meshIndex) {
+						continue;
+					}
+
+					currentMaterialIndex = matPoly.mMaterialIndex;
+					if (currentMaterialIndex >= 0 && currentMaterialIndex < gModFile.mMaterials.mMaterials.size()) {
+						usedMaterials.insert(currentMaterialIndex);
+						os << "usemtl material_" << currentMaterialIndex << "\n";
+					}
+
+					break;
+				}
+			}
+
+			// Process display lists
 			for (const auto& dlist : packet.mDisplayLists) {
 				util::vector_reader reader(dlist.mData, 0, util::vector_reader::Endianness::Big);
 
 				while (reader.getRemaining() > 0) {
 					const u8 opcode = reader.readU8();
 
-					// GX draw commands
-					if (opcode == 0x98 || opcode == 0xA0 || opcode == 0xA8 || opcode == 0xB0 || opcode == 0xB8) {
-						// Read vertex count
+					// GX primitive types
+					if (opcode == 0x90 || opcode == 0x98 || opcode == 0xA0 || opcode == 0xA8 || opcode == 0xB0 || opcode == 0xB8) {
+
 						u16 vertexCount = reader.readU16();
-
-						// For triangle strips, we need at least 3 vertices
-						if (vertexCount < 3) {
+						if (vertexCount < 3)
 							continue;
-						}
 
-						std::vector<u16> posIndices;
-						std::vector<u16> nrmIndices;
-						std::vector<u16> texIndices[8];
+						std::vector<std::string> faceVertices;
 
-						// Read vertex data
+						// Read all vertices for this primitive
 						for (u16 v = 0; v < vertexCount; v++) {
-							// Read matrix indices if present (DIRECT format)
-							if (hasPNMTXIDX) {
-								reader.readU8(); // Position/Normal matrix index
-							}
-							if (hasTEXMTXIDX) {
-								reader.readU8(); // Texture matrix index
-							}
+							std::string vertexStr;
+
+							// Skip matrix indices if present
+							if (hasPNMTXIDX)
+								reader.readU8();
+							if (hasTEXMTXIDX)
+								reader.readU8();
 
 							// Position index (always present)
-							posIndices.push_back(reader.readU16());
+							u16 posIdx = reader.readU16();
+							vertexStr  = std::to_string(posIdx + 1);
 
-							// Normal index (or NBT index)
-							if (!gModFile.mVertexNormals.empty() || !gModFile.mVertexNbt.empty()) {
-								nrmIndices.push_back(reader.readU16());
+							// Normal index
+							u16 nrmIdx = 0;
+							if (hasNormal) {
+								nrmIdx = reader.readU16();
 							}
 
 							// Color index
 							if (hasColor) {
-								reader.readU16(); // Skip color index for now
+								reader.readU16(); // Skip for now
 							}
 
 							// Texture coordinate indices
+							u32 texIdx          = 0;
+							bool hasAnyTexCoord = false;
 							for (int i = 0; i < 8; i++) {
 								if (hasTexCoord[i]) {
-									texIndices[i].push_back(reader.readU16());
+									u16 localTexIdx = reader.readU16();
+
+									// Use the first valid tex coord found for this vertex.
+									if (!hasAnyTexCoord) {
+										texIdx         = static_cast<u32>(localTexIdx) + texCoordOffsets[i];
+										hasAnyTexCoord = true;
+									}
 								}
 							}
+
+							// Build vertex string (pos/tex/normal format)
+							if (hasAnyTexCoord && hasNormal) {
+								vertexStr += "/" + std::to_string(texIdx + 1) + "/" + std::to_string(nrmIdx + 1);
+							} else if (hasAnyTexCoord) {
+								vertexStr += "/" + std::to_string(texIdx + 1);
+							} else if (hasNormal) {
+								vertexStr += "//" + std::to_string(nrmIdx + 1);
+							}
+
+							faceVertices.push_back(vertexStr);
 						}
 
-						// Convert triangle strip to individual triangles
-						if (opcode == 0x98) { // Triangle strip
+						// Convert primitives to triangles
+						switch (opcode) {
+						case 0x90: // Triangles
+						case 0xA8: {
+							for (u16 i = 0; i < vertexCount; i += 3) {
+								if (i + 2 < vertexCount) {
+									os << "f " << faceVertices[i] << " " << faceVertices[i + 1] << " " << faceVertices[i + 2] << "\n";
+									totalFaces++;
+								}
+							}
+							break;
+						}
+						case 0x98: { // Triangle strip
 							for (u16 i = 0; i < vertexCount - 2; i++) {
-								// Alternate winding order for triangle strips
 								if (i % 2 == 0) {
-									os << "f";
-									// Vertex 1
-									os << " " << (posIndices[i] + 1);
-									if (!nrmIndices.empty()) {
-										os << "//" << (nrmIndices[i] + 1);
-									} else if (hasTexCoord[0]) {
-										os << "/" << (texIndices[0][i] + 1);
-									}
-
-									// Vertex 2
-									os << " " << (posIndices[i + 1] + 1);
-									if (!nrmIndices.empty()) {
-										os << "//" << (nrmIndices[i + 1] + 1);
-									} else if (hasTexCoord[0]) {
-										os << "/" << (texIndices[0][i + 1] + 1);
-									}
-
-									// Vertex 3
-									os << " " << (posIndices[i + 2] + 1);
-									if (!nrmIndices.empty()) {
-										os << "//" << (nrmIndices[i + 2] + 1);
-									} else if (hasTexCoord[0]) {
-										os << "/" << (texIndices[0][i + 2] + 1);
-									}
-
-									os << "\n";
+									os << "f " << faceVertices[i] << " " << faceVertices[i + 1] << " " << faceVertices[i + 2] << "\n";
 								} else {
-									os << "f";
-									// Vertex 1 (reversed order for alternating triangles)
-									os << " " << (posIndices[i + 2] + 1);
-									if (!nrmIndices.empty()) {
-										os << "//" << (nrmIndices[i + 2] + 1);
-									} else if (hasTexCoord[0]) {
-										os << "/" << (texIndices[0][i + 2] + 1);
-									}
-
-									// Vertex 2
-									os << " " << (posIndices[i + 1] + 1);
-									if (!nrmIndices.empty()) {
-										os << "//" << (nrmIndices[i + 1] + 1);
-									} else if (hasTexCoord[0]) {
-										os << "/" << (texIndices[0][i + 1] + 1);
-									}
-
-									// Vertex 3
-									os << " " << (posIndices[i] + 1);
-									if (!nrmIndices.empty()) {
-										os << "//" << (nrmIndices[i] + 1);
-									} else if (hasTexCoord[0]) {
-										os << "/" << (texIndices[0][i] + 1);
-									}
-
-									os << "\n";
+									os << "f " << faceVertices[i + 2] << " " << faceVertices[i + 1] << " " << faceVertices[i] << "\n";
 								}
 								totalFaces++;
 							}
-						} else if (opcode == 0xA0) { // Triangle fan
-							for (u16 i = 1; i < vertexCount - 1; i++) {
-								os << "f";
-								// Center vertex
-								os << " " << (posIndices[0] + 1);
-								if (!nrmIndices.empty()) {
-									os << "//" << (nrmIndices[0] + 1);
-								} else if (hasTexCoord[0]) {
-									os << "/" << (texIndices[0][0] + 1);
-								}
-
-								// Current vertex
-								os << " " << (posIndices[i] + 1);
-								if (!nrmIndices.empty()) {
-									os << "//" << (nrmIndices[i] + 1);
-								} else if (hasTexCoord[0]) {
-									os << "/" << (texIndices[0][i] + 1);
-								}
-
-								// Next vertex
-								os << " " << (posIndices[i + 1] + 1);
-								if (!nrmIndices.empty()) {
-									os << "//" << (nrmIndices[i + 1] + 1);
-								} else if (hasTexCoord[0]) {
-									os << "/" << (texIndices[0][i + 1] + 1);
-								}
-
-								os << "\n";
-								totalFaces++;
-							}
+							break;
 						}
-						// Add more primitive types as needed (0xA8 = triangles, 0xB0 = quads, etc.)
+						case 0xA0: { // Triangle fan
+							for (u16 i = 1; i < vertexCount - 1; i++) {
+								os << "f " << faceVertices[0] << " " << faceVertices[i] << " " << faceVertices[i + 1] << "\n";
+								totalFaces++;
+							}
+							break;
+						}
+						case 0xB0: // Quads
+						case 0xB8: {
+							for (u16 i = 0; i < vertexCount; i += 4) {
+								if (i + 3 < vertexCount) {
+									// Convert quad to two triangles
+									os << "f " << faceVertices[i] << " " << faceVertices[i + 1] << " " << faceVertices[i + 2] << "\n";
+									os << "f " << faceVertices[i] << " " << faceVertices[i + 2] << " " << faceVertices[i + 3] << "\n";
+									totalFaces += 2;
+								}
+							}
+							break;
+						}
+						}
 					}
 				}
 			}
 		}
 		os << "\n";
+		meshIndex++;
 	}
 
 	// Export collision mesh if present
 	if (!gModFile.mCollisionTriangles.mCollInfo.empty()) {
-		os << "o collision_mesh\n";
+		os << "g collision_mesh\n";
 		os << "# Collision triangles (" << gModFile.mCollisionTriangles.mCollInfo.size() << ")\n";
+
 		for (const auto& tri : gModFile.mCollisionTriangles.mCollInfo) {
 			os << "f " << (tri.mVertexIndexA + 1) << " " << (tri.mVertexIndexB + 1) << " " << (tri.mVertexIndexC + 1) << "\n";
 			totalFaces++;
@@ -402,7 +479,12 @@ void exportObj()
 	}
 
 	os.close();
-	std::cout << "Done! Exported " << totalFaces << " faces to " << filename << '\n';
+
+	std::cout << "Done! Exported " << totalFaces << " faces to " << filename << std::endl;
+	if (!gModFile.mMaterials.mMaterials.empty()) {
+		std::cout << "Exported " << gModFile.mMaterials.mMaterials.size() << " materials (";
+		std::cout << usedMaterials.size() << " used) to " << std::filesystem::path(filename).stem().string() << ".mtl" << std::endl;
+	}
 }
 
 void exportDmd()
