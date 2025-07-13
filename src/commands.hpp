@@ -19,6 +19,7 @@ void loadFile();
 void writeFile();
 void resetActiveModel();
 
+void importObj();
 void importMaterials();
 void importTexture();
 void importIni();
@@ -42,70 +43,34 @@ struct Command {
 	std::function<void()> mFunction;
 };
 
-static std::vector<Command> gCommands = {
-	{ .mCommand = "load", .mParameters = { "input filename" }, .mDescription = "loads a MOD file", .mFunction = cmd::mod::loadFile },
-	{ .mCommand = "write", .mParameters = { "output filename" }, .mDescription = "writes the MOD file", .mFunction = cmd::mod::writeFile },
-	{ .mCommand = "close", .mParameters = {}, .mDescription = "closes the MOD file", .mFunction = cmd::mod::resetActiveModel },
+static std::vector<Command> gCommands
+    = { { "load", { "input filename" }, "loads a MOD file", cmd::mod::loadFile },
+	    { "write", { "output filename" }, "writes the MOD file", cmd::mod::writeFile },
+	    { "close", {}, "closes the MOD file", cmd::mod::resetActiveModel },
 
-	{ .mCommand = "NEW_LINE" },
+	    { "NEW_LINE" },
 
-	{ .mCommand     = "delete_chunk",
-	  .mParameters  = { "target chunk (0x10, 0x12, 0x30, etc.)" },
-	  .mDescription = "deletes a chunk type [dangerous]",
-	  .mFunction    = cmd::mod::deleteChunk },
-	{ .mCommand     = "edit_header",
-	  .mParameters  = {},
-	  .mDescription = "edits header information (date of creation / flags)",
-	  .mFunction    = cmd::mod::editHeader },
+	    { "import_material", { "input filename" }, "imports materials from an external file", cmd::mod::importMaterials },
+	    { "import_texture", { /*handles input internally*/ }, "swaps a texture with an external TXE file", cmd::mod::importTexture },
+	    { "import_obj", { "input filename" }, "imports an external obj", cmd::mod::importObj },
+	    { "import_ini", { "input filename" }, "imports an external ini", cmd::mod::importIni },
 
-	{ .mCommand = "NEW_LINE" },
+	    { "NEW_LINE" },
 
-	{ .mCommand     = "import_texture",
-	  .mParameters  = { /*handles input internally*/ },
-	  .mDescription = "swaps a texture with an external TXE file",
-	  .mFunction    = cmd::mod::importTexture },
-	{ .mCommand     = "import_ini",
-	  .mParameters  = { "input filename" },
-	  .mDescription = "imports an external ini",
-	  .mFunction    = cmd::mod::importIni },
-	{ .mCommand     = "import_material",
-	  .mParameters  = { "input filename" },
-	  .mDescription = "imports materials from an external file",
-	  .mFunction    = cmd::mod::importMaterials },
+	    { "export_materials", { "output filename" }, " exports all materials to a file ", cmd::mod::exportMaterials },
+	    { "export_textures", { "output directory" }, "exports all textures to a directory", cmd::mod::exportTextures },
+	    { "export_obj", { "output filename" }, "exports the model to an obj file [WIP]", cmd::mod::exportObj },
+	    { "export_ini", { "output filename" }, "exports the ini to a file", cmd::mod::exportIni },
+	    { "export_dmd", { "output filename" }, "exports the model to a dmd file [WIP]", cmd::mod::exportDmd },
 
-	{ .mCommand = "NEW_LINE" },
+	    { "NEW_LINE" },
 
-	{ .mCommand     = "export_materials",
-	  .mParameters  = { "output filename" },
-	  .mDescription = " exports all materials to a file ",
-	  .mFunction    = cmd::mod::exportMaterials },
-	{ .mCommand     = "export_textures",
-	  .mParameters  = { "output directory" },
-	  .mDescription = "exports all textures to a directory",
-	  .mFunction    = cmd::mod::exportTextures },
-	{ .mCommand     = "export_ini",
-	  .mParameters  = { "output filename" },
-	  .mDescription = "exports the ini to a file",
-	  .mFunction    = cmd::mod::exportIni },
-	{ .mCommand     = "export_obj",
-	  .mParameters  = { "output filename" },
-	  .mDescription = "exports the model to an obj file [WIP]",
-	  .mFunction    = cmd::mod::exportObj },
-	{ .mCommand     = "export_dmd",
-	  .mParameters  = { "output filename" },
-	  .mDescription = "exports the model to a dmd file [WIP]",
-	  .mFunction    = cmd::mod::exportDmd },
-	{ .mCommand = "NEW_LINE" },
+	    { "delete_chunk", { "target chunk (0x10, 0x12, 0x30, etc.)" }, "deletes a chunk type [dangerous]", cmd::mod::deleteChunk },
+	    { "edit_header", {}, "edits header information (date of creation / flags)", cmd::mod::editHeader },
 
-	{ .mCommand     = "delete_chunk",
-	  .mParameters  = { "target chunk (0x10, 0x12, 0x30, etc.)" },
-	  .mDescription = "deletes a chunk type [dangerous]",
-	  .mFunction    = cmd::mod::deleteChunk },
+	    { "NEW_LINE" },
 
-	{ .mCommand = "NEW_LINE" },
-
-	{ .mCommand = "help", .mParameters = {}, .mDescription = "re-generate this command list", .mFunction = showCommands }
-};
+	    { "help", {}, "re-generate this command list", showCommands } };
 
 inline void showCommands()
 {
@@ -118,7 +83,7 @@ inline void showCommands()
 
 		std::cout << " " << cmd.mCommand << " ";
 
-		for (auto mParameter : cmd.mParameters) {
+		for (auto& mParameter : cmd.mParameters) {
 			std::cout << "[" << mParameter << "] ";
 		}
 

@@ -14,11 +14,12 @@
  * @brief Enumeration representing the flags for the MOD.
  */
 enum class MODFlags : u8 {
-	None         = 0x00,
-	UseNBT       = 0x01,
-	AllowCaching = 0x02, // Allows caching of shape geometry into a display list.
-	AlwaysRedraw = 0x04, // Forces the shape to be redrawn every frame, bypassing any cached display list.
-	IsPlatform   = 0x10, // Indicates the shape is a platform or has platform collision.
+	None              = 0x00,
+	UseNBT            = 0x01,
+	AllowCaching      = 0x02, // Allows caching of shape geometry into a display list.
+	AlwaysRedraw      = 0x04, // Forces the shape to be redrawn every frame, bypassing any cached display list.
+	UseClassicScaling = 0x08, // If set, uses classic scaling type, if unset, uses Softimage Scaling (functionally nothing changes)
+	IsPlatform        = 0x10, // Indicates the shape is a platform or has platform collision.
 };
 
 /**

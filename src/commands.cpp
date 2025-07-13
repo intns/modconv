@@ -31,7 +31,9 @@ void loadFile()
 		std::cout << "Unable to open " << filename << '\n';
 		return;
 	}
+
 	gModFileName = filename;
+	gModFile.reset();
 
 	reader.seekg(0, std::ios_base::beg);
 	gModFile.read(reader);
@@ -44,11 +46,6 @@ void loadFile()
 
 void writeFile()
 {
-	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << '\n';
-		return;
-	}
-
 	const std::string& filename = gTokeniser.next();
 	util::fstream_writer writer;
 	writer.open(filename, std::ios_base::binary);
@@ -487,101 +484,201 @@ void exportObj()
 	}
 }
 
-void exportDmd()
+void importObj()
 {
-	if (!isModFileOpen()) {
-		std::cout << "You haven't opened a MOD file!" << '\n';
+	if (gTokeniser.isEnd()) {
+		std::cout << "OBJ filename not provided!" << std::endl;
 		return;
 	}
 
-	const std::string& filename = gTokeniser.isEnd() ? gModFileName + ".dmd" : gTokeniser.next();
-	std::ofstream os(filename);
-	if (!os.is_open()) {
-		std::cout << "Error can't open " << filename << '\n';
+	std::string objFile = gTokeniser.next();
+	std::ifstream inputFile(objFile);
+	if (!inputFile.is_open()) {
+		std::cout << "Error: can't open " << objFile << std::endl;
 		return;
 	}
 
-	os << "<INFORMATION>\n{" << '\n';
-	os << "\tnumjoints\t" << gModFile.mJoints.size() << '\n';
-	os << "\tprimitive\tTriangleStrip" << '\n';
-	os << "\tembossbump\t" << (!gModFile.mVertexNbt.empty() ? "on" : "off") << '\n';
-	os << "\tscalingrule\tsoftimage" << '\n';
-	os << "}" << '\n' << '\n';
-
-	if (!gModFile.mVertices.empty()) {
-		Vector3f minbounds = gModFile.mVertices[0];
-		Vector3f maxbounds = gModFile.mVertices[0];
-		for (const Vector3f& vertex : gModFile.mVertices) {
-			maxbounds.x = std::max(maxbounds.x, vertex.x);
-			maxbounds.y = std::max(maxbounds.y, vertex.y);
-			maxbounds.z = std::max(maxbounds.z, vertex.z);
-
-			minbounds.x = std::min(minbounds.x, vertex.x);
-			minbounds.y = std::min(minbounds.y, vertex.y);
-			minbounds.z = std::min(minbounds.z, vertex.z);
-		}
-
-		os << "<ENVELOPE_XYZ>\n{" << '\n';
-		os << "\tsize\t" << gModFile.mVertices.size() << '\n';
-		os << "\tmin\t" << minbounds << '\n';
-		os << "\tmax\t" << maxbounds << '\n' << '\n';
-		for (const Vector3f& c : gModFile.mVertices) {
-			os << "\tfloat\t" << c << '\n';
-		}
-		os << "}" << '\n' << '\n';
+	// Clear existing geometry data
+	gModFile.mVertices.clear();
+	gModFile.mVertexNormals.clear();
+	for (auto& texCoords : gModFile.mTextureCoords) {
+		texCoords.clear();
 	}
+	gModFile.mMeshes.clear();
 
-	if (!gModFile.mVertexNormals.empty()) {
-		os << "<ENVELOPE_NRM>\n{" << '\n';
-		os << "\tsize\t" << gModFile.mVertexNormals.size() << '\n' << '\n';
-		for (const Vector3f& c : gModFile.mVertexNormals) {
-			os << "\tfloat\t" << c << '\n';
+	// Parse OBJ file
+	std::vector<Vector3f> tempVertices;
+	std::vector<Vector3f> tempNormals;
+	std::vector<Vector2f> tempTexCoords;
+
+	struct IndexedVertex {
+		int posIdx;
+		int texIdx;
+		int nrmIdx;
+
+		bool operator==(const IndexedVertex& other) const
+		{
+			return posIdx == other.posIdx && texIdx == other.texIdx && nrmIdx == other.nrmIdx;
 		}
-		os << "}" << '\n' << '\n';
-	}
+	};
 
-	for (u32 i = 0; i < gModFile.mTextureCoords.size(); i++) {
-		std::vector<Vector2f>& texcoords = gModFile.mTextureCoords[i];
-		if (texcoords.empty()) {
+	struct IndexedVertexHash {
+		std::size_t operator()(const IndexedVertex& v) const
+		{
+			return std::hash<int>()(v.posIdx) ^ (std::hash<int>()(v.texIdx) << 1) ^ (std::hash<int>()(v.nrmIdx) << 2);
+		}
+	};
+
+	std::unordered_map<IndexedVertex, u16, IndexedVertexHash> vertexMap;
+	std::vector<std::vector<u16>> meshFaces;
+
+	std::string line;
+	while (std::getline(inputFile, line)) {
+		util::tokeniser tokeniser(line);
+		if (tokeniser.isEnd())
 			continue;
+
+		std::string type = tokeniser.next();
+
+		if (type == "v") {
+			float x = std::stof(tokeniser.next());
+			float y = std::stof(tokeniser.next());
+			float z = std::stof(tokeniser.next());
+			tempVertices.push_back({ x, y, z });
+		} else if (type == "vn") {
+			float x = std::stof(tokeniser.next());
+			float y = std::stof(tokeniser.next());
+			float z = std::stof(tokeniser.next());
+			tempNormals.push_back({ x, y, z });
+		} else if (type == "vt") {
+			float u = std::stof(tokeniser.next());
+			float v = 1.0f - std::stof(tokeniser.next()); // Flip Y for MOD format
+			tempTexCoords.push_back({ u, v });
+		} else if (type == "f") {
+			std::vector<u16> faceIndices;
+
+			while (!tokeniser.isEnd()) {
+				std::string vertexStr = tokeniser.next();
+				IndexedVertex vertex  = { -1, -1, -1 };
+
+				// Parse vertex indices
+				size_t firstSlash = vertexStr.find('/');
+				if (firstSlash == std::string::npos) {
+					vertex.posIdx = std::stoi(vertexStr) - 1;
+				} else {
+					vertex.posIdx = std::stoi(vertexStr.substr(0, firstSlash)) - 1;
+
+					size_t secondSlash = vertexStr.find('/', firstSlash + 1);
+					if (secondSlash == std::string::npos) {
+						vertex.texIdx = std::stoi(vertexStr.substr(firstSlash + 1)) - 1;
+					} else {
+						if (secondSlash > firstSlash + 1) {
+							vertex.texIdx = std::stoi(vertexStr.substr(firstSlash + 1, secondSlash - firstSlash - 1)) - 1;
+						}
+						vertex.nrmIdx = std::stoi(vertexStr.substr(secondSlash + 1)) - 1;
+					}
+				}
+
+				// Get or create vertex index
+				auto it = vertexMap.find(vertex);
+				u16 index;
+				if (it == vertexMap.end()) {
+					index             = static_cast<u16>(gModFile.mVertices.size());
+					vertexMap[vertex] = index;
+
+					// Add vertex data
+					gModFile.mVertices.push_back(tempVertices[vertex.posIdx]);
+
+					if (vertex.nrmIdx >= 0) {
+						if (gModFile.mVertexNormals.size() < gModFile.mVertices.size()) {
+							gModFile.mVertexNormals.resize(gModFile.mVertices.size());
+						}
+						gModFile.mVertexNormals[index] = tempNormals[vertex.nrmIdx];
+					}
+
+					if (vertex.texIdx >= 0) {
+						if (gModFile.mTextureCoords[0].size() < gModFile.mVertices.size()) {
+							gModFile.mTextureCoords[0].resize(gModFile.mVertices.size());
+						}
+						gModFile.mTextureCoords[0][index] = tempTexCoords[vertex.texIdx];
+					}
+				} else {
+					index = it->second;
+				}
+
+				faceIndices.push_back(index);
+			}
+
+			meshFaces.push_back(faceIndices);
 		}
-
-		os << "<TEXCOORD" << i << ">\n{" << '\n';
-		os << "\tsize\t" << texcoords.size() << '\n';
-
-		Vector2f minbounds = texcoords[0];
-		Vector2f maxbounds = texcoords[0];
-		for (const Vector2f& coord : texcoords) {
-			maxbounds.x = std::max(maxbounds.x, coord.x);
-			maxbounds.y = std::max(maxbounds.y, coord.y);
-
-			minbounds.x = std::min(minbounds.x, coord.x);
-			minbounds.y = std::min(minbounds.y, coord.y);
-		}
-
-		os << "\tmin\t" << minbounds.x << " " << minbounds.y << '\n';
-		os << "\tmax\t" << maxbounds.x << " " << maxbounds.y << '\n' << '\n';
-
-		os << std::fixed << std::setprecision(6);
-		for (const Vector2f& coord : texcoords) {
-			os << "\tfloat\t" << coord.x << " " << coord.y << '\n';
-		}
-		os << "}" << '\n' << '\n';
 	}
 
-	if (!gModFile.mVertexColours.empty()) {
-		os << "<COLOR0>\n{" << '\n';
-		os << "\tsize\t" << gModFile.mVertexColours.size() << '\n' << '\n';
-		for (const ColourU8& c : gModFile.mVertexColours) {
-			os << "\tbyte\t" << c << '\n';
+	inputFile.close();
+
+	// Create mesh from faces
+	if (!meshFaces.empty()) {
+		Mesh mesh;
+		mesh.mBoneIndex = 0;
+
+		// Set vertex descriptor based on what data we have
+		mesh.mVtxDescriptor = 0;
+		if (!gModFile.mVertexNormals.empty()) {
+			mesh.mVtxDescriptor |= (1 << 11); // Has normals
 		}
-		os << "}" << '\n' << '\n';
+		if (!gModFile.mTextureCoords[0].empty()) {
+			mesh.mVtxDescriptor |= (1 << 3); // Has texcoord0
+		}
+
+		// Create a single packet with all faces
+		MeshPacket packet;
+
+		// Convert faces to triangle strips (simple conversion)
+		DisplayList dlist;
+		dlist.mFlags.byteView.cullMode = DLCullMode::Back;
+
+		// Build display list data
+		util::vector_reader::Endianness endian = util::vector_reader::Endianness::Big;
+
+		for (const auto& face : meshFaces) {
+			if (face.size() >= 3) {
+				// Use triangle primitive (0xA8)
+				dlist.mData.push_back(0xA8);
+
+				// Vertex count (as u16)
+				u16 vertCount = static_cast<u16>(face.size());
+				dlist.mData.push_back((vertCount >> 8) & 0xFF);
+				dlist.mData.push_back(vertCount & 0xFF);
+
+				// Write vertex indices
+				for (u16 idx : face) {
+					// Position index
+					dlist.mData.push_back((idx >> 8) & 0xFF);
+					dlist.mData.push_back(idx & 0xFF);
+
+					// Normal index (if present)
+					if (!gModFile.mVertexNormals.empty()) {
+						dlist.mData.push_back((idx >> 8) & 0xFF);
+						dlist.mData.push_back(idx & 0xFF);
+					}
+
+					// Texture coordinate index (if present)
+					if (!gModFile.mTextureCoords[0].empty()) {
+						dlist.mData.push_back((idx >> 8) & 0xFF);
+						dlist.mData.push_back(idx & 0xFF);
+					}
+				}
+			}
+		}
+
+		dlist.mCommandCount = meshFaces.size();
+		packet.mDisplayLists.push_back(dlist);
+
+		mesh.mPackets.push_back(packet);
+		gModFile.mMeshes.push_back(mesh);
 	}
 
-	os.flush();
-	os.close();
-
-	std::cout << "Done!" << '\n';
+	std::cout << "Done! Imported " << gModFile.mVertices.size() << " vertices and " << meshFaces.size() << " faces from " << objFile
+	          << std::endl;
 }
 
 void exportTextures()
@@ -935,7 +1032,8 @@ void editHeader()
 			}
 
 			if (!(flags & static_cast<u32>(MODFlags::UseNBT)) && !(flags & static_cast<u32>(MODFlags::AllowCaching))
-			    && !(flags & static_cast<u32>(MODFlags::AlwaysRedraw)) && !(flags & static_cast<u32>(MODFlags::IsPlatform))) {
+			    && !(flags & static_cast<u32>(MODFlags::AlwaysRedraw)) && !(flags & static_cast<u32>(MODFlags::IsPlatform))
+			    && !(flags & static_cast<u32>(MODFlags::UseClassicScaling))) {
 				std::cout << "Unable to change flags, you haven't provided any valid option!" << '\n';
 				return;
 			}
@@ -953,6 +1051,9 @@ void editHeader()
 			}
 			if (flags & static_cast<u32>(MODFlags::AlwaysRedraw)) {
 				std::cout << "\t- AlwaysRedraw enabled" << '\n';
+			}
+			if (flags & static_cast<u32>(MODFlags::UseClassicScaling)) {
+				std::cout << "\t- UseClassicScaling enabled" << '\n';
 			}
 			if (flags & static_cast<u32>(MODFlags::IsPlatform)) {
 				std::cout << "\t- IsPlatform enabled" << '\n';
@@ -973,71 +1074,295 @@ void editHeader()
 	}
 }
 
-} // namespace mod
-
-void objToDmd()
+void exportDmd()
 {
-	if (gTokeniser.isEnd()) {
-		std::cout << "Input filename not provided!" << '\n';
+	if (!isModFileOpen()) {
+		std::cout << "You haven't opened a MOD file!" << '\n';
 		return;
 	}
 
-	std::string input = gTokeniser.next();
-
-	if (gTokeniser.isEnd()) {
-		std::cout << "Output filename not provided, defaulting to out.dmd!" << '\n';
-	}
-
-	std::string output = gTokeniser.isEnd() ? "out.dmd" : gTokeniser.next();
-
-	std::ifstream inputFile(input);
-	if (!inputFile.is_open()) {
-		std::cout << "Error can't open " << input << '\n';
-		return;
-	}
-
-	std::vector<Vector2f> texcoords;
-	std::vector<Vector3f> vnormals;
-	std::vector<Vector3f> vertices;
-	std::vector<Vector3i> faces;
-
-	for (std::string line; std::getline(inputFile, line);) {
-		util::tokeniser tokeniser(line);
-
-		if (tokeniser.isEnd()) {
-			continue;
-		}
-
-		std::string first = tokeniser.next();
-		if (first.starts_with('#')) { // Skip comments
-			continue;
-		}
-
-		if (first == "vt") {
-			texcoords.emplace_back(std::stof(tokeniser.next()), std::stof(tokeniser.next()));
-		} else if (first == "vn") {
-			vnormals.emplace_back(std::stof(tokeniser.next()), std::stof(tokeniser.next()), std::stof(tokeniser.next()));
-		} else if (first == "v") {
-			vertices.emplace_back(std::stof(tokeniser.next()), std::stof(tokeniser.next()), std::stof(tokeniser.next()));
-		} else if (first == "f") {
-			faces.emplace_back(static_cast<u32>(std::stoul(tokeniser.next())), static_cast<u32>(std::stoul(tokeniser.next())),
-			                   static_cast<u32>(std::stoul(tokeniser.next())));
-		}
-	}
-
-	std::ofstream os(output);
+	const std::string& filename = gTokeniser.isEnd() ? gModFileName + ".dmd" : gTokeniser.next();
+	std::ofstream os(filename);
 	if (!os.is_open()) {
-		std::cout << "Error can't open " << input << '\n';
+		std::cout << "Error can't open " << filename << '\n';
 		return;
 	}
 
-	os << "<INFORMATION>\n{";
-	os << "\tmagnify\t1\n";
-	os << "\tnumjoints\t0\n";
-	os << "\tscalingrule\tsoftimage\n";
-	os << "\tprimitive\tTriangleStrip\n";
-	os << "\tembossbump\toff\n}\n";
+	os << std::fixed << std::setprecision(6);
 
-	if (!vertices.empty()) { }
+	// <INFORMATION> section
+	os << "<INFORMATION>\n{\n";
+	os << "\tnumjoints\t" << gModFile.mJoints.size() << '\n';
+	os << "\tprimitive\tTriangleStrip\n";
+	os << "\tembossbump\t" << (gModFile.mHeader.mFlags & static_cast<u32>(MODFlags::UseNBT) ? "on" : "off") << '\n';
+	os << "\tscalingrule\tsoftimage\n";
+	os << "}\n\n";
+
+	// <JOINT> sections
+	for (size_t i = 0; i < gModFile.mJoints.size(); ++i) {
+		const auto& joint = gModFile.mJoints[i];
+		os << "<JOINT>\n{\n";
+
+		// Index and name
+		os << "\tindex\t" << i << '\n';
+		std::string jointName = (i < gModFile.mJointNames.size()) ? gModFile.mJointNames[i] : "joint_" + std::to_string(i);
+		os << "\tname\t" << jointName << '\n';
+
+		// Parent
+		os << "\tparent\t" << joint.mParentIndex << "\t(null)\n";
+
+		// Kind (default to "mesh", or change if you store type elsewhere)
+		os << "\tkind\tmesh\n";
+
+		// Transform
+		os << "\tscaling\t" << joint.mScale.x << " " << joint.mScale.y << " " << joint.mScale.z << '\n';
+		os << "\trotation\t" << joint.mRotation.x << " " << joint.mRotation.y << " " << joint.mRotation.z << '\n';
+		os << "\ttranslation\t" << joint.mPosition.x << " " << joint.mPosition.y << " " << joint.mPosition.z << '\n';
+
+		// Bounding box and radius
+		os << "\tvolume_min\t" << joint.mMinBounds.x << " " << joint.mMinBounds.y << " " << joint.mMinBounds.z << '\n';
+		os << "\tvolume_max\t" << joint.mMaxBounds.x << " " << joint.mMaxBounds.y << " " << joint.mMaxBounds.z << '\n';
+		os << "\tvolume_r\t" << joint.mVolumeRadius << '\n';
+
+		// ndisplays and display lines
+		if (!joint.mLinkedPolygons.empty()) {
+			os << "\tndisplays\t" << joint.mLinkedPolygons.size() << '\n';
+			for (const auto& poly : joint.mLinkedPolygons) {
+				os << "\tdisplay\t" << poly.mMaterialIndex << " " << poly.mMeshIndex << '\n';
+			}
+		}
+
+		os << "}\n\n";
+	}
+
+	// <TEX_ATTR> sections
+	for (const auto& attr : gModFile.mTextureAttributes) {
+		os << "<TEX_ATTR>\n{\n";
+		os << "\tindex\t" << attr.mIndex << '\n';
+		os << "\timage\t" << attr.mIndex << '\n';
+
+		// Tiling: clamp or repeat per axis
+		const char* uTiling = (attr.mTilingType & 0x01) ? "clamp" : "repeat";
+		const char* vTiling = (attr.mTilingType & 0x0100) ? "clamp" : "repeat";
+		os << "\ttiling\t" << uTiling << " " << vTiling << '\n';
+		os << "}\n\n";
+	}
+
+	// <ENVELOPE> section
+	if (!gModFile.mVertexEnvelopes.empty()) {
+		os << "<ENVELOPE>\n{\n";
+		os << "\tsize\t" << gModFile.mVertexEnvelopes.size() << '\n';
+		for (const auto& env : gModFile.mVertexEnvelopes) {
+			os << "\tevl_mtx_num\t" << env.mIndices.size();
+			os << "\n\tevl_mtx_idx";
+			for (const auto& index : env.mIndices) {
+				os << "\t" << index;
+			}
+			os << "\n\tevl_mtx_wgt";
+			for (const auto& weight : env.mWeights) {
+				os << "\t" << weight;
+			}
+			os << " \n";
+		}
+		os << "}\n\n";
+	}
+
+	// <VTX_MATRIX> section
+	if (!gModFile.mVertexMatrices.empty()) {
+		os << "<VTX_MATRIX>\n{\n";
+		os << "\tsize\t" << gModFile.mVertexMatrices.size() << '\n';
+		for (const auto& vtxMtx : gModFile.mVertexMatrices) {
+			os << "\tmatrix\t" << (vtxMtx.mHasPartialWeights ? "weight" : "full") << " " << vtxMtx.mIndex << '\n';
+		}
+		os << "}\n\n";
+	}
+
+	// <MATERIAL> section
+	for (u32 i = 0; i < gModFile.mMaterials.mMaterials.size(); ++i) {
+		const auto& mat = gModFile.mMaterials.mMaterials[i];
+		os << "<MATERIAL>\n{\n";
+		os << "\tindex\t" << i << '\n';
+		os << "\tname\tmat_" << std::to_string(i) << '\n';
+
+		// Mode
+		std::string mode = "STD";
+		switch ((mat.mFlags >> 8) & 0xFF) {
+		case 1:
+			mode = "STD"; // Opaque
+			break;
+		case 2:
+			mode = "TEX"; // Alpha Test
+			break;
+		case 4:
+			mode = "XLU"; // Transparent
+			break;
+		default:
+			break;
+		}
+		os << "\tmode\t" << mode << '\n';
+
+		// Diffuse
+		const auto& c = mat.mColourInfo.mDiffuseColour;
+		os << "\tdiffuse\t" << static_cast<int>(c.r) << " " << static_cast<int>(c.g) << " " << static_cast<int>(c.b) << " "
+		   << static_cast<int>(c.a) << '\n';
+
+		// Texture binding
+		os << "\ttexture0\t" << mat.mTextureIndex << '\n';
+
+		os << "}\n\n";
+	}
+
+	// <VTX_POS> and <DEFORMED_XYZ>
+	if (!gModFile.mVertices.empty()) {
+		Vector3f minbounds = gModFile.mVertices[0];
+		Vector3f maxbounds = gModFile.mVertices[0];
+		for (const Vector3f& vertex : gModFile.mVertices) {
+			minbounds.x = std::min(minbounds.x, vertex.x);
+			minbounds.y = std::min(minbounds.y, vertex.y);
+			minbounds.z = std::min(minbounds.z, vertex.z);
+			maxbounds.x = std::max(maxbounds.x, vertex.x);
+			maxbounds.y = std::max(maxbounds.y, vertex.y);
+			maxbounds.z = std::max(maxbounds.z, vertex.z);
+		}
+
+		for (const std::string& blockName : { "<VTX_POS>", "<DEFORMED_XYZ>", "<ENVELOPE_XYZ>" }) {
+			os << blockName << "\n{\n";
+			os << "\tsize\t" << gModFile.mVertices.size() << '\n';
+			os << "\tmin\t" << minbounds.x << " " << minbounds.y << " " << minbounds.z << '\n';
+			os << "\tmax\t" << maxbounds.x << " " << maxbounds.y << " " << maxbounds.z << '\n' << '\n';
+			for (const Vector3f& v : gModFile.mVertices) {
+				os << "\tfloat\t" << v.x << " " << v.y << " " << v.z << '\n';
+			}
+			os << "}\n\n";
+		}
+	}
+
+	// <VTX_NRM> and <ENVELOPE_NRM>
+	if (!gModFile.mVertexNormals.empty()) {
+		for (const std::string& blockName : { "<VTX_NRM>", "<ENVELOPE_NRM>" }) {
+			os << blockName << "\n{\n";
+			os << "\tsize\t" << gModFile.mVertexNormals.size() << '\n' << '\n';
+			for (const Vector3f& vn : gModFile.mVertexNormals) {
+				os << "\tfloat\t" << vn.x << " " << vn.y << " " << vn.z << '\n';
+			}
+			os << "}\n\n";
+		}
+	}
+
+	// <TEXCOORDn>
+	for (u32 i = 0; i < gModFile.mTextureCoords.size(); ++i) {
+		const auto& texCoords = gModFile.mTextureCoords[i];
+		if (texCoords.empty())
+			continue;
+
+		os << "<TEXCOORD" << i << ">\n{\n";
+		os << "\tsize\t" << texCoords.size() << '\n';
+		os << "\n";
+		for (const auto& vt : texCoords) {
+			os << "\tfloat\t" << vt.x << " " << vt.y << '\n';
+		}
+		os << "}\n\n";
+	}
+
+	// <COLOR0>
+	if (!gModFile.mVertexColours.empty()) {
+		os << "<COLOR0>\n{\n";
+		os << "\tsize\t" << gModFile.mVertexColours.size() << '\n' << '\n';
+		for (const ColourU8& c : gModFile.mVertexColours) {
+			os << "\tbyte\t" << static_cast<u32>(c.r) << " " << static_cast<u32>(c.g) << " " << static_cast<u32>(c.b) << " "
+			   << static_cast<u32>(c.a) << '\n';
+		}
+		os << "}\n\n";
+	}
+
+	// <POLYGON>
+	for (size_t i = 0; i < gModFile.mMeshes.size(); ++i) {
+		const auto& mesh = gModFile.mMeshes[i];
+		os << "<POLYGON>\n{\n";
+		os << "\tindex\t" << i << '\n';
+		os << "\tlight\ton\n";
+		os << "\tembossbump\t" << ((mesh.mVtxDescriptor & 0x10000) ? "on" : "off") << '\n';
+		os << "\tvcd\t";
+		// Generate VCD line from descriptor
+		// Bit 0: PNMTXIDX, Bit 2: Color0, Bit 3-10: TexCoord0-7
+		os << ((mesh.mVtxDescriptor & 0x1) ? 1 : 0) << " 1 ";                                      // PNMTXIDX, Position
+		os << ((!gModFile.mVertexNormals.empty() || !gModFile.mVertexNbt.empty()) ? 1 : 0) << " "; // Normal
+		os << ((mesh.mVtxDescriptor & 0x4) ? 1 : 0) << " 0 ";                                      // Color0, Color1
+		for (int j = 0; j < 8; ++j) {
+			os << ((mesh.mVtxDescriptor & (1 << (j + 3))) ? 1 : 0) << " "; // TexCoord j
+		}
+		os << "0 0 0 0 0 0 0 0\n"; // Unused fields
+
+		for (const auto& packet : mesh.mPackets) {
+			os << "\tnmtx_lists\t" << (packet.mIndices.empty() ? 0 : 1) << '\n';
+			os << "\tnmtxs\t" << packet.mIndices.size() << '\n';
+			os << "\tmtx_list";
+			for (s16 idx : packet.mIndices) {
+				os << "\t" << idx;
+			}
+			os << '\n';
+
+			for (const auto& dlist : packet.mDisplayLists) {
+				switch (dlist.mFlags.byteView.cullMode) {
+				case DLCullMode::Front:
+					os << "\tface\tfront\n";
+					break;
+				case DLCullMode::Back:
+					os << "\tface\tback\n";
+					break;
+				case DLCullMode::Both:
+					os << "\tface\tboth\n";
+					break;
+				case DLCullMode::None:
+					os << "\tface\tnone\n";
+					break;
+				}
+
+				util::vector_reader reader(dlist.mData, 0, util::vector_reader::Endianness::Big);
+				while (reader.getRemaining() > 0) {
+					u8 opcode = reader.readU8();
+					if (opcode >= 0x90 && opcode <= 0xB8) { // Is a primitive
+						u16 vertCount = reader.readU16();
+						os << "\tnodes\t" << vertCount << '\n';
+
+						for (u16 v = 0; v < vertCount; ++v) {
+							std::vector<int> vcd_data(21, -1);
+
+							// Parse vertex data from stream based on descriptor
+							if (mesh.mVtxDescriptor & 0x1)
+								vcd_data[0] = reader.readU8(); // PNMTXIDX
+							if (mesh.mVtxDescriptor & 0x2)
+								reader.readU8(); // TEXMTXIDX (skip)
+
+							vcd_data[1] = reader.readU16(); // POS
+							if (!gModFile.mVertexNormals.empty() || !gModFile.mVertexNbt.empty())
+								vcd_data[2] = reader.readU16(); // NRM
+							if (mesh.mVtxDescriptor & 0x4)
+								vcd_data[3] = reader.readU16(); // COL0
+
+							for (int j = 0; j < 8; ++j) {
+								if (mesh.mVtxDescriptor & (1 << (j + 3)))
+									vcd_data[10 + j] = reader.readU16(); // TEX j
+							}
+
+							os << "\tvcd_dat";
+							for (int val : vcd_data) {
+								os << "\t" << val;
+							}
+							os << '\n';
+						}
+					}
+				}
+			}
+		}
+		os << "}\n\n";
+	}
+
+	os.close();
+	if (gModFile.mVerbosePrint) {
+		std::cout << "Done! Exported model to " << filename << std::endl;
+	}
 }
+
+} // namespace mod
 } // namespace cmd

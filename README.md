@@ -14,14 +14,15 @@ A C++ command-line tool for converting and editing proprietary 3D model files (`
 
 - **File Handling**
   - Load, parse, and write `.mod` files
+  - Edit header data (date of creation / model flags)
   - Delete specific data chunks (materials, textures, vertices) from loaded models
+  - Clear current model data
 
 - **Import / Export**
-  - Export / import material and TEV (Texture Environment) settings to human-readable text files
-  - Export model geometry to Wavefront `.obj` format
-  - Export all textures as individual `.txe` files
-  - Import data from previously exported `.txe` and material files
-  - Import and export trailing `.ini` data blocks
+  - Import / export material and TEV (Texture Environment) settings to human-readable text files
+  - Import / export model geometry to Wavefront `.obj` format
+  - Import / export texture data from `.txe` files
+  - Import / export trailing `.ini` data blocks
   - Export model data to `.dmd` format [WIP]
 
 ## Building and Running
@@ -122,5 +123,4 @@ modconv load model.mod delete_chunk 0x100 delete_chunk 0x110 write model_no_coll
 
 - Complete work-in-progress `.obj` and `.dmd` export functionality
 - Implement the stubbed `objToDmd` converter
-- Add support for importing geometry from standard formats like `.obj`
 - Tidy the code further

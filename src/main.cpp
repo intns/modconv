@@ -31,15 +31,16 @@ void printUsage(const char* programName)
 	std::cout << "  close                        Close the MOD file\n";
 
 	std::cout << "\nImport Operations:\n";
-	std::cout << "  import_texture               Swap a texture with an external TXE file (interactive)\n";
-	std::cout << "  import_ini <filename>        Import an external INI file\n";
 	std::cout << "  import_material <filename>   Import materials from an external file\n";
+	std::cout << "  import_texture               Swap a texture with an external TXE file (interactive)\n";
+	std::cout << "  import_obj <filename>        Import an external OBJ\n";
+	std::cout << "  import_ini <filename>        Import an external INI file\n";
 
 	std::cout << "\nExport Operations:\n";
 	std::cout << "  export_materials <filename>  Export all materials to a file\n";
 	std::cout << "  export_textures <directory>  Export all textures to a directory\n";
-	std::cout << "  export_ini <filename>        Export the INI to a file\n";
 	std::cout << "  export_obj <filename>        Export the model to an OBJ file\n";
+	std::cout << "  export_ini <filename>        Export the INI to a file\n";
 	std::cout << "  export_dmd <filename>        Export the model to a DMD file\n";
 
 	std::cout << "\nModification Operations:\n";

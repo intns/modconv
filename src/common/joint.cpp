@@ -15,7 +15,7 @@ void JointMatPoly::write(util::fstream_writer& writer) const
 void Joint::read(util::fstream_reader& reader)
 {
 	mParentIndex = reader.readU32();
-	mFlags       = reader.readU32();
+	mIsVisible   = reader.readU32();
 	mMinBounds.read(reader);
 	mMaxBounds.read(reader);
 	mVolumeRadius = reader.readF32();
@@ -31,7 +31,7 @@ void Joint::read(util::fstream_reader& reader)
 void Joint::write(util::fstream_writer& writer)
 {
 	writer.writeU32(mParentIndex);
-	writer.writeU32(mFlags);
+	writer.writeU32(mIsVisible);
 	mMinBounds.write(writer);
 	mMaxBounds.write(writer);
 	writer.writeF32(mVolumeRadius);

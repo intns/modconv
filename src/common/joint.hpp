@@ -16,7 +16,7 @@ struct JointMatPoly {
 
 struct Joint {
 	s32 mParentIndex = 0;
-	u32 mFlags       = 0;
+	u32 mIsVisible   = 0;
 	Vector3f mMinBounds;
 	Vector3f mMaxBounds;
 	f32 mVolumeRadius = 0;

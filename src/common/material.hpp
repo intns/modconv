@@ -264,6 +264,7 @@ enum class MaterialFlags : u32 {
 	InvertSpecialBlend = 0x8000,
 	Hidden             = 0x10000,
 };
+
 struct Material {
 	u32 mFlags        = 0;
 	s32 mTextureIndex = 0;
