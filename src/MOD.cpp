@@ -13,7 +13,7 @@ inline void writeGenericChunk(util::fstream_writer& writer, auto& vector, u32 ch
 	const u32 subchunkPos = startChunk(writer, chunkIdentifier);
 	writer.writeU32(static_cast<u32>(vector.size()));
 
-	writer.align(0x20);
+	writer.align();
 
 	for (auto& contents : vector) {
 		contents.write(writer);
@@ -31,11 +31,11 @@ inline void readGenericChunk(util::fstream_reader& reader, auto& vector)
 {
 	vector.resize(reader.readU32());
 
-	reader.align(0x20);
+	reader.align();
 	for (auto& elem : vector) {
 		elem.read(reader);
 	}
-	reader.align(0x20);
+	reader.align();
 }
 } // namespace
 
@@ -63,12 +63,12 @@ void MOD::read(util::fstream_reader& reader)
 
 		switch (static_cast<EChunkType>(opcode)) {
 		case EChunkType::Header:
-			reader.align(0x20);
+			reader.align();
 			mHeader.mDateTime.mYear  = reader.readU16();
 			mHeader.mDateTime.mMonth = reader.readU8();
 			mHeader.mDateTime.mDay   = reader.readU8();
 			mHeader.mFlags           = reader.readU32();
-			reader.align(0x20);
+			reader.align();
 			break;
 		case EChunkType::Vertex:
 			readGenericChunk(reader, mVertices);
@@ -125,7 +125,7 @@ void MOD::read(util::fstream_reader& reader)
 			mMaterials.mMaterials.resize(reader.readU32());
 			mMaterials.mTevEnvironmentInfo.resize(reader.readU32());
 
-			reader.align(0x20);
+			reader.align();
 			if (!mMaterials.mTevEnvironmentInfo.empty()) {
 				for (mat::TEVInfo& info : mMaterials.mTevEnvironmentInfo) {
 					info.read(reader);
@@ -138,7 +138,7 @@ void MOD::read(util::fstream_reader& reader)
 				}
 			}
 
-			reader.align(0x20);
+			reader.align();
 
 			if (mMaterials.mMaterials.empty() && mMaterials.mTevEnvironmentInfo.empty()) {
 				mEmptyChunks.insert(EChunkType::Material);
@@ -170,14 +170,14 @@ void MOD::read(util::fstream_reader& reader)
 			break;
 		case EChunkType::JointName:
 			mJointNames.resize(reader.readU32());
-			reader.align(0x20);
+			reader.align();
 			for (std::string& str : mJointNames) {
 				str.resize(reader.readU32());
 				for (char& i : str) {
 					i = reader.readU8();
 				}
 			}
-			reader.align(0x20);
+			reader.align();
 
 			if (mJointNames.empty()) {
 				mEmptyChunks.insert(EChunkType::JointName);
@@ -214,7 +214,7 @@ void MOD::write(util::fstream_writer& writer)
 {
 	// Write header
 	u32 headerPos = startChunk(writer, static_cast<u32>(EChunkType::Header));
-	writer.align(0x20);
+	writer.align();
 	writer.writeU16(mHeader.mDateTime.mYear);
 	writer.writeU8(mHeader.mDateTime.mMonth);
 	writer.writeU8(mHeader.mDateTime.mDay);
@@ -260,19 +260,11 @@ void MOD::write(util::fstream_writer& writer)
 		const u32 start = startChunk(writer, static_cast<u32>(EChunkType::Material));
 		writer.writeU32(static_cast<u32>(mMaterials.mMaterials.size()));
 		writer.writeU32(static_cast<u32>(mMaterials.mTevEnvironmentInfo.size()));
-		writer.align(0x20);
+		writer.align();
 		for (mat::TEVInfo& tevInfo : mMaterials.mTevEnvironmentInfo) {
-			if (mVerbosePrint) {
-				std::cout << "tev @ " << std::hex << writer.tellp() << std::dec << '\n';
-			}
-
 			tevInfo.write(writer);
 		}
 		for (mat::Material& material : mMaterials.mMaterials) {
-			if (mVerbosePrint) {
-				std::cout << "material @ " << std::hex << writer.tellp() << std::dec << '\n';
-			}
-
 			material.write(writer);
 		}
 		finishChunk(writer, start);
@@ -300,7 +292,7 @@ void MOD::write(util::fstream_writer& writer)
 
 			const u32 start = startChunk(writer, static_cast<u32>(EChunkType::JointName));
 			writer.writeU32(static_cast<u32>(mJointNames.size()));
-			writer.align(0x20);
+			writer.align();
 			for (std::string& name : mJointNames) {
 				writer.writeU32(static_cast<u32>(name.size()));
 				for (char i : name) {
@@ -320,20 +312,22 @@ void MOD::write(util::fstream_writer& writer)
 
 		// These come as a duo
 		const u32 start = startChunk(writer, static_cast<u32>(EChunkType::CollisionGrid));
-		writer.align(0x20);
-		mCollisionGridInfo.mBoundsMin.write(writer);
-		mCollisionGridInfo.mBoundsMax.write(writer);
-		writer.writeF32(mCollisionGridInfo.mGridSize);
-		writer.writeU32(mCollisionGridInfo.mGridSizeX);
-		writer.writeU32(mCollisionGridInfo.mGridSizeY);
-		writer.writeU32(static_cast<u32>(mCollisionGridInfo.m_groups.size()));
-		for (CollGroup& group : mCollisionGridInfo.m_groups) {
+		writer.align();
+		mCollisionGridInfo.mAABBMin.write(writer);
+		mCollisionGridInfo.mAABBMax.write(writer);
+		writer.writeF32(mCollisionGridInfo.mCellSize);
+		writer.writeU32(mCollisionGridInfo.mCellCountX);
+		writer.writeU32(mCollisionGridInfo.mCellCountY);
+		writer.writeU32(static_cast<u32>(mCollisionGridInfo.mGroups.size()));
+
+		for (CollGroup& group : mCollisionGridInfo.mGroups) {
 			group.write(writer);
 		}
-		for (s32& i : mCollisionGridInfo.m_unknown2) {
+
+		for (s32& i : mCollisionGridInfo.mGroupIndices) {
 			writer.writeS32(i);
 		}
-		writer.align(0x20);
+		writer.align();
 		finishChunk(writer, start);
 	}
 

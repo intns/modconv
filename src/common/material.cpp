@@ -2,29 +2,6 @@
 #include <iostream>
 #include <string>
 
-//================================================================================
-// UTILITY HELPERS
-//================================================================================
-
-#define PrintIndent(os, tabCnt, item)                              \
-	for (std::size_t idntIdx = 0; idntIdx < (tabCnt); idntIdx++) { \
-		(os) << '\t';                                              \
-	}                                                              \
-	(os) << item << std::endl;
-
-template <typename T>
-static inline void PrintList(std::ostream& os, const T& vector, const std::string& size_msg, const std::string& itemIdx_msg,
-                             const u32 itemTabCount = 1)
-{
-	PrintIndent(os, itemTabCount - 1, size_msg << " " << vector.size());
-
-	std::size_t index = 0;
-	for (const auto& item : vector) {
-		PrintIndent(os, itemTabCount, itemIdx_msg << " " << index++);
-		PrintIndent(os, itemTabCount, item);
-	}
-}
-
 namespace mat {
 
 //================================================================================
@@ -53,12 +30,6 @@ void KeyInfoU8::write(util::fstream_writer& writer) const
 	writer.writeF32(mTangent);
 }
 
-std::ostream& operator<<(std::ostream& os, KeyInfoU8 const& k)
-{
-	os << "TIME[" << (u32)k.mTime << "] " << k.mValue << " " << k.mTangent;
-	return os;
-}
-
 void KeyInfoF32::read(util::fstream_reader& reader)
 {
 	mTime    = reader.readF32();
@@ -71,12 +42,6 @@ void KeyInfoF32::write(util::fstream_writer& writer) const
 	writer.writeF32(mTime);
 	writer.writeF32(mValue);
 	writer.writeF32(mTangent);
-}
-
-std::ostream& operator<<(std::ostream& os, KeyInfoF32 const& k)
-{
-	os << k.mTime << " " << k.mValue << " " << k.mTangent;
-	return os;
 }
 
 void KeyInfoS10::read(util::fstream_reader& reader)
@@ -93,12 +58,6 @@ void KeyInfoS10::write(util::fstream_writer& writer) const
 	writer.writeS16(0);
 	writer.writeF32(mValue);
 	writer.writeF32(mTangent);
-}
-
-std::ostream& operator<<(std::ostream& os, KeyInfoS10 const& k)
-{
-	os << "TIME[" << k.mTime << "] " << k.mValue << " " << k.mTangent;
-	return os;
 }
 
 //================================================================================
@@ -121,16 +80,6 @@ void ColourAnimInfo::write(util::fstream_writer& writer) const
 	mKeyDataB.write(writer);
 }
 
-std::ostream& operator<<(std::ostream& os, ColourAnimInfo const& p)
-{
-	PrintIndent(os, 2, "COLOUR_ANIM");
-	PrintIndent(os, 3, "INDEX " << p.mIndex);
-	PrintIndent(os, 3, "RED_KEYFRAME " << p.mKeyDataR);
-	PrintIndent(os, 3, "GREEN_KEYFRAME " << p.mKeyDataG);
-	PrintIndent(os, 3, "BLUE_KEYFRAME " << p.mKeyDataB);
-	return os;
-}
-
 void AlphaAnimInfo::read(util::fstream_reader& reader)
 {
 	mIndex = reader.readS32();
@@ -141,14 +90,6 @@ void AlphaAnimInfo::write(util::fstream_writer& writer) const
 {
 	writer.writeS32(mIndex);
 	mKeyData.write(writer);
-}
-
-std::ostream& operator<<(std::ostream& os, AlphaAnimInfo const& p)
-{
-	PrintIndent(os, 2, "ALPHA_ANIM");
-	PrintIndent(os, 3, "INDEX " << p.mIndex);
-	PrintIndent(os, 3, "ALPHA_KEYFRAME " << p.mKeyData);
-	return os;
 }
 
 void TextureAnimData::read(util::fstream_reader& reader)
@@ -167,15 +108,6 @@ void TextureAnimData::write(util::fstream_writer& writer) const
 	mValueZ.write(writer);
 }
 
-std::ostream& operator<<(std::ostream& os, TextureAnimData const& t)
-{
-	PrintIndent(os, 6, "ANIMATION_FRAME " << t.mAnimationFrame);
-	PrintIndent(os, 7, "VALUE_X " << t.mValueX);
-	PrintIndent(os, 7, "VALUE_Y " << t.mValueY);
-	PrintIndent(os, 7, "VALUE_Z " << t.mValueZ);
-	return os;
-}
-
 void PVWAnimInfo_1_S10::read(util::fstream_reader& reader)
 {
 	mKeyframeCount = reader.readS32();
@@ -186,13 +118,6 @@ void PVWAnimInfo_1_S10::write(util::fstream_writer& writer) const
 {
 	writer.writeS32(mKeyframeCount);
 	mKeyframeInfo.write(writer);
-}
-
-std::ostream& operator<<(std::ostream& os, PVWAnimInfo_1_S10 const& t)
-{
-	PrintIndent(os, 3, "KEYFRAME_COUNT " << t.mKeyframeCount);
-	PrintIndent(os, 3, "KEYFRAME_INFO " << t.mKeyframeInfo);
-	return os;
 }
 
 void PVWAnimInfo_3_S10::read(util::fstream_reader& reader)
@@ -209,15 +134,6 @@ void PVWAnimInfo_3_S10::write(util::fstream_writer& writer) const
 	mKeyframeA.write(writer);
 	mKeyframeB.write(writer);
 	mKeyframeC.write(writer);
-}
-
-std::ostream& operator<<(std::ostream& os, PVWAnimInfo_3_S10 const& t)
-{
-	PrintIndent(os, 3, "KEYFRAME_COUNT " << t.mKeyframeCount);
-	PrintIndent(os, 3, "KEYFRAME_A " << t.mKeyframeA);
-	PrintIndent(os, 3, "KEYFRAME_B " << t.mKeyframeB);
-	PrintIndent(os, 3, "KEYFRAME_C " << t.mKeyframeC);
-	return os;
 }
 
 //================================================================================
@@ -258,18 +174,6 @@ void PolygonColourInfo::write(util::fstream_writer& writer)
 	}
 }
 
-std::ostream& operator<<(std::ostream& os, PolygonColourInfo const& p)
-{
-	PrintIndent(os, 1, "POLYGON_COLOUR_INFO");
-	PrintIndent(os, 2, "DIFFUSE_COLOUR " << p.mDiffuseColour);
-	PrintIndent(os, 2, "ANIM_LENGTH " << p.mAnimLength);
-	PrintIndent(os, 2, "ANIM_SPEED " << p.mAnimSpeed);
-	PrintList(os, p.mColourAnimInfo, "COLOUR_ANIM_COUNT", "COLOUR_ANIM_INDEX", 3);
-	PrintList(os, p.mAlphaAnimInfo, "ALPHA_ANIM_COUNT", "ALPHA_ANIM_INDEX", 3);
-
-	return os;
-}
-
 void LightingInfo::read(util::fstream_reader& reader)
 {
 	mFlags   = reader.readU32();
@@ -280,14 +184,6 @@ void LightingInfo::write(util::fstream_writer& writer) const
 {
 	writer.writeU32(mFlags);
 	writer.writeF32(mUnknown);
-}
-
-std::ostream& operator<<(std::ostream& os, LightingInfo const& l)
-{
-	PrintIndent(os, 1, "LIGHTING_INFO");
-	PrintIndent(os, 2, "FLAGS " << LightingInfoFlagsToString(l.mFlags));
-	PrintIndent(os, 2, "UNK " << l.mUnknown);
-	return os;
 }
 
 void PeInfo::read(util::fstream_reader& reader)
@@ -304,25 +200,6 @@ void PeInfo::write(util::fstream_writer& writer) const
 	writer.writeS32(mAlphaCompareFunction.value);
 	writer.writeS32(mZModeFunction);
 	writer.writeS32(mBlendMode.value);
-}
-
-std::ostream& operator<<(std::ostream& os, PeInfo const& p)
-{
-	PrintIndent(os, 1, "PE_INFO");
-	PrintIndent(os, 2, "FLAGS " << p.mFlags);
-	PrintIndent(os, 2, "ALPHA_COMPARE_FUNCTION");
-	PrintIndent(os, 3, "COMP0 " << p.mAlphaCompareFunction.bits.comp0);
-	PrintIndent(os, 3, "REF0 " << p.mAlphaCompareFunction.bits.ref0);
-	PrintIndent(os, 3, "OP " << p.mAlphaCompareFunction.bits.op);
-	PrintIndent(os, 3, "COMP1 " << p.mAlphaCompareFunction.bits.comp1);
-	PrintIndent(os, 3, "REF1 " << p.mAlphaCompareFunction.bits.ref1);
-	PrintIndent(os, 2, "Z_MODE_FUNCTION " << p.mZModeFunction);
-	PrintIndent(os, 2, "BLEND_MODE");
-	PrintIndent(os, 3, "TYPE " << p.mBlendMode.bits.mType);
-	PrintIndent(os, 3, "SRC_FACTOR " << p.mBlendMode.bits.mSrcFactor);
-	PrintIndent(os, 3, "DST_FACTOR " << p.mBlendMode.bits.mDstFactor);
-	PrintIndent(os, 3, "LOGIC_OP " << p.mBlendMode.bits.mLogicOp);
-	return os;
 }
 
 //================================================================================
@@ -343,15 +220,6 @@ void TexGenData::write(util::fstream_writer& writer) const
 	writer.writeU8(mFunc);
 	writer.writeU8(mSourceParam);
 	writer.writeU8(mTexMtx);
-}
-
-std::ostream& operator<<(std::ostream& os, TexGenData const& t)
-{
-	PrintIndent(os, 4, "DESTINATION_COORDS " << GXTexCoordIDToStringConverter(static_cast<GXTexCoordID>(t.mDestinationCoords)));
-	PrintIndent(os, 4, "FUNC " << GXTexGenTypeToStringConverter(static_cast<GXTexGenType>(t.mFunc)));
-	PrintIndent(os, 4, "SOURCE_PARAM " << GXTexGenSrcToStringConverter(static_cast<GXTexGenSrc>(t.mSourceParam)));
-	PrintIndent(os, 4, "TEXTURE_MTX " << GXTexMtxToStringConverter(static_cast<GXTexMtx>(t.mTexMtx)));
-	return os;
 }
 
 void TextureData::read(util::fstream_reader& reader)
@@ -399,6 +267,7 @@ void TextureData::write(util::fstream_writer& writer)
 	writer.writeS32(mAnimationFactor);
 	writer.writeS32(mAnimLength);
 	writer.writeF32(mAnimSpeed);
+
 	mScale.write(writer);
 	writer.writeF32(mRotation);
 	mPivot.write(writer);
@@ -418,30 +287,6 @@ void TextureData::write(util::fstream_writer& writer)
 	for (TextureAnimData& info : mTranslationInfo) {
 		info.write(writer);
 	}
-}
-
-std::ostream& operator<<(std::ostream& os, TextureData const& t)
-{
-	PrintIndent(os, 5, "TEX_ATTR_IDX " << t.mTextureAttributeIndex);
-	PrintIndent(os, 5, "WRAP_MODE_S " << GXTexWrapModeToStringConverter(static_cast<GXTexWrapMode>(t.mWrapModeS)));
-	PrintIndent(os, 5, "WRAP_MODE_T " << GXTexWrapModeToStringConverter(static_cast<GXTexWrapMode>(t.mWrapModeT)));
-	PrintIndent(os, 5, "UNK4 " << (u32)t.mUnknown3);
-	PrintIndent(os, 5, "UNK5 " << (u32)t.mUnknown4);
-	PrintIndent(os, 5, "UNK6 " << (u32)t.mUnknown5);
-	PrintIndent(os, 5, "UNK7 " << (u32)t.mUnknown6);
-	PrintIndent(os, 5, "ANIMATION_FACTOR " << t.mAnimationFactor);
-	PrintIndent(os, 5, "ANIM_LENGTH " << (u32)t.mAnimLength);
-	PrintIndent(os, 5, "ANIM_SPEED " << t.mAnimSpeed);
-	PrintIndent(os, 5, "SCALE " << t.mScale);
-	PrintIndent(os, 5, "ROTATION " << t.mRotation);
-	PrintIndent(os, 5, "PIVOT " << t.mPivot);
-	PrintIndent(os, 5, "POSITION " << t.mPosition);
-
-	PrintList(os, t.mScaleInfo, "SCALE_FRAME_COUNT", "ENTRY", 6);
-	PrintList(os, t.mRotationInfo, "ROTATION_FRAME_COUNT", "ENTRY", 6);
-	PrintList(os, t.mTranslationInfo, "TRANSLATION_FRAME_COUNT", "ENTRY", 6);
-
-	return os;
 }
 
 void TextureInfo::read(util::fstream_reader& reader)
@@ -474,16 +319,6 @@ void TextureInfo::write(util::fstream_writer& writer)
 	for (mat::TextureData& info : mTextureData) {
 		info.write(writer);
 	}
-}
-
-std::ostream& operator<<(std::ostream& os, TextureInfo const& ti)
-{
-	PrintIndent(os, 1, "TEXTURE_INFO");
-	PrintIndent(os, 2, "USE_SCALE " << ti.mUseScale);
-	PrintIndent(os, 2, "SCALE " << ti.mScale);
-	PrintList(os, ti.mTextureGenData, "TEXTURE_GEN_DATA_COUNT", "ENTRY", 3);
-	PrintList(os, ti.mTextureData, "TEXDATA_COUNT", "TEXDATA_ENTRY", 3);
-	return os;
 }
 
 //================================================================================
@@ -520,20 +355,6 @@ void PVWCombiner::write(util::fstream_writer& writer) const
 	}
 }
 
-std::ostream& operator<<(std::ostream& os, PVWCombiner const& i)
-{
-	PrintIndent(os, 4, "INPUT_A " << GXTevColorArgToStringConverter((GXTevColorArg)i.mInputABCD[0]));
-	PrintIndent(os, 4, "INPUT_B " << GXTevColorArgToStringConverter((GXTevColorArg)i.mInputABCD[1]));
-	PrintIndent(os, 4, "INPUT_C " << GXTevColorArgToStringConverter((GXTevColorArg)i.mInputABCD[2]));
-	PrintIndent(os, 4, "INPUT_D " << GXTevColorArgToStringConverter((GXTevColorArg)i.mInputABCD[3]));
-	PrintIndent(os, 4, "OP " << (u32)i.mOp);
-	PrintIndent(os, 4, "BIAS " << (u32)i.mBias);
-	PrintIndent(os, 4, "SCALE " << (u32)i.mScale);
-	PrintIndent(os, 4, "CLAMP " << (u32)i.mClamp);
-	PrintIndent(os, 4, "OUT_REG " << (u32)i.mOutReg);
-	return os;
-}
-
 void TEVStage::read(util::fstream_reader& reader)
 {
 	mUnknown     = reader.readU8();
@@ -559,21 +380,6 @@ void TEVStage::write(util::fstream_writer& writer) const
 	writer.writeU16(0);
 	mTevColorCombiner.write(writer);
 	mTevAlphaCombiner.write(writer);
-}
-
-std::ostream& operator<<(std::ostream& os, TEVStage const& i)
-{
-	PrintIndent(os, 3, "UNKNOWN " << (u32)i.mUnknown);
-	PrintIndent(os, 3, "TEX_COORD_ID " << GXTexCoordIDToStringConverter(static_cast<GXTexCoordID>(i.mTexCoordID)));
-	PrintIndent(os, 3, "TEX_MAP_ID " << GXTexMapIDToStringConverter(static_cast<GXTexMapID>(i.mTexMapID)));
-	PrintIndent(os, 3, "GX_CHANNEL_ID " << GXChannelIDToStringConverter(static_cast<GXChannelID>(i.mGXChannelID)));
-	PrintIndent(os, 3, "K_COLOR_SEL " << GXTevKColorSelToStringConverter(static_cast<GXTevKColorSel>(i.mKColorSel)));
-	PrintIndent(os, 3, "K_ALPHA_SEL " << GXTevKAlphaSelToStringConverter(static_cast<GXTevKAlphaSel>(i.mKAlphaSel)));
-	PrintIndent(os, 3, "TEV_COLOR_COMBINER");
-	os << i.mTevColorCombiner;
-	PrintIndent(os, 3, "TEV_ALPHA_COMBINER");
-	os << i.mTevAlphaCombiner;
-	return os;
 }
 
 void TEVColReg::read(util::fstream_reader& reader)
@@ -610,16 +416,6 @@ void TEVColReg::write(util::fstream_writer& writer)
 	}
 }
 
-std::ostream& operator<<(std::ostream& os, TEVColReg const& t)
-{
-	PrintIndent(os, 2, "COLOUR " << t.mColour);
-	PrintIndent(os, 2, "ANIM_LENGTH " << t.mAnimLength);
-	PrintIndent(os, 2, "ANIM_SPEED " << t.mAnimSpeed);
-	PrintList(os, t.mColorAnimInfo, "COLOR_ANIM_COUNT", "COLOR_ANIM_ENTRY", 3);
-	PrintList(os, t.mAlphaAnimInfo, "ALPHA_ANIM_COUNT", "ALPHA_ANIM_ENTRY", 3);
-	return os;
-}
-
 void TEVInfo::read(util::fstream_reader& reader)
 {
 	mTevColourRegA.read(reader);
@@ -654,24 +450,6 @@ void TEVInfo::write(util::fstream_writer& writer)
 	}
 }
 
-std::ostream& operator<<(std::ostream& os, TEVInfo const& i)
-{
-	PrintIndent(os, 1, "TEVCOLREG_A");
-	os << i.mTevColourRegA;
-	PrintIndent(os, 1, "TEVCOLREG_B");
-	os << i.mTevColourRegB;
-	PrintIndent(os, 1, "TEVCOLREG_C");
-	os << i.mTevColourRegC;
-	PrintIndent(os, 1, "KONST_COL_A " << i.mKonstColourA);
-	PrintIndent(os, 1, "KONST_COL_B " << i.mKonstColourB);
-	PrintIndent(os, 1, "KONST_COL_C " << i.mKonstColourC);
-	PrintIndent(os, 1, "KONST_COL_D " << i.mKonstColourD);
-
-	PrintList(os, i.mTevStages, "TEVSTAGE_COUNT", "TEVSTAGE_ENTRY", 2);
-
-	return os;
-}
-
 #pragma region Material
 
 void Material::read(util::fstream_reader& reader)
@@ -702,24 +480,6 @@ void Material::write(util::fstream_writer& writer)
 		mPeInfo.write(writer);
 		mTexInfo.write(writer);
 	}
-}
-
-std::ostream& operator<<(std::ostream& os, Material const& m)
-{
-	os << "\tFLAGS " << MaterialFlagsToString(m.mFlags) << '\n';
-	os << "\tTEXTURE_INDEX " << m.mTextureIndex << '\n';
-	os << "\tCOLOUR " << m.mColourInfo.mDiffuseColour << '\n';
-
-	if (m.mFlags & static_cast<u32>(mat::MaterialFlags::IsEnabled)) {
-		os << "\tTEV_GROUP_ID " << m.mTevGroupId << '\n';
-		os << m.mColourInfo;
-		os << m.mLightingInfo;
-		os << m.mPeInfo;
-		os << m.mTexInfo;
-	}
-	os << '\n';
-
-	return os;
 }
 
 #pragma endregion

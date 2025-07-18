@@ -65,8 +65,8 @@ public:
 	void reset() noexcept { m_tokenIdx = 0; }
 	[[nodiscard]] std::size_t remainingTokens() const noexcept { return isEnd() ? 0 : m_tokenList.size() - m_tokenIdx; }
 
-	[[nodiscard]] bool hasNext() const noexcept { return m_tokenIdx + 1 < m_tokenList.size(); }
-	const std::string& next() { return m_tokenList[m_tokenIdx++]; }
+	[[nodiscard]] bool hasNext() const noexcept { return m_tokenIdx < m_tokenList.size(); }
+	std::string next() { return hasNext() ? m_tokenList[m_tokenIdx++] : ""; }
 
 	std::size_t seek(s32 amount) { return m_tokenIdx += amount; }
 	[[nodiscard]] bool isEnd() const noexcept { return m_tokenIdx >= m_tokenList.size(); }

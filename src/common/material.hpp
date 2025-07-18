@@ -25,7 +25,6 @@ struct KeyInfoU8 {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream& os, KeyInfoU8 const& k);
 };
 
 struct KeyInfoF32 {
@@ -40,7 +39,6 @@ struct KeyInfoF32 {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream& os, KeyInfoF32 const& k);
 };
 
 struct KeyInfoS10 {
@@ -55,7 +53,6 @@ struct KeyInfoS10 {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream& os, KeyInfoS10 const& k);
 };
 
 struct ColourAnimInfo {
@@ -71,7 +68,6 @@ struct ColourAnimInfo {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream&, ColourAnimInfo const&);
 };
 
 struct AlphaAnimInfo {
@@ -82,7 +78,6 @@ struct AlphaAnimInfo {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream&, AlphaAnimInfo const&);
 };
 
 struct PolygonColourInfo {
@@ -100,7 +95,6 @@ struct PolygonColourInfo {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);
-	friend std::ostream& operator<<(std::ostream&, PolygonColourInfo const&);
 };
 
 enum struct LightingInfoFlags : u32 {
@@ -127,7 +121,6 @@ struct LightingInfo {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream&, LightingInfo const&);
 };
 
 struct PeInfo {
@@ -165,7 +158,6 @@ struct PeInfo {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream&, PeInfo const&);
 };
 
 struct TexGenData {
@@ -182,7 +174,6 @@ struct TexGenData {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream& os, TexGenData const& t);
 };
 
 struct TextureAnimData {
@@ -198,7 +189,6 @@ struct TextureAnimData {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream& os, TextureAnimData const& t);
 };
 
 struct TextureData {
@@ -236,7 +226,6 @@ struct TextureData {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);
-	friend std::ostream& operator<<(std::ostream& os, TextureData const& t);
 };
 
 struct TextureInfo {
@@ -253,7 +242,6 @@ struct TextureInfo {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);
-	friend std::ostream& operator<<(std::ostream& os, TextureInfo const& ti);
 };
 
 enum class MaterialFlags : u32 {
@@ -283,7 +271,6 @@ struct Material {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);
-	friend std::ostream& operator<<(std::ostream&, Material const&);
 };
 
 struct PVWAnimInfo_3_S10 {
@@ -300,7 +287,6 @@ struct PVWAnimInfo_3_S10 {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream&, PVWAnimInfo_3_S10 const&);
 };
 
 struct PVWAnimInfo_1_S10 {
@@ -314,7 +300,6 @@ struct PVWAnimInfo_1_S10 {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream&, PVWAnimInfo_1_S10 const&);
 };
 
 struct TEVColReg {
@@ -332,7 +317,6 @@ struct TEVColReg {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);
-	friend std::ostream& operator<<(std::ostream&, TEVColReg const&);
 };
 
 struct PVWCombiner {
@@ -356,7 +340,6 @@ struct PVWCombiner {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream&, PVWCombiner const&);
 };
 
 struct TEVStage {
@@ -378,7 +361,6 @@ struct TEVStage {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer) const;
-	friend std::ostream& operator<<(std::ostream&, TEVStage const&);
 };
 
 struct TEVInfo {
@@ -402,7 +384,6 @@ struct TEVInfo {
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);
-	friend std::ostream& operator<<(std::ostream&, TEVInfo const&);
 };
 } // namespace mat
 
@@ -413,6 +394,10 @@ struct MaterialContainer {
 
 inline std::string MaterialFlagsToString(u32 flags)
 {
+	if (flags == 0) {
+		return "None";
+	}
+
 	using mat::MaterialFlags;
 
 	static const std::pair<u32, const char*> flagMap[] = {
@@ -468,6 +453,7 @@ inline std::string LightingInfoFlagsToString(u32 flags)
 			if (!first) {
 				result += ", ";
 			}
+
 			result += name;
 			first = false;
 		}

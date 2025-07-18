@@ -44,6 +44,13 @@ inline bool nearly_equal(T a, T b, T epsilon = std::numeric_limits<T>::epsilon()
 	return std::abs(a - b) <= epsilon;
 }
 
+namespace cfg {
+
+// To guarantee alignment with GameCube & Wii cache lines
+constexpr u32 MOD_ALIGNMENT_AMT = 0x20;
+
+} // namespace cfg
+
 #ifdef __cplusplus
 static_assert(sizeof(s8) == 1 && sizeof(u8) == 1, "8 bit number isn't 1 byte big");
 static_assert(sizeof(s16) == 2 && sizeof(u16) == 2, "16 bit number isn't 2 bytes big");

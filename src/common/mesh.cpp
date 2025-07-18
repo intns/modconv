@@ -2,19 +2,19 @@
 
 void DisplayList::read(util::fstream_reader& reader)
 {
-	mFlags.intView = reader.readU32();
+	mFlags         = static_cast<DLFlags>(reader.readU32());
 	mCommandCount  = reader.readU32();
 	mData.resize(reader.readU32());
-	reader.align(0x20);
+	reader.align();
 	reader.read(reinterpret_cast<char*>(mData.data()), mData.size());
 }
 
 void DisplayList::write(util::fstream_writer& writer)
 {
-	writer.writeU32(mFlags.intView);
+	writer.writeU32(static_cast<u32>(mFlags));
 	writer.writeU32(mCommandCount);
 	writer.writeU32(static_cast<u32>(mData.size()));
-	writer.align(0x20);
+	writer.align();
 	writer.write(reinterpret_cast<char*>(mData.data()), mData.size());
 }
 

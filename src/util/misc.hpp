@@ -8,6 +8,7 @@
 #include <optional>
 #include <array>
 #include <sstream>
+#include <cstring>
 #include <string>
 #include "../types.hpp"
 #include <vector>

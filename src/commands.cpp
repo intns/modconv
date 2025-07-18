@@ -1,14 +1,17 @@
-#include <commands.hpp>
-#include <common.hpp>
 #include <filesystem>
 #include <iostream>
 #include <iomanip>
-#include <util/misc.hpp>
-#include <util/vector_reader.hpp>
-#include <common/material_io.hpp>
 #include <map>
 #include <functional>
 #include <set>
+#include <numeric>
+
+#include "util/vector_reader.hpp"
+#include "util/misc.hpp"
+#include "common.hpp"
+#include "commands.hpp"
+
+using namespace mat;
 
 namespace cmd {
 MOD gModFile;
@@ -18,7 +21,7 @@ util::tokeniser gTokeniser;
 namespace mod {
 inline bool isModFileOpen() { return static_cast<bool>(!gModFileName.empty()); }
 
-void loadFile()
+void importMod()
 {
 	const std::string& filename = gTokeniser.next();
 	if (filename.empty()) {
@@ -44,7 +47,7 @@ void loadFile()
 	}
 }
 
-void writeFile()
+void exportMod()
 {
 	const std::string& filename = gTokeniser.next();
 	util::fstream_writer writer;
@@ -62,7 +65,7 @@ void writeFile()
 	}
 }
 
-void resetActiveModel()
+void resetModel()
 {
 	if (!isModFileOpen()) {
 		std::cout << "You haven't opened a MOD file!" << '\n';
@@ -74,6 +77,203 @@ void resetActiveModel()
 
 	if (gModFile.mVerbosePrint) {
 		std::cout << "Done!" << '\n';
+	}
+}
+
+void listChunks()
+{
+	if (!isModFileOpen()) {
+		std::cout << "You haven't opened a MOD file!" << '\n';
+		return;
+	}
+
+	const int nameWidth = 20;
+
+	auto printRow
+	    = [&](const std::string& name, const std::string& data) { std::cout << std::left << std::setw(nameWidth) << name << data << '\n'; };
+
+	std::cout << "\n--- File Information ---\n";
+	printRow("MOD File:", gModFileName);
+	printRow("File Size:", std::to_string(std::filesystem::file_size(gModFileName)) + " bytes");
+
+	// --- Header (Always Present) ---
+	std::cout << "\n--- Header ---\n";
+	const auto& header = gModFile.mHeader;
+	std::stringstream dateStream;
+	dateStream << header.mDateTime.mYear << "/" << std::setfill('0') << std::setw(2) << static_cast<u32>(header.mDateTime.mMonth) << "/"
+	           << std::setfill('0') << std::setw(2) << static_cast<u32>(header.mDateTime.mDay);
+	printRow("Creation Date:", dateStream.str());
+
+	std::stringstream flagsStream;
+	flagsStream << "0x" << std::hex << header.mFlags << std::dec << " (" << MaterialFlagsToString(header.mFlags) << ")";
+	printRow("Flags:", flagsStream.str());
+
+	// --- Geometry Section ---
+	u32 totalTexCoords = 0;
+	for (const auto& coords : gModFile.mTextureCoords) {
+		totalTexCoords += static_cast<u32>(coords.size());
+	}
+	const bool hasGeometry = !gModFile.mVertices.empty() || !gModFile.mVertexNormals.empty() || !gModFile.mVertexNbt.empty()
+	                      || !gModFile.mVertexColours.empty() || totalTexCoords > 0;
+
+	if (hasGeometry) {
+		std::cout << "\n--- Geometry ---\n";
+		if (!gModFile.mVertices.empty()) {
+			Vector3f minBounds = gModFile.mVertices[0], maxBounds = gModFile.mVertices[0];
+			for (const auto& v : gModFile.mVertices) {
+				minBounds.x = std::min(minBounds.x, v.x);
+				minBounds.y = std::min(minBounds.y, v.y);
+				minBounds.z = std::min(minBounds.z, v.z);
+				maxBounds.x = std::max(maxBounds.x, v.x);
+				maxBounds.y = std::max(maxBounds.y, v.y);
+				maxBounds.z = std::max(maxBounds.z, v.z);
+			}
+			std::stringstream boundsStr;
+			boundsStr << std::fixed << std::setprecision(2) << gModFile.mVertices.size() << " [Bounds: (" << minBounds.x << ", "
+			          << minBounds.y << ", " << minBounds.z << ") to (" << maxBounds.x << ", " << maxBounds.y << ", " << maxBounds.z
+			          << ")]";
+			printRow("Vertices (0x10):", boundsStr.str());
+		}
+		if (!gModFile.mVertexNormals.empty())
+			printRow("Normals (0x11):", std::to_string(gModFile.mVertexNormals.size()));
+		if (!gModFile.mVertexNbt.empty())
+			printRow("NBT (0x12):", std::to_string(gModFile.mVertexNbt.size()) + " [Normal/Binormal/Tangent vectors]");
+		if (!gModFile.mVertexColours.empty())
+			printRow("Colors (0x13):", std::to_string(gModFile.mVertexColours.size()));
+		if (totalTexCoords > 0) {
+			for (u32 i = 0; i < 8; ++i) {
+				if (!gModFile.mTextureCoords[i].empty()) {
+					std::stringstream title;
+					title << "TexCoord" << i << " (0x" << std::hex << (0x18 + i) << std::dec << "):";
+					printRow(title.str(), std::to_string(gModFile.mTextureCoords[i].size()));
+				}
+			}
+		}
+	}
+
+	// --- Materials & Textures Section ---
+	const bool hasMtlAndTex = !gModFile.mTextures.empty() || !gModFile.mTextureAttributes.empty() || !gModFile.mMaterials.mMaterials.empty()
+	                       || !gModFile.mMaterials.mTevEnvironmentInfo.empty();
+
+	if (hasMtlAndTex) {
+		std::cout << "\n--- Materials & Textures ---\n";
+		if (!gModFile.mTextures.empty()) {
+			std::map<TextureFormat, int> formatCounts;
+			size_t totalBytes = 0;
+			for (const auto& tex : gModFile.mTextures) {
+				formatCounts[tex.mFormat]++;
+				totalBytes += tex.mImageData.size();
+			}
+			std::stringstream texStr;
+			texStr << gModFile.mTextures.size() << " textures, " << totalBytes << " bytes total. Formats: ";
+			for (auto const& [format, count] : formatCounts) {
+				// This part would ideally convert format enum to string
+				texStr << count << "x" << static_cast<int>(format) << " ";
+			}
+			printRow("Textures (0x20):", texStr.str());
+		}
+		if (!gModFile.mTextureAttributes.empty())
+			printRow("Tex Attrs (0x22):", std::to_string(gModFile.mTextureAttributes.size()));
+		if (!gModFile.mMaterials.mMaterials.empty()) {
+			std::set<s16> usedMaterials;
+			for (const auto& joint : gModFile.mJoints) {
+				for (const auto& poly : joint.mLinkedPolygons) {
+					if (poly.mMaterialIndex >= 0)
+						usedMaterials.insert(poly.mMaterialIndex);
+				}
+			}
+			printRow("Materials (0x30):", std::to_string(gModFile.mMaterials.mMaterials.size()) + " ("
+			                                  + std::to_string(usedMaterials.size()) + " used in geometry)");
+		}
+		if (!gModFile.mMaterials.mTevEnvironmentInfo.empty())
+			printRow("TEV Environments:", std::to_string(gModFile.mMaterials.mTevEnvironmentInfo.size()));
+	}
+
+	// --- Rigging & Animation Section ---
+	const bool hasRigging = !gModFile.mVertexMatrices.empty() || !gModFile.mVertexEnvelopes.empty();
+	if (hasRigging) {
+		std::cout << "\n--- Rigging & Animation ---\n";
+		if (!gModFile.mVertexMatrices.empty()) {
+			u32 partialWeights = 0;
+			for (const auto& vtxMtx : gModFile.mVertexMatrices) {
+				if (vtxMtx.mHasPartialWeights)
+					partialWeights++;
+			}
+			printRow("Vtx Matrices (0x40):", std::to_string(gModFile.mVertexMatrices.size()) + " [" + std::to_string(partialWeights)
+			                                     + " partial, " + std::to_string(gModFile.mVertexMatrices.size() - partialWeights)
+			                                     + " full]");
+		}
+		if (!gModFile.mVertexEnvelopes.empty()) {
+			u32 totalInfluences = 0;
+			for (const auto& env : gModFile.mVertexEnvelopes) {
+				totalInfluences += static_cast<u32>(env.mIndices.size());
+			}
+			double avgInfluences = static_cast<double>(totalInfluences) / gModFile.mVertexEnvelopes.size();
+			std::stringstream envStr;
+			envStr << gModFile.mVertexEnvelopes.size() << " [Avg " << std::fixed << std::setprecision(1) << avgInfluences
+			       << " influences/vertex]";
+			printRow("Matrix Envelopes (0x41):", envStr.str());
+		}
+	}
+
+	// --- Mesh & Skeleton Section ---
+	const bool hasMeshAndSkel = !gModFile.mMeshes.empty() || !gModFile.mJoints.empty() || !gModFile.mJointNames.empty();
+	if (hasMeshAndSkel) {
+		std::cout << "\n--- Mesh & Skeleton ---\n";
+		if (!gModFile.mMeshes.empty()) {
+			u32 totalPackets = 0, totalDisplayLists = 0;
+			for (const auto& mesh : gModFile.mMeshes) {
+				totalPackets += static_cast<u32>(mesh.mPackets.size());
+				for (const auto& packet : mesh.mPackets) {
+					totalDisplayLists += static_cast<u32>(packet.mDisplayLists.size());
+				}
+			}
+			printRow("Meshes (0x50):", std::to_string(gModFile.mMeshes.size()) + " [" + std::to_string(totalPackets) + " packets, "
+			                               + std::to_string(totalDisplayLists) + " display lists]");
+		}
+		if (!gModFile.mJoints.empty()) {
+			u32 totalPolygons = 0;
+			for (const auto& joint : gModFile.mJoints) {
+				totalPolygons += static_cast<u32>(joint.mLinkedPolygons.size());
+			}
+			printRow("Joints (0x60):", std::to_string(gModFile.mJoints.size()) + " [" + std::to_string(totalPolygons) + " polygon links]");
+		}
+		if (!gModFile.mJointNames.empty())
+			printRow("Joint Names (0x61):", std::to_string(gModFile.mJointNames.size()));
+	}
+
+	// --- Collision Section ---
+	if (!gModFile.mCollisionTriangles.mCollInfo.empty()) {
+		std::cout << "\n--- Collision ---\n";
+		printRow("Coll Tris (0x100):", std::to_string(gModFile.mCollisionTriangles.mCollInfo.size()));
+		if (!gModFile.mCollisionTriangles.mRoomInfo.empty())
+			printRow("Rooms:", std::to_string(gModFile.mCollisionTriangles.mRoomInfo.size()));
+		if (gModFile.mCollisionGridInfo.mCellCountX > 0) {
+			std::stringstream gridStr;
+			gridStr << "Enabled [" << gModFile.mCollisionGridInfo.mCellCountX << "x" << gModFile.mCollisionGridInfo.mCellCountY
+			        << " cells, " << gModFile.mCollisionGridInfo.mGroups.size() << " groups]";
+			printRow("Coll Grid (0x110):", gridStr.str());
+		}
+	}
+
+	// --- Miscellaneous Section ---
+	if (!gModFile.mEndOfFileData.empty()) {
+		std::cout << "\n--- Miscellaneous ---\n";
+		printRow("End of File (0xFFFF):", std::to_string(gModFile.mEndOfFileData.size()) + " bytes [INI/Config data]");
+	}
+
+	// --- Empty Chunks Tracking (for debugging) ---
+	if (!gModFile.mEmptyChunks.empty()) {
+		std::cout << "\n--- Diagnostics ---\n";
+		std::stringstream emptyStream;
+		bool first = true;
+		for (const auto& chunk : gModFile.mEmptyChunks) {
+			if (!first)
+				emptyStream << ", ";
+			emptyStream << "0x" << std::hex << static_cast<u32>(chunk) << std::dec;
+			first = false;
+		}
+		printRow("Empty Chunks Found:", emptyStream.str());
 	}
 }
 
@@ -213,13 +413,13 @@ void exportObj()
 
 		os << "# Texture coordinates (all sets merged)\n";
 		for (int i = 0; i < 8; ++i) {
-			texCoordOffsets[i]    = totalTexCoords; // Store the starting offset for this set
+			texCoordOffsets[i]    = totalTexCoords;
 			const auto& texCoords = gModFile.mTextureCoords[i];
 
 			if (!texCoords.empty()) {
 				anyTexCoordsExported = true;
 				for (const auto& vt : texCoords) {
-					os << "vt " << vt.x << " " << (1.0f - vt.y) << "\n"; // Flip Y for OBJ format
+					os << "vt " << vt.x << " " << (1.0f - vt.y) << "\n";
 				}
 
 				totalTexCoords += static_cast<u32>(texCoords.size());
@@ -243,42 +443,34 @@ void exportObj()
 				const auto& mat = gModFile.mMaterials.mMaterials[i];
 				mtlFile << "newmtl material_" << i << "\n";
 
-				// Convert color from 0-255 to 0-1 range
 				float r = mat.mColourInfo.mDiffuseColour.r / 255.0f;
 				float g = mat.mColourInfo.mDiffuseColour.g / 255.0f;
 				float b = mat.mColourInfo.mDiffuseColour.b / 255.0f;
 				float a = mat.mColourInfo.mDiffuseColour.a / 255.0f;
 
 				mtlFile << "Kd " << r << " " << g << " " << b << "\n";
-				mtlFile << "d " << a << "\n"; // Transparency
+				mtlFile << "d " << a << "\n";
 
-				// Add ambient and specular based on lighting info
 				if (mat.mFlags & static_cast<u32>(mat::MaterialFlags::IsEnabled)) {
-					// Check lighting flags
 					if (mat.mLightingInfo.mFlags & static_cast<u32>(mat::LightingInfoFlags::EnableColor0)) {
-						mtlFile << "Ka 0.2 0.2 0.2\n"; // Default ambient
+						mtlFile << "Ka 0.2 0.2 0.2\n";
 					}
 					if (mat.mLightingInfo.mFlags & static_cast<u32>(mat::LightingInfoFlags::EnableSpecular)) {
-						mtlFile << "Ks 0.5 0.5 0.5\n"; // Default specular
-						mtlFile << "Ns 32.0\n";        // Specular exponent
+						mtlFile << "Ks 0.5 0.5 0.5\n";
+						mtlFile << "Ns 32.0\n";
 					}
 				}
 
-				// Check material flags for transparency/blending
 				if (mat.mFlags & static_cast<u32>(mat::MaterialFlags::TransparentBlend)) {
-					mtlFile << "illum 4\n"; // Transparent material
+					mtlFile << "illum 4\n";
 				} else if (mat.mFlags & static_cast<u32>(mat::MaterialFlags::AlphaClip)) {
-					mtlFile << "illum 3\n"; // Alpha test material
+					mtlFile << "illum 3\n";
 				} else {
-					mtlFile << "illum 2\n"; // Basic lighting with specular
+					mtlFile << "illum 2\n";
 				}
 
-				// Reference texture if available
 				if (mat.mTextureIndex >= 0 && mat.mTextureIndex < gModFile.mTextures.size()) {
 					mtlFile << "# Texture index: " << mat.mTextureIndex << "\n";
-
-					// TODO: export texture and reference it here
-					// mtlFile << "map_Kd texture_" << mat.mTextureIndex << ".png\n";
 				}
 
 				mtlFile << "\n";
@@ -287,12 +479,11 @@ void exportObj()
 		}
 	}
 
-	// Parse and export mesh data
+	// Parse and export mesh data using DisplayListReader
 	os << "# Mesh data\n";
 	u32 meshIndex  = 0;
 	u32 totalFaces = 0;
 
-	// Track which materials are actually used by meshes
 	std::set<s16> usedMaterials;
 
 	for (const auto& mesh : gModFile.mMeshes) {
@@ -300,23 +491,17 @@ void exportObj()
 		os << "# Bone index: " << mesh.mBoneIndex << "\n";
 		os << "# Vertex descriptor: 0x" << std::hex << mesh.mVtxDescriptor << std::dec << "\n";
 
-		// Parse vertex descriptor
-		const bool hasPNMTXIDX  = (mesh.mVtxDescriptor & 0x1) != 0;
-		const bool hasTEXMTXIDX = (mesh.mVtxDescriptor & 0x2) != 0;
-		const bool hasColor     = (mesh.mVtxDescriptor & 0x4) != 0;
-		const bool hasNormal    = (!gModFile.mVertexNormals.empty() || !gModFile.mVertexNbt.empty());
+		const bool hasNormal = (!gModFile.mVertexNormals.empty() || !gModFile.mVertexNbt.empty());
 
 		std::vector<bool> hasTexCoord(8);
 		for (int i = 0; i < 8; i++) {
 			hasTexCoord[i] = (mesh.mVtxDescriptor & (1 << (i + 3))) != 0;
 		}
 
-		// Process each packet
 		for (size_t packetIdx = 0; packetIdx < mesh.mPackets.size(); ++packetIdx) {
 			const auto& packet = mesh.mPackets[packetIdx];
 
-			// The packet indices often contain material indices
-			// Check if first index is a valid material index
+			// Handle material assignment
 			s16 currentMaterialIndex = -1;
 			if (!packet.mIndices.empty()) {
 				s16 potentialMatIdx = packet.mIndices[0];
@@ -327,7 +512,6 @@ void exportObj()
 				}
 			}
 
-			// Look for material index in joint-material-polygon associations
 			if (currentMaterialIndex == -1 && mesh.mBoneIndex < gModFile.mJoints.size()) {
 				const Joint& joint = gModFile.mJoints[mesh.mBoneIndex];
 				for (const auto& matPoly : joint.mLinkedPolygons) {
@@ -345,121 +529,56 @@ void exportObj()
 				}
 			}
 
-			// Process display lists
+			// Process display lists using DisplayListReader
 			for (const auto& dlist : packet.mDisplayLists) {
 				util::vector_reader reader(dlist.mData, 0, util::vector_reader::Endianness::Big);
+				DisplayListReader dlReader(reader, mesh.mVtxDescriptor);
+				auto batches = dlReader.parse();
 
-				while (reader.getRemaining() > 0) {
-					const u8 opcode = reader.readU8();
-
-					// GX primitive types
-					if (opcode == 0x90 || opcode == 0x98 || opcode == 0xA0 || opcode == 0xA8 || opcode == 0xB0 || opcode == 0xB8) {
-
-						u16 vertexCount = reader.readU16();
-						if (vertexCount < 3)
-							continue;
-
+				// Export all triangles from parsed batches
+				for (const auto& batch : batches) {
+					for (const auto& tri : batch.getTriangles()) {
+						// Build face string for each vertex
 						std::vector<std::string> faceVertices;
 
-						// Read all vertices for this primitive
-						for (u16 v = 0; v < vertexCount; v++) {
+						for (int v = 0; v < 3; ++v) {
+							const VertexAttrib& vertex = tri[v];
 							std::string vertexStr;
 
-							// Skip matrix indices if present
-							if (hasPNMTXIDX)
-								reader.readU8();
-							if (hasTEXMTXIDX)
-								reader.readU8();
+							// Position index (always present, 1-based for OBJ)
+							vertexStr = std::to_string(vertex.mPosition + 1);
 
-							// Position index (always present)
-							u16 posIdx = reader.readU16();
-							vertexStr  = std::to_string(posIdx + 1);
-
-							// Normal index
-							u16 nrmIdx = 0;
-							if (hasNormal) {
-								nrmIdx = reader.readU16();
-							}
-
-							// Color index
-							if (hasColor) {
-								reader.readU16(); // Skip for now
-							}
-
-							// Texture coordinate indices
+							// Find first valid texcoord
 							u32 texIdx          = 0;
 							bool hasAnyTexCoord = false;
 							for (int i = 0; i < 8; i++) {
-								if (hasTexCoord[i]) {
-									u16 localTexIdx = reader.readU16();
-
-									// Use the first valid tex coord found for this vertex.
-									if (!hasAnyTexCoord) {
-										texIdx         = static_cast<u32>(localTexIdx) + texCoordOffsets[i];
-										hasAnyTexCoord = true;
-									}
+								if (hasTexCoord[i] && vertex.mTexcoords[i] != 0) {
+									texIdx         = static_cast<u32>(vertex.mTexcoords[i]) + texCoordOffsets[i];
+									hasAnyTexCoord = true;
+									break;
 								}
 							}
 
 							// Build vertex string (pos/tex/normal format)
 							if (hasAnyTexCoord && hasNormal) {
-								vertexStr += "/" + std::to_string(texIdx + 1) + "/" + std::to_string(nrmIdx + 1);
+								vertexStr += "/" + std::to_string(texIdx + 1) + "/" + std::to_string(vertex.mNormal + 1);
 							} else if (hasAnyTexCoord) {
 								vertexStr += "/" + std::to_string(texIdx + 1);
 							} else if (hasNormal) {
-								vertexStr += "//" + std::to_string(nrmIdx + 1);
+								vertexStr += "//" + std::to_string(vertex.mNormal + 1);
 							}
 
 							faceVertices.push_back(vertexStr);
 						}
 
-						// Convert primitives to triangles
-						switch (opcode) {
-						case 0x90: // Triangles
-						case 0xA8: {
-							for (u16 i = 0; i < vertexCount; i += 3) {
-								if (i + 2 < vertexCount) {
-									os << "f " << faceVertices[i] << " " << faceVertices[i + 1] << " " << faceVertices[i + 2] << "\n";
-									totalFaces++;
-								}
-							}
-							break;
-						}
-						case 0x98: { // Triangle strip
-							for (u16 i = 0; i < vertexCount - 2; i++) {
-								if (i % 2 == 0) {
-									os << "f " << faceVertices[i] << " " << faceVertices[i + 1] << " " << faceVertices[i + 2] << "\n";
-								} else {
-									os << "f " << faceVertices[i + 2] << " " << faceVertices[i + 1] << " " << faceVertices[i] << "\n";
-								}
-								totalFaces++;
-							}
-							break;
-						}
-						case 0xA0: { // Triangle fan
-							for (u16 i = 1; i < vertexCount - 1; i++) {
-								os << "f " << faceVertices[0] << " " << faceVertices[i] << " " << faceVertices[i + 1] << "\n";
-								totalFaces++;
-							}
-							break;
-						}
-						case 0xB0: // Quads
-						case 0xB8: {
-							for (u16 i = 0; i < vertexCount; i += 4) {
-								if (i + 3 < vertexCount) {
-									// Convert quad to two triangles
-									os << "f " << faceVertices[i] << " " << faceVertices[i + 1] << " " << faceVertices[i + 2] << "\n";
-									os << "f " << faceVertices[i] << " " << faceVertices[i + 2] << " " << faceVertices[i + 3] << "\n";
-									totalFaces += 2;
-								}
-							}
-							break;
-						}
-						}
+						// Write the triangle
+						os << "f " << faceVertices[0] << " " << faceVertices[1] << " " << faceVertices[2] << "\n";
+						totalFaces++;
 					}
 				}
 			}
 		}
+
 		os << "\n";
 		meshIndex++;
 	}
@@ -634,10 +753,7 @@ void importObj()
 
 		// Convert faces to triangle strips (simple conversion)
 		DisplayList dlist;
-		dlist.mFlags.byteView.cullMode = DLCullMode::Back;
-
-		// Build display list data
-		util::vector_reader::Endianness endian = util::vector_reader::Endianness::Big;
+		dlist.mFlags = DLFlags::Back;
 
 		for (const auto& face : meshFaces) {
 			if (face.size() >= 3) {
@@ -741,62 +857,23 @@ void exportMaterials()
 		return;
 	}
 
-	std::string filename = gTokeniser.isEnd() ? "./materials.txt" : gTokeniser.next();
+	std::string filename = gTokeniser.isEnd() ? "./materials.json" : gTokeniser.next();
 
-	std::ofstream output(filename, std::ios::out | std::ios::trunc);
-	if (!output.is_open()) {
-		std::cout << "Error: can't open " << filename << '\n';
-		return;
-	}
-
-	MaterialWriter writer(output);
-	writer.writeLine("MATERIAL_FILE");
-
-	// Write materials section
-	if (!gModFile.mMaterials.mMaterials.empty()) {
-		writer.writeLine("MAT_SECTION");
-		for (size_t i = 0; i < gModFile.mMaterials.mMaterials.size(); ++i) {
-			writer.writeLine("MAT " + std::to_string(i));
-			writer.m_indentLevel = 1;
-			writer.writeMaterial(gModFile.mMaterials.mMaterials[i]);
-			writer.m_indentLevel = 0;
-			writer.writeLine("");
-		}
-	}
-
-	// Write TEV section
-	if (!gModFile.mMaterials.mTevEnvironmentInfo.empty()) {
-		writer.writeLine("TEV_SECTION");
-		for (size_t i = 0; i < gModFile.mMaterials.mTevEnvironmentInfo.size(); ++i) {
-			writer.writeLine("TEV " + std::to_string(i));
-			writer.m_indentLevel = 1;
-			writer.writeTEVInfo(gModFile.mMaterials.mTevEnvironmentInfo[i]);
-			writer.m_indentLevel = 0;
-			writer.writeLine("");
-		}
-	}
-
-	output.close();
-	if (gModFile.mVerbosePrint) {
-		std::cout << "Materials exported to " << filename << "\n";
+	if (!mat::saveMaterialsToFile(filename, gModFile.mMaterials.mMaterials, gModFile.mMaterials.mTevEnvironmentInfo)) {
+		std::cout << "[FAIL]" << std::endl;
+	} else {
+		std::cout << "[SUCCESS]" << std::endl;
 	}
 }
 
 void importMaterials()
 {
-	std::string filename = gTokeniser.isEnd() ? "./materials.txt" : gTokeniser.next();
+	std::string filename = gTokeniser.isEnd() ? "./materials.json" : gTokeniser.next();
 
-	std::ifstream input(filename);
-	if (!input.is_open()) {
-		std::cout << "Error: can't open " << filename << '\n';
-		return;
-	}
-
-	MaterialReader reader(input);
 	std::vector<Material> materials;
 	std::vector<TEVInfo> tevInfos;
 
-	if (reader.readMaterialFile(materials, tevInfos)) {
+	if (mat::loadMaterialsFromFile(filename, materials, tevInfos)) {
 		// Update the global mod file with imported materials
 		gModFile.mMaterials.mMaterials          = std::move(materials);
 		gModFile.mMaterials.mTevEnvironmentInfo = std::move(tevInfos);
@@ -808,8 +885,6 @@ void importMaterials()
 	} else if (gModFile.mVerbosePrint) {
 		std::cout << "Failed to import materials from " << filename << "\n";
 	}
-
-	input.close();
 }
 
 void exportIni()
@@ -1225,7 +1300,7 @@ void exportDmd()
 			maxbounds.z = std::max(maxbounds.z, vertex.z);
 		}
 
-		for (const std::string& blockName : { "<VTX_POS>", "<DEFORMED_XYZ>", "<ENVELOPE_XYZ>" }) {
+		for (const char* blockName : { "<VTX_POS>", "<DEFORMED_XYZ>", "<ENVELOPE_XYZ>" }) {
 			os << blockName << "\n{\n";
 			os << "\tsize\t" << gModFile.mVertices.size() << '\n';
 			os << "\tmin\t" << minbounds.x << " " << minbounds.y << " " << minbounds.z << '\n';
@@ -1239,7 +1314,7 @@ void exportDmd()
 
 	// <VTX_NRM> and <ENVELOPE_NRM>
 	if (!gModFile.mVertexNormals.empty()) {
-		for (const std::string& blockName : { "<VTX_NRM>", "<ENVELOPE_NRM>" }) {
+		for (const char* blockName : { "<VTX_NRM>", "<ENVELOPE_NRM>" }) {
 			os << blockName << "\n{\n";
 			os << "\tsize\t" << gModFile.mVertexNormals.size() << '\n' << '\n';
 			for (const Vector3f& vn : gModFile.mVertexNormals) {
@@ -1303,18 +1378,18 @@ void exportDmd()
 			os << '\n';
 
 			for (const auto& dlist : packet.mDisplayLists) {
-				switch (dlist.mFlags.byteView.cullMode) {
-				case DLCullMode::Front:
+				switch (dlist.mFlags) {
+				case DLFlags::Front:
 					os << "\tface\tfront\n";
 					break;
-				case DLCullMode::Back:
+				case DLFlags::Back:
 					os << "\tface\tback\n";
 					break;
-				case DLCullMode::Both:
+				case DLFlags::Both:
 					os << "\tface\tboth\n";
 					break;
-				case DLCullMode::None:
-					os << "\tface\tnone\n";
+				default:
+					os << "\tface\tboth\n"; // Default case
 					break;
 				}
 
@@ -1361,6 +1436,87 @@ void exportDmd()
 	os.close();
 	if (gModFile.mVerbosePrint) {
 		std::cout << "Done! Exported model to " << filename << std::endl;
+	}
+}
+
+void exportCollision()
+{
+	if (!isModFileOpen()) {
+		std::cout << "You haven't opened a MOD file!\n";
+		return;
+	}
+
+	if (gModFile.mCollisionTriangles.mCollInfo.empty()) {
+		std::cout << "Loaded file has no collision data!\n";
+		return;
+	}
+
+	std::string filename = gTokeniser.isEnd() ? "./collision.json" : gTokeniser.next();
+
+	if (!collision::saveCollisionToFile(filename, gModFile.mCollisionTriangles, gModFile.mCollisionGridInfo)) {
+		std::cout << "Failed to export collision data to " << filename << "\n";
+		return;
+	}
+
+	if (gModFile.mVerbosePrint) {
+		std::cout << "Successfully exported collision data to " << filename << "\n";
+		std::cout << "Exported " << gModFile.mCollisionTriangles.mCollInfo.size() << " collision triangles\n";
+		std::cout << "Exported " << gModFile.mCollisionTriangles.mRoomInfo.size() << " room entries\n";
+		std::cout << "Exported collision grid with " << gModFile.mCollisionGridInfo.mGroups.size() << " groups\n";
+
+		// Analyze collision data
+		std::map<int, int> surfaceTypeCounts;
+		std::map<int, int> slipCodeCounts;
+		int baldTriangles = 0;
+
+		for (const auto& tri : gModFile.mCollisionTriangles.mCollInfo) {
+			collision::MapCodeBitfield mapCode(static_cast<u32>(tri.mMapCode));
+			surfaceTypeCounts[mapCode.getAttribute()]++;
+			slipCodeCounts[mapCode.getSlipCode()]++;
+			if (mapCode.getBaldFlag())
+				baldTriangles++;
+		}
+
+		std::cout << "\nCollision Analysis:\n";
+		std::cout << "Surface Types:\n";
+		for (const auto& [type, count] : surfaceTypeCounts) {
+			std::cout << "  " << collision::EnumConverters::MapAttributesToString(type) << ": " << count << " triangles\n";
+		}
+
+		std::cout << "Slip Codes:\n";
+		for (const auto& [slip, count] : slipCodeCounts) {
+			std::cout << "  " << collision::EnumConverters::SlipCodeToString(slip) << ": " << count << " triangles\n";
+		}
+
+		std::cout << "Bald (non-walkable) triangles: " << baldTriangles << "\n";
+	}
+}
+
+void importCollision()
+{
+	if (!isModFileOpen()) {
+		std::cout << "You haven't opened a MOD file!\n";
+		return;
+	}
+
+	std::string filename = gTokeniser.isEnd() ? "./collision.json" : gTokeniser.next();
+
+	CollTriInfo triangles;
+	CollGrid grid;
+
+	if (collision::loadCollisionFromFile(filename, triangles, grid)) {
+		// Update the global mod file with imported collision data
+		gModFile.mCollisionTriangles = std::move(triangles);
+		gModFile.mCollisionGridInfo  = std::move(grid);
+
+		if (gModFile.mVerbosePrint) {
+			std::cout << "Successfully imported collision data from " << filename << "\n";
+			std::cout << "Loaded " << gModFile.mCollisionTriangles.mCollInfo.size() << " collision triangles\n";
+			std::cout << "Loaded " << gModFile.mCollisionTriangles.mRoomInfo.size() << " room entries\n";
+			std::cout << "Loaded collision grid with " << gModFile.mCollisionGridInfo.mGroups.size() << " groups\n";
+		}
+	} else {
+		std::cout << "Failed to import collision data from " << filename << "\n";
 	}
 }
 

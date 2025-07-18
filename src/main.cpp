@@ -26,26 +26,27 @@ void printUsage(const char* programName)
 
 	// Group commands by category
 	std::cout << "\nFile Operations:\n";
-	std::cout << "  load <filename>              Load a MOD file\n";
+	std::cout << "  load  <filename>             Load a MOD file\n";
 	std::cout << "  write <filename>             Write the MOD file\n";
-	std::cout << "  close                        Close the MOD file\n";
+	std::cout << "  close                        Resets the currently loaded MOD file\n";
+
+	std::cout << "\nModification Operations:\n";
+	std::cout << "  list_chunks                  Lists all chunks in the currently loaded MOD file\n";
+	std::cout << "  delete_chunk <chunk_id>      Delete a chunk type (e.g., 0x10, 0x30)\n";
+	std::cout << "  edit_header                  Edit header information (interactive)\n";
 
 	std::cout << "\nImport Operations:\n";
-	std::cout << "  import_material <filename>   Import materials from an external file\n";
-	std::cout << "  import_texture               Swap a texture with an external TXE file (interactive)\n";
+	std::cout << "  import_mat <filename>        Import materials from an external file\n";
 	std::cout << "  import_obj <filename>        Import an external OBJ\n";
 	std::cout << "  import_ini <filename>        Import an external INI file\n";
+	std::cout << "  import_tex                   Swaps a texture with an external TXE file (interactive)\n";
 
 	std::cout << "\nExport Operations:\n";
-	std::cout << "  export_materials <filename>  Export all materials to a file\n";
-	std::cout << "  export_textures <directory>  Export all textures to a directory\n";
+	std::cout << "  export_mat <filename>        Export all materials to a file\n";
+	std::cout << "  export_tex <directory>       Export all textures to a directory\n";
 	std::cout << "  export_obj <filename>        Export the model to an OBJ file\n";
 	std::cout << "  export_ini <filename>        Export the INI to a file\n";
 	std::cout << "  export_dmd <filename>        Export the model to a DMD file\n";
-
-	std::cout << "\nModification Operations:\n";
-	std::cout << "  delete_chunk <chunk_id>      Delete a chunk type (e.g., 0x10, 0x30)\n";
-	std::cout << "  edit_header                  Edit header information (interactive)\n";
 
 	std::cout << "\nOther:\n";
 	std::cout << "  help                         Show available commands (in interactive mode)\n\n";
@@ -62,7 +63,7 @@ bool processCommand(const std::string& commandStr)
 		return true; // Empty command, skip
 	}
 
-	const std::string& token = cmd::gTokeniser.next();
+	std::string token = cmd::gTokeniser.next();
 
 	// Find and execute the command
 	for (const cmd::Command& cmd : cmd::gCommands) {

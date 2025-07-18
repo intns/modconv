@@ -13,6 +13,9 @@
 #include "common/vector2.hpp"
 #include "common/vector3.hpp"
 #include "common/vtxmatrix.hpp"
+#include "common/dlist_reader.hpp"
+#include "common/material_serializer.hpp"
+#include "common/collision_serializer.hpp"
 #include "util/fstream_writer.hpp"
 
 namespace {
@@ -26,7 +29,7 @@ inline u32 startChunk(util::fstream_writer& writer, u32 chunk)
 
 inline void finishChunk(util::fstream_writer& writer, u32 chunkStart)
 {
-	writer.align(0x20);
+	writer.align();
 	const u32 position = static_cast<u32>(writer.tellp());
 	writer.seekp(chunkStart, std::ios_base::beg);
 	writer.writeU32(position - chunkStart - 4);

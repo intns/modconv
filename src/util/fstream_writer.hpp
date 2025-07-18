@@ -10,17 +10,19 @@ namespace util {
 
 class fstream_writer : public std::ofstream {
 public:
-	fstream_writer()
-
-	    = default;
+	fstream_writer()                                 = default;
 	~fstream_writer() override                       = default;
 	fstream_writer(const fstream_writer&)            = delete;
 	fstream_writer& operator=(const fstream_writer&) = delete;
 
-	void align(u32 amt)
+	void align(std::streamoff amt = cfg::MOD_ALIGNMENT_AMT)
 	{
-		const u32 pos = static_cast<u32>(tellp());
-		for (u32 i = 0; i < ((~(amt - 1) & (pos + amt - 1)) - pos); ++i) {
+		if (amt == 0) {
+			return;
+		}
+
+		std::streamoff padding = (-tellp()) & (amt - 1);
+		while (padding--) {
 			writeU8(0);
 		}
 	}
@@ -51,7 +53,8 @@ public:
 
 	void writeF32(f32 val)
 	{
-		u32 const intVal = reinterpret_cast<u32&>(val);
+		u32 intVal;
+		std::memcpy(&intVal, &val, sizeof(f32)); // Safe bit-exact copy
 		u32 value
 		    = ((intVal & 0xff000000) >> 24) | ((intVal & 0x00ff0000) >> 8) | ((intVal & 0x0000ff00) << 8) | ((intVal & 0x000000ff) << 24);
 		write(reinterpret_cast<char*>(&value), 4);

@@ -15,20 +15,24 @@ extern std::string gModFileName;
 extern util::tokeniser gTokeniser;
 
 namespace mod {
-void loadFile();
-void writeFile();
-void resetActiveModel();
+void importMod();
+void exportMod();
+void resetModel();
 
+void listChunks();
 void importObj();
 void importMaterials();
 void importTexture();
 void importIni();
 
+void exportObj();
 void exportMaterials();
 void exportTextures();
-void exportObj();
-void exportDmd();
 void exportIni();
+void exportDmd();
+
+void exportCollision();
+void importCollision();
 
 void deleteChunk();
 void editHeader();
@@ -41,36 +45,56 @@ struct Command {
 	std::vector<std::string_view> mParameters;
 	std::string_view mDescription;
 	std::function<void()> mFunction;
+
+	Command(std::string_view cmd, std::vector<std::string_view> params, std::string_view desc, std::function<void()> func)
+	    : mCommand(cmd)
+	    , mParameters(params)
+	    , mDescription(desc)
+	    , mFunction(func)
+	{
+	}
+
+	explicit Command(std::string_view cmd)
+	    : mCommand(cmd)
+	    , mParameters {}
+	    , mDescription {}
+	    , mFunction {}
+	{
+	}
 };
 
-static std::vector<Command> gCommands
-    = { { "load", { "input filename" }, "loads a MOD file", cmd::mod::loadFile },
-	    { "write", { "output filename" }, "writes the MOD file", cmd::mod::writeFile },
-	    { "close", {}, "closes the MOD file", cmd::mod::resetActiveModel },
+static std::vector<Command> gCommands = {
+	Command("load", { "input filename" }, "loads a MOD file", cmd::mod::importMod),
+	Command("write", { "output filename" }, "writes the MOD file", cmd::mod::exportMod),
+	Command("reset", {}, "resets the currently loaded MOD file", cmd::mod::resetModel),
 
-	    { "NEW_LINE" },
+	Command("NEW_LINE"),
 
-	    { "import_material", { "input filename" }, "imports materials from an external file", cmd::mod::importMaterials },
-	    { "import_texture", { /*handles input internally*/ }, "swaps a texture with an external TXE file", cmd::mod::importTexture },
-	    { "import_obj", { "input filename" }, "imports an external obj", cmd::mod::importObj },
-	    { "import_ini", { "input filename" }, "imports an external ini", cmd::mod::importIni },
+	Command("list_chunks", {}, "lists all chunks in the currently loaded MOD file", cmd::mod::listChunks),
+	Command("delete_chunk", { "target chunk (0x10, 0x12, 0x30, etc.)" }, "deletes a chunk type [dangerous]", cmd::mod::deleteChunk),
+	Command("edit_header", {}, "edits header information (date of creation / flags)", cmd::mod::editHeader),
 
-	    { "NEW_LINE" },
+	Command("NEW_LINE"),
 
-	    { "export_materials", { "output filename" }, " exports all materials to a file ", cmd::mod::exportMaterials },
-	    { "export_textures", { "output directory" }, "exports all textures to a directory", cmd::mod::exportTextures },
-	    { "export_obj", { "output filename" }, "exports the model to an obj file [WIP]", cmd::mod::exportObj },
-	    { "export_ini", { "output filename" }, "exports the ini to a file", cmd::mod::exportIni },
-	    { "export_dmd", { "output filename" }, "exports the model to a dmd file [WIP]", cmd::mod::exportDmd },
+	Command("import_col", { "input filename" }, "imports collision data from a file", cmd::mod::importCollision),
+	Command("import_mat", { "input filename" }, "imports materials from an external file", cmd::mod::importMaterials),
+	Command("import_obj", { "input filename" }, "imports an external obj", cmd::mod::importObj),
+	Command("import_ini", { "input filename" }, "imports an external ini", cmd::mod::importIni),
+	Command("import_tex", {}, "swaps a texture with an external TXE file", cmd::mod::importTexture),
 
-	    { "NEW_LINE" },
+	Command("NEW_LINE"),
 
-	    { "delete_chunk", { "target chunk (0x10, 0x12, 0x30, etc.)" }, "deletes a chunk type [dangerous]", cmd::mod::deleteChunk },
-	    { "edit_header", {}, "edits header information (date of creation / flags)", cmd::mod::editHeader },
+	Command("export_col", { "output filename" }, "exports collision data to a file", cmd::mod::exportCollision),
+	Command("export_mat", { "output filename " }, "exports all materials to a file ", cmd::mod::exportMaterials),
+	Command("export_obj", { "output filename " }, "exports the model to an OBJ file [WIP]", cmd::mod::exportObj),
+	Command("export_ini", { "output filename " }, "exports the ini to a file", cmd::mod::exportIni),
+	Command("export_tex", { "output directory" }, "exports all textures to a directory", cmd::mod::exportTextures),
+	Command("export_dmd", { "output filename " }, "exports the model to a DMD file [WIP]", cmd::mod::exportDmd),
 
-	    { "NEW_LINE" },
+	Command("NEW_LINE"),
 
-	    { "help", {}, "re-generate this command list", showCommands } };
+	Command("help", {}, "re-generate this command list", showCommands),
+};
 
 inline void showCommands()
 {

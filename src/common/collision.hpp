@@ -14,13 +14,26 @@ struct BaseRoomInfo {
 	void write(util::fstream_writer& writer) const;
 };
 
+/**
+ * @brief Map surface attributes for collision detection.
+ */
+enum class MapAttributes : s32 {
+	Solid = 0,
+	Rock  = 1,
+	Grass = 2,
+	Wood  = 3,
+	Mud   = 4,
+	Water = 5,
+	Hole  = 6,
+};
+
 struct BaseCollTriInfo {
-	u32 mMapCode             = 0;
+	MapAttributes mMapCode   = MapAttributes::Solid;
 	u32 mVertexIndexA        = 0;
 	u32 mVertexIndexB        = 0;
 	u32 mVertexIndexC        = 0;
-	u16 mUnknown             = 0;
-	u16 mNeighbourIndices[3] = {};
+	u16 mCollRoomId                    = 0;
+	s16 mNeighbourIndices[3] = {};
 	Plane mPlane;
 
 	void read(util::fstream_reader& reader);
@@ -36,21 +49,21 @@ struct CollTriInfo {
 };
 
 struct CollGroup {
-	std::vector<u8> mUnknown1;
-	std::vector<u32> mUnknown2;
+	std::vector<u8> mFarCullDistances;
+	std::vector<u32> mTriangleIndices;
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);
 };
 
 struct CollGrid {
-	Vector3f mBoundsMin;
-	Vector3f mBoundsMax;
-	f32 mGridSize  = 0;
-	u32 mGridSizeX = 0;
-	u32 mGridSizeY = 0;
-	std::vector<CollGroup> m_groups;
-	std::vector<s32> m_unknown2;
+	Vector3f mAABBMin;
+	Vector3f mAABBMax;
+	f32 mCellSize   = 0;
+	u32 mCellCountX = 0;
+	u32 mCellCountY = 0;
+	std::vector<CollGroup> mGroups;
+	std::vector<s32> mGroupIndices;
 
 	void read(util::fstream_reader& reader);
 	void write(util::fstream_writer& writer);

@@ -47,12 +47,12 @@ inline bool Unit_TestReadWrite(const fs::path& path)
 	}
 
 	cmd::gTokeniser.read(relativePath.string());
-	cmd::mod::loadFile();
+	cmd::mod::importMod();
 
 	cmd::gTokeniser.read("out.mod");
-	cmd::mod::writeFile();
+	cmd::mod::exportMod();
 
-	cmd::mod::resetActiveModel();
+	cmd::mod::resetModel();
 
 	// Ensure the file is the same, byte for byte
 	return util::AreFilesIdentical(path, "out.mod");
@@ -70,7 +70,7 @@ inline bool Unit_TestMaterialReadWrite(const fs::path& path)
 
 	// Load relativePath
 	cmd::gTokeniser.read(relativePath.string());
-	cmd::mod::loadFile();
+	cmd::mod::importMod();
 
 	cmd::mod::exportMaterials();
 
@@ -82,10 +82,51 @@ inline bool Unit_TestMaterialReadWrite(const fs::path& path)
 
 	// Load out.mod
 	cmd::gTokeniser.read("out.mod");
-	cmd::mod::writeFile();
+	cmd::mod::exportMod();
 
 	// Cleanup and check parity
-	cmd::mod::resetActiveModel();
+	cmd::mod::resetModel();
+
+	return util::AreFilesIdentical(path, "out.mod");
+}
+
+inline bool Unit_TestCollisionReadWrite(const fs::path& path)
+{
+	// Build a list of
+	std::error_code ec;
+	const auto relativePath = fs::relative(path, fs::current_path(), ec);
+	if (ec) {
+		std::cout << "Error in converting to relative path: " << ec.message() << std::endl;
+		return false;
+	}
+
+	// Load relativePath
+	cmd::gTokeniser.read(relativePath.string());
+	cmd::mod::importMod();
+
+	MOD& mod = cmd::gModFile;
+
+	if (mod.mCollisionGridInfo.mGroups.empty() && mod.mCollisionTriangles.mCollInfo.empty()) {
+		return true;
+	}
+
+	cmd::mod::exportCollision();
+
+	// Delete the material chunk and import our export (testing our export)
+	cmd::gTokeniser.read("0x100");
+	cmd::mod::deleteChunk();
+
+	cmd::gTokeniser.read("0x110");
+	cmd::mod::deleteChunk();
+
+	cmd::mod::importCollision();
+
+	// Load out.mod
+	cmd::gTokeniser.read("out.mod");
+	cmd::mod::exportMod();
+
+	// Cleanup and check parity
+	cmd::mod::resetModel();
 
 	return util::AreFilesIdentical(path, "out.mod");
 }
@@ -96,10 +137,9 @@ inline void UnitTest(const std::string& path = "unit")
 	// Run some unit tests before we can allow the user to destroy their files
 	auto pathList = BuildUnitPathList(path);
 	for (const auto& p : pathList) {
-		if (Unit_TestReadWrite(p) && Unit_TestMaterialReadWrite(p)) {
-			std::cout << "[PASS]\t" << p.filename() << std::endl;
-		} else {
-			std::cout << "[FAIL]\t" << p.filename() << std::endl;
+		if (!Unit_TestReadWrite(p) || !Unit_TestMaterialReadWrite(p) || !Unit_TestCollisionReadWrite(p)) {
+			std::cout << p << std::endl;
+			throw std::runtime_error("Fuck");
 		}
 	}
 }

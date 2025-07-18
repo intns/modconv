@@ -22,7 +22,7 @@ public:
 	std::streampos getRemaining() { return m_filesize - tellg(); }
 	[[nodiscard]] std::streampos getFilesize() const { return m_filesize; }
 
-	void align(std::streamoff amt)
+	void align(std::streamoff amt = cfg::MOD_ALIGNMENT_AMT)
 	{
 		if (amt == 0) {
 			return;
